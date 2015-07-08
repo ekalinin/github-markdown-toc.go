@@ -17,8 +17,9 @@ buildall: clean
 	GOARCH=amd64 go build -o ${EXEC}_amd64
 	GOARCH=386 go build -o ${EXEC}_i386
 
-buildX: clean
+buildstripped: clean
 	@go build -ldflags "-s" -o ${EXEC}
 
 test: clean
-	@go test -o ${EXEC}
+	@go test -cover fmt -o ${EXEC}
+

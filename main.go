@@ -1,8 +1,10 @@
 package main
 
 import (
+	"bytes"
 	"flag"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -13,23 +15,17 @@ import (
 )
 
 var (
-	version = "0.1.0"
+	version    = "0.2.0"
+	user_agent = fmt.Sprint("github-markdown-toc.go v", version)
 )
 
 //
 // Internal
 //
 
-// Executes HTTP GET request
-func http_get(url_path string) string {
+func do_http_req(req *http.Request) string {
+	req.Header.Set("User-Agent", user_agent)
 	client := &http.Client{}
-	req, err := http.NewRequest("GET", url_path, nil)
-	if err != nil {
-		return ""
-	}
-
-	req.Header.Set("User-Agent", fmt.Sprint("github-markdown-toc.go v", version))
-
 	resp, err := client.Do(req)
 	if err != nil {
 		return ""
@@ -42,6 +38,32 @@ func http_get(url_path string) string {
 	}
 
 	return string(body)
+}
+
+// Executes HTTP GET request
+func http_get(url_path string) string {
+	req, err := http.NewRequest("GET", url_path, nil)
+	if err != nil {
+		return ""
+	}
+	return do_http_req(req)
+}
+
+// Executes HTTP POST with file content
+func http_post(url_path string, file_path string) string {
+	file, err := os.Open(file_path)
+	if err != nil {
+		return ""
+	}
+	defer file.Close()
+
+	body := &bytes.Buffer{}
+	io.Copy(body, file)
+
+	req, err := http.NewRequest("POST", url_path, body)
+	req.Header.Set("Content-Type", "text/plain")
+
+	return do_http_req(req)
 }
 
 // Public
@@ -61,8 +83,8 @@ func GetHmtlBody(path string) string {
 
 // Check if string is url
 func IsUrl(candidate string) bool {
-	_, err := url.Parse(candidate)
-	if err != nil {
+	u, err := url.Parse(candidate)
+	if err != nil || u.Scheme == "" {
 		return false
 	}
 	return true
@@ -71,7 +93,7 @@ func IsUrl(candidate string) bool {
 // Sends Markdown to the github converter
 // and returns html.
 func ConvertMd2Html(localpath string) string {
-	return ""
+	return http_post("https://api.github.com/markdown/raw", localpath)
 }
 
 // Create TOC by html from github

@@ -6,9 +6,13 @@ import (
 
 func Test_is_url(t *testing.T) {
 	url1 := "https://github.com/ekalinin/envirius/blob/master/README.md"
-	res := IsUrl(url1)
-	if !res {
-		t.Error("This is not url: ", url1)
+	if !IsUrl(url1) {
+		t.Error("This is url: ", url1)
+	}
+
+	url2 := "./README.md"
+	if IsUrl(url2) {
+		t.Error("This is not url: ", url2)
 	}
 }
 

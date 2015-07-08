@@ -28,11 +28,16 @@ You need golang installed is your OS:
 ```(sh)
 $ make get-deps
 $ make build
-$ ./gh-md-toc -h
-GitHub TOC generator:  0.1.0
+$ ./gh-md-toc --help
+usage: gh-md-toc [<flags>] [<path>...]
 
-Usage:
-        $ gh-md-toc url [url]
+Flags:
+  --help     Show help (also see --help-long and --help-man).
+  --version  Show application version.
+
+Args:
+  [<path>]  Local path or URL of the document to grab TOC
+
 ```
 
 Tests
@@ -40,7 +45,7 @@ Tests
 
 ```(sh)
 $ make test
-coverage: 22.4% of statements
+coverage: 28.8% of statements
 ok      _~/projects/my/github-toc.go    0.003s
 ```
 

@@ -16,6 +16,10 @@ var (
 	version = "0.1.0"
 )
 
+//
+// Internal
+//
+
 // Executes HTTP GET request
 func http_get(url_path string) string {
 	client := &http.Client{}
@@ -40,6 +44,21 @@ func http_get(url_path string) string {
 	return string(body)
 }
 
+// Public
+
+// If path is url then just executes HTTP GET and
+// Returns html for this url.
+//
+// If path is a local path then sends file to the GitHub's
+// Markdown -> Html converter and returns html.
+func GetHmtlBody(path string) string {
+	if IsUrl(path) {
+		return http_get(path)
+	} else {
+		return ConvertMd2Html(path)
+	}
+}
+
 // Check if string is url
 func IsUrl(candidate string) bool {
 	_, err := url.Parse(candidate)
@@ -51,7 +70,7 @@ func IsUrl(candidate string) bool {
 
 // Sends Markdown to the github converter
 // and returns html.
-func convert_md_to_html(localpath string) string {
+func ConvertMd2Html(localpath string) string {
 	return ""
 }
 
@@ -86,17 +105,9 @@ func GrabToc(html string) []string {
 	return toc
 }
 
-func get_hmtl(path string) string {
-	if IsUrl(path) {
-		return http_get(path)
-	} else {
-		return convert_md_to_html(path)
-	}
-}
-
 // Generate TOC for document (path in filesystem or url)
 func GenerateToc(path string) []string {
-	return GrabToc(get_hmtl(path))
+	return GrabToc(GetHmtlBody(path))
 }
 
 // Custom help

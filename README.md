@@ -39,7 +39,8 @@ Tests
 
 ```(sh)
 $ make test
-ok      fmt     0.033s  coverage: 91.8% of statements
+coverage: 22.4% of statements
+ok      _~/projects/my/github-toc.go    0.003s
 ```
 
 Usage

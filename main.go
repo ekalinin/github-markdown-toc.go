@@ -139,19 +139,30 @@ func usage() {
 	fmt.Println("GitHub TOC generator: ", version)
 	fmt.Println("")
 	fmt.Println("Usage:")
-	fmt.Println("	$", app_name, "url [url]")
-	//fmt.Println("	$", app_name, "[options] [path [path]]")
-	//fmt.Println("")
-	//fmt.Println("Options:")
+	fmt.Println("    $", app_name, "[options] [path [path]]")
+	fmt.Println("")
+	fmt.Println("Options:")
 
 	flag.PrintDefaults()
 }
 
 // Entry point
 func main() {
+	flagVersion := flag.Bool("version", false, "Show version")
+	flagHelp := flag.Bool("help", false, "Show help")
 
 	flag.Usage = usage
 	flag.Parse()
+
+	if *flagVersion {
+		fmt.Println(version)
+		os.Exit(0)
+	}
+
+	if *flagHelp {
+		usage()
+		os.Exit(0)
+	}
 
 	paths := flag.Args()
 

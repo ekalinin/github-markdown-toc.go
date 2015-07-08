@@ -26,6 +26,7 @@ Compiling from source
 You need golang installed is your OS:
 
 ```(sh)
+$ make get-deps
 $ make build
 $ ./gh-md-toc -h
 GitHub TOC generator:  0.1.0

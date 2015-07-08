@@ -2,8 +2,8 @@ package main
 
 import (
 	"bytes"
-	"flag"
 	"fmt"
+	"gopkg.in/alecthomas/kingpin.v2"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -132,51 +132,24 @@ func GenerateToc(path string) []string {
 	return GrabToc(GetHmtlBody(path))
 }
 
-// Custom help
-func usage() {
-	app_name := strings.Replace(os.Args[0], "./", "", 1)
-
-	fmt.Println("GitHub TOC generator: ", version)
-	fmt.Println("")
-	fmt.Println("Usage:")
-	fmt.Println("    $", app_name, "[options] [path [path]]")
-	fmt.Println("")
-	fmt.Println("Options:")
-
-	flag.PrintDefaults()
-}
-
 // Entry point
 func main() {
-	flagVersion := flag.Bool("version", false, "Show version")
-	flagHelp := flag.Bool("help", false, "Show help")
+	paths := kingpin.Arg("path", "Local path or URL of the document to grab TOC").Strings()
+	kingpin.Version(version)
+	kingpin.Parse()
 
-	flag.Usage = usage
-	flag.Parse()
-
-	if *flagVersion {
-		fmt.Println(version)
-		os.Exit(0)
-	}
-
-	if *flagHelp {
-		usage()
-		os.Exit(0)
-	}
-
-	paths := flag.Args()
-
-	if len(paths) == 1 {
+	if len(*paths) == 1 {
 		fmt.Println()
 		fmt.Println("Table of Contents")
 		fmt.Println("=================")
 		fmt.Println()
 	}
 
-	for _, p := range paths {
+	for _, p := range *paths {
 		for _, item := range GenerateToc(p) {
 			fmt.Println(item)
 		}
+		fmt.Println()
 	}
 	fmt.Println()
 	fmt.Println("Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc.go)")

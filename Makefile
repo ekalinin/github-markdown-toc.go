@@ -10,6 +10,9 @@ clean:
 	@rm -f ${EXEC}*
 	@go clean
 
+get-deps:
+	@go get gopkg.in/alecthomas/kingpin.v2
+
 build: clean
 	@go build -o ${EXEC}
 

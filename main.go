@@ -28,7 +28,7 @@ func http_get(url_path string) string {
 		return ""
 	}
 
-	req.Header.Set("User-Agent", fmt.Sprint("ghtoc v", version))
+	req.Header.Set("User-Agent", fmt.Sprint("github-markdown-toc.go v", version))
 
 	resp, err := client.Do(req)
 	if err != nil {

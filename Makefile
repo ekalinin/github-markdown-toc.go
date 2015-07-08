@@ -27,5 +27,5 @@ test: clean
 	@go test -cover -o ${EXEC}
 
 release:
-	@git tag `grep "version =" main.go | grep -o -E '[0-9]\.[0-9]\.[0-9]{1,2}'`
+	@git tag `grep "version" main.go | grep -o -E '[0-9]\.[0-9]\.[0-9]{1,2}'`
 	@#git push --tags origin master

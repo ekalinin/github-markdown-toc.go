@@ -28,4 +28,4 @@ test: clean
 
 release:
 	@git tag `grep "version" main.go | grep -o -E '[0-9]\.[0-9]\.[0-9]{1,2}'`
-	@#git push --tags origin master
+	@git push --tags origin master

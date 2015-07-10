@@ -24,7 +24,7 @@ For example:
 
 ```(bash)
 $ wget https://github.com/ekalinin/github-markdown-toc.go/releases/download/0.3.0/gh-md-toc.amd64.tgz
-$ tar xzvf
+$ tar xzvf gh-md-toc.amd64.tgz
 gh-md-toc
 $ ./gh-md-toc --version
 0.3.0

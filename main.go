@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -22,6 +23,12 @@ var (
 //
 // Internal
 //
+
+func check(e error) {
+	if e != nil {
+		panic(e)
+	}
+}
 
 func do_http_req(req *http.Request) string {
 	req.Header.Set("User-Agent", user_agent)
@@ -132,9 +139,18 @@ func GenerateToc(path string) []string {
 	return GrabToc(GetHmtlBody(path))
 }
 
+func PrintToc(toc []string) {
+	for _, toc_item := range toc {
+		fmt.Println(toc_item)
+	}
+	fmt.Println()
+}
+
 // Entry point
 func main() {
-	paths := kingpin.Arg("path", "Local path or URL of the document to grab TOC").Strings()
+	paths_desc := "Local path or URL of the document to grab TOC. " +
+		"If not entered, then read Markdown from stdin."
+	paths := kingpin.Arg("path", paths_desc).Strings()
 	kingpin.Version(version)
 	kingpin.Parse()
 
@@ -145,12 +161,23 @@ func main() {
 		fmt.Println()
 	}
 
+	// read file paths | urls from args
 	for _, p := range *paths {
-		for _, item := range GenerateToc(p) {
-			fmt.Println(item)
-		}
-		fmt.Println()
+		PrintToc(GenerateToc(p))
 	}
-	fmt.Println()
+
+	// read md from stdin
+	if len(*paths) == 0 {
+		file, err := ioutil.TempFile(os.TempDir(), "ghtoc")
+		check(err)
+		defer os.Remove(file.Name())
+		file_path, err := filepath.Abs(file.Name())
+		check(err)
+		bytes, err := ioutil.ReadAll(os.Stdin)
+		check(err)
+		check(ioutil.WriteFile(file.Name(), bytes, 0644))
+		PrintToc(GenerateToc(file_path))
+	}
+
 	fmt.Println("Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc.go)")
 }

@@ -10,6 +10,23 @@ The advantages of this implementation:
   * cross-platform (support for Windows, Mac OS, etc.)
   * regexp for parsing TOC
 
+Table of Contents
+=================
+
+  * [github-markdown-toc](#github-markdown-toc)
+  * [Installation](#installation)
+    * [Precompiled binaries](#precompiled-binaries)
+    * [Compiling from source](#compiling-from-source)
+  * [Tests](#tests)
+  * [Usage](#usage)
+    * [STDIN](#stdin)
+    * [Local files](#local-files)
+    * [Remote files](#remote-files)
+    * [Combo](#combo)
+  * [LICENSE](#license)
+
+Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc.go)
+
 Installation
 ============
 

@@ -73,6 +73,15 @@ func http_post(url_path string, file_path string) string {
 	return do_http_req(req)
 }
 
+func removeStuf(s string) string {
+	res := strings.Replace(s, "\n", "", -1)
+	res = strings.Replace(res, "<code>", "", -1)
+	res = strings.Replace(res, "</code>", "", -1)
+	res = strings.TrimSpace(res)
+
+	return res
+}
+
 // Public
 
 // If path is url then just executes HTTP GET and
@@ -108,7 +117,7 @@ func GrabToc(html string) []string {
 	re := `(?si)<h(?P<num>[1-6])>\s*` +
 		`<a\s*id="user-content-[^"]*"\s*class="anchor"\s*` +
 		`href="(?P<href>[^"]*)"[^>]*>\s*` +
-		`<span[^<*]*</span>\s*</a>(?P<name>[^<]*)`
+		`<span[^<*]*</span>\s*</a>(?P<name>.*?)</h`
 	r := regexp.MustCompile(re)
 
 	toc := []string{}
@@ -119,13 +128,12 @@ func GrabToc(html string) []string {
 			if i == 0 || name == "" {
 				continue
 			}
-			groups[name] = strings.TrimSpace(
-				strings.Replace(match[i], "\n", "", -1))
+			groups[name] = removeStuf(match[i])
 		}
 		// format result
 		n, _ := strconv.Atoi(groups["num"])
 		toc_item := strings.Repeat("  ", n) + "* " +
-			"[" + groups["name"] + "]" +
+			"[" + removeStuf(groups["name"]) + "]" +
 			"(" + groups["href"] + ")"
 		//fmt.Println(toc_item)
 		toc = append(toc, toc_item)

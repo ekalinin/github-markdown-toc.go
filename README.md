@@ -39,7 +39,7 @@ See the releases page, "Downloads" section:
 
 For example:
 
-```(bash)
+```bash
 $ wget https://github.com/ekalinin/github-markdown-toc.go/releases/download/0.3.0/gh-md-toc.linux.amd64.tgz
 $ tar xzvf gh-md-toc.linux.amd64.tgz
 gh-md-toc
@@ -52,7 +52,7 @@ Compiling from source
 
 You need golang installed is your OS:
 
-```(sh)
+```bash
 $ make get-deps
 $ make build
 $ ./gh-md-toc --help
@@ -70,7 +70,7 @@ Args:
 Tests
 =====
 
-```(sh)
+```bash
 $ make test
 coverage: 28.8% of statements
 ok      _~/projects/my/github-toc.go    0.003s
@@ -84,7 +84,7 @@ STDIN
 
 Here's an example of TOC creating for markdown from STDIN:
 
-```
+```bash
 ➥ cat ~/projects/Dockerfile.vim/README.md | ./gh-md-toc
   * [Dockerfile.vim](#dockerfilevim)
   * [Screenshot](#screenshot)

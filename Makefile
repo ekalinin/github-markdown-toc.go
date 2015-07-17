@@ -17,8 +17,9 @@ clean:
 get-deps:
 	@go get gopkg.in/alecthomas/kingpin.v2
 
+# http://tschottdorf.github.io/linking-golang-go-statically-cgo-testing/
 build: clean
-	@go build -ldflags "-s" -o ${EXEC}
+	@go build -a -tags netgo --ldflags '-s -extldflags "-lm -lstdc++ -static"' -i -o ${EXEC}
 
 test: clean
 	@go test -cover -o ${EXEC}
@@ -28,14 +29,12 @@ release: buildall
 	@git push --tags origin master
 
 toolchain:
-	@cd `go env GOROOT`/src 	&& \
-		GOOS=windows GOARCH=amd64 CGO_ENABLED=0 ./make.bash --no-clean 	&& \
-		GOOS=windows GOARCH=386   CGO_ENABLED=0 ./make.bash --no-clean 	&& \
-		GOOS=darwin  GOARCH=amd64 CGO_ENABLED=0 ./make.bash --no-clean 	&& \
-		GOOS=darwin  GOARCH=386   CGO_ENABLED=0 ./make.bash --no-clean 	&& \
-		GOOS=linux   GOARCH=386   CGO_ENABLED=0 ./make.bash --no-clean 	&& \
-		GOOS=freebsd GOARCH=386   CGO_ENABLED=0 ./make.bash --no-clean 	&& \
-		GOOS=freebsd GOARCH=amd64 CGO_ENABLED=0 ./make.bash --no-clean
+	@cd `go env GOROOT`/src && \
+	 for os in "${BUILD_OS}" ; do \
+		for arch in "${BUILD_ARCH}" ; do \
+			echo " * toolchain $$os for $$arch"; \
+			GOOS=$$os GOARCH=$$arch CGO_ENABLED=0 ./make.bash --no-clean; \
+		done done
 
 buildall: clean
 	@mkdir -p ${BUILD_DIR}

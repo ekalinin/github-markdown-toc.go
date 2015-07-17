@@ -82,9 +82,9 @@ For example:</p>
 func Test_GrabToc_backquoted(t *testing.T) {
 	toc_expected := []string{
 		"  * [The command foo1](#the-command-foo1)",
-		"  * [The command foo2 is better](#the-command-foo2-is-better)",
+		"    * [The command foo2 is better](#the-command-foo2-is-better)",
 		"  * [The command bar1](#the-command-bar1)",
-		"  * [The command bar2 is better](#the-command-bar2-is-better)",
+		"    * [The command bar2 is better](#the-command-bar2-is-better)",
 	}
 
 	toc := GrabToc(`
@@ -94,8 +94,8 @@ func Test_GrabToc_backquoted(t *testing.T) {
 
 <p>Blabla...</p>
 
-<h1>
-<a id="user-content-the-command-foo2-is-better" class="anchor" href="#the-command-foo2-is-better" aria-hidden="true"><span class="octicon octicon-link"></span></a>The command <code>foo2</code> is better</h1>
+<h2>
+<a id="user-content-the-command-foo2-is-better" class="anchor" href="#the-command-foo2-is-better" aria-hidden="true"><span class="octicon octicon-link"></span></a>The command <code>foo2</code> is better</h2>
 
 <p>Blabla...</p>
 
@@ -105,8 +105,8 @@ func Test_GrabToc_backquoted(t *testing.T) {
 
 <p>Blabla...</p>
 
-<h1>
-<a id="user-content-the-command-bar2-is-better" class="anchor" href="#the-command-bar2-is-better" aria-hidden="true"><span class="octicon octicon-link"></span></a>The command <code>bar2</code> is better</h1>
+<h2>
+<a id="user-content-the-command-bar2-is-better" class="anchor" href="#the-command-bar2-is-better" aria-hidden="true"><span class="octicon octicon-link"></span></a>The command <code>bar2</code> is better</h2>
 
 <p>Blabla...</p>
 	`)

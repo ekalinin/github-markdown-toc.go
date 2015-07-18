@@ -24,13 +24,15 @@ var (
 // Internal
 //
 
+// check checks if there whas an error and do panic if it was
 func check(e error) {
 	if e != nil {
 		panic(e)
 	}
 }
 
-func do_http_req(req *http.Request) string {
+// doHttpReq executes a particullar http request
+func doHttpReq(req *http.Request) string {
 	req.Header.Set("User-Agent", user_agent)
 	client := &http.Client{}
 	resp, err := client.Do(req)
@@ -48,16 +50,16 @@ func do_http_req(req *http.Request) string {
 }
 
 // Executes HTTP GET request
-func http_get(url_path string) string {
+func httpGet(url_path string) string {
 	req, err := http.NewRequest("GET", url_path, nil)
 	if err != nil {
 		return ""
 	}
-	return do_http_req(req)
+	return doHttpReq(req)
 }
 
-// Executes HTTP POST with file content
-func http_post(url_path string, file_path string) string {
+// httpPost executes HTTP POST with file content
+func httpPost(url_path string, file_path string) string {
 	file, err := os.Open(file_path)
 	if err != nil {
 		return ""
@@ -70,9 +72,10 @@ func http_post(url_path string, file_path string) string {
 	req, err := http.NewRequest("POST", url_path, body)
 	req.Header.Set("Content-Type", "text/plain")
 
-	return do_http_req(req)
+	return doHttpReq(req)
 }
 
+// removeStuf trims spaces, removes new lines and code tag from a string
 func removeStuf(s string) string {
 	res := strings.Replace(s, "\n", "", -1)
 	res = strings.Replace(res, "<code>", "", -1)
@@ -91,7 +94,7 @@ func removeStuf(s string) string {
 // Markdown -> Html converter and returns html.
 func GetHmtlBody(path string) string {
 	if IsUrl(path) {
-		return http_get(path)
+		return httpGet(path)
 	} else {
 		return ConvertMd2Html(path)
 	}
@@ -109,7 +112,7 @@ func IsUrl(candidate string) bool {
 // Sends Markdown to the github converter
 // and returns html.
 func ConvertMd2Html(localpath string) string {
-	return http_post("https://api.github.com/markdown/raw", localpath)
+	return httpPost("https://api.github.com/markdown/raw", localpath)
 }
 
 // Create TOC by html from github
@@ -147,6 +150,7 @@ func GenerateToc(path string) []string {
 	return GrabToc(GetHmtlBody(path))
 }
 
+// PrintToc print on console string array
 func PrintToc(toc []string) {
 	for _, toc_item := range toc {
 		fmt.Println(toc_item)

@@ -20,6 +20,8 @@ var (
 	user_agent = fmt.Sprint("github-markdown-toc.go v", version)
 )
 
+type GHToc []string
+
 //
 // Internal
 //
@@ -116,14 +118,14 @@ func ConvertMd2Html(localpath string) string {
 }
 
 // Create TOC by html from github
-func GrabToc(html string) []string {
+func GrabToc(html string) GHToc {
 	re := `(?si)<h(?P<num>[1-6])>\s*` +
 		`<a\s*id="user-content-[^"]*"\s*class="anchor"\s*` +
 		`href="(?P<href>[^"]*)"[^>]*>\s*` +
 		`<span[^<*]*</span>\s*</a>(?P<name>.*?)</h`
 	r := regexp.MustCompile(re)
 
-	toc := []string{}
+	toc := GHToc{}
 	groups := make(map[string]string)
 	for _, match := range r.FindAllStringSubmatch(html, -1) {
 		// fill map for groups
@@ -146,12 +148,12 @@ func GrabToc(html string) []string {
 }
 
 // Generate TOC for document (path in filesystem or url)
-func GenerateToc(path string) []string {
+func GenerateToc(path string) GHToc {
 	return GrabToc(GetHmtlBody(path))
 }
 
 // PrintToc print on console string array
-func PrintToc(toc []string) {
+func PrintToc(toc GHToc) {
 	for _, toc_item := range toc {
 		fmt.Println(toc_item)
 	}

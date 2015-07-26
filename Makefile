@@ -1,13 +1,15 @@
 EXEC=gh-md-toc
+ENVNAME=github-toc
 BUILD_DIR=build
 BUILD_OS="windows darwin freebsd linux"
 BUILD_ARCH="amd64 386"
 
-env:
+env-init:
 	@nv mk github-toc --go-prebuilt=1.4.2 --force
 
-env-activate:
-	nv use github-toc
+# with https://github.com/ekalinin/envirius
+env:
+	@bash -c ". ~/.envirius/nv && nv use ${ENVNAME}"
 
 clean:
 	@rm -f ${EXEC}

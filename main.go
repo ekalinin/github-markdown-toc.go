@@ -119,6 +119,10 @@ func ConvertMd2Html(localpath string) string {
 
 // Create TOC by html from github
 func GrabToc(html string) GHToc {
+	return GrabTocX(html, "")
+}
+
+func GrabTocX(html string, absPath string) GHToc {
 	re := `(?si)<h(?P<num>[1-6])>\s*` +
 		`<a\s*id="user-content-[^"]*"\s*class="anchor"\s*` +
 		`href="(?P<href>[^"]*)"[^>]*>\s*` +
@@ -137,9 +141,13 @@ func GrabToc(html string) GHToc {
 		}
 		// format result
 		n, _ := strconv.Atoi(groups["num"])
+		link := groups["href"]
+		if len(absPath) > 0 {
+			link = absPath + link
+		}
 		toc_item := strings.Repeat("  ", n) + "* " +
 			"[" + removeStuf(groups["name"]) + "]" +
-			"(" + groups["href"] + ")"
+			"(" + link + ")"
 		//fmt.Println(toc_item)
 		toc = append(toc, toc_item)
 	}
@@ -149,7 +157,16 @@ func GrabToc(html string) GHToc {
 
 // Generate TOC for document (path in filesystem or url)
 func GenerateToc(path string) GHToc {
-	return GrabToc(GetHmtlBody(path))
+	return GenerateTocX(path, false)
+}
+
+func GenerateTocX(path string, absPaths bool) GHToc {
+	htmlBody := GetHmtlBody(path)
+	if absPaths {
+		return GrabTocX(htmlBody, path)
+	} else {
+		return GrabToc(htmlBody)
+	}
 }
 
 // PrintToc print on console string array
@@ -168,7 +185,9 @@ func main() {
 	kingpin.Version(version)
 	kingpin.Parse()
 
-	if len(*paths) == 1 {
+	pathsCount := len(*paths)
+
+	if pathsCount == 1 {
 		fmt.Println()
 		fmt.Println("Table of Contents")
 		fmt.Println("=================")
@@ -176,12 +195,13 @@ func main() {
 	}
 
 	// read file paths | urls from args
+	absPathsInToc := pathsCount > 1
 	for _, p := range *paths {
-		PrintToc(GenerateToc(p))
+		PrintToc(GenerateTocX(p, absPathsInToc))
 	}
 
 	// read md from stdin
-	if len(*paths) == 0 {
+	if pathsCount == 0 {
 		file, err := ioutil.TempFile(os.TempDir(), "ghtoc")
 		check(err)
 		defer os.Remove(file.Name())

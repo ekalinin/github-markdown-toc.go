@@ -17,7 +17,6 @@ func Test_is_url(t *testing.T) {
 }
 
 func Test_grab_toc_onerow(t *testing.T) {
-	t.Skip("not ready yet")
 	toc_expected := []string{
 		"  * [README in another language](#readme-in-another-language)",
 	}
@@ -30,7 +29,6 @@ func Test_grab_toc_onerow(t *testing.T) {
 }
 
 func Test_grab_toc_onerow_with_newlines(t *testing.T) {
-	t.Skip("not ready yet")
 	toc_expected := []string{
 		"  * [README in another language](#readme-in-another-language)",
 	}
@@ -115,5 +113,18 @@ func Test_GrabToc_backquoted(t *testing.T) {
 		if toc[i] != toc_expected[i] {
 			t.Error("Res :", toc[i], "\nExpected      :", toc_expected[i])
 		}
+	}
+}
+
+func Test_grab_toc_with_abspath(t *testing.T) {
+	link := "https://github.com/ekalinin/envirius/blob/master/README.md"
+	toc_expected := []string{
+		"  * [README in another language](" + link + "#readme-in-another-language)",
+	}
+	toc := GrabTocX(`
+	<h1><a id="user-content-readme-in-another-language" class="anchor" href="#readme-in-another-language" aria-hidden="true"><span class="octicon octicon-link"></span></a>README in another language</h1>
+	`, link)
+	if toc[0] != toc_expected[0] {
+		t.Error("Res :", toc, "\nExpected     :", toc_expected)
 	}
 }

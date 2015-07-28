@@ -118,11 +118,11 @@ func ConvertMd2Html(localpath string) string {
 }
 
 // Create TOC by html from github
-func GrabToc(html string) GHToc {
+func GrabToc(html string) *GHToc {
 	return GrabTocX(html, "")
 }
 
-func GrabTocX(html string, absPath string) GHToc {
+func GrabTocX(html string, absPath string) *GHToc {
 	re := `(?si)<h(?P<num>[1-6])>\s*` +
 		`<a\s*id="user-content-[^"]*"\s*class="anchor"\s*` +
 		`href="(?P<href>[^"]*)"[^>]*>\s*` +
@@ -152,15 +152,15 @@ func GrabTocX(html string, absPath string) GHToc {
 		toc = append(toc, toc_item)
 	}
 
-	return toc
+	return &toc
 }
 
 // Generate TOC for document (path in filesystem or url)
-func GenerateToc(path string) GHToc {
+func GenerateToc(path string) *GHToc {
 	return GenerateTocX(path, false)
 }
 
-func GenerateTocX(path string, absPaths bool) GHToc {
+func GenerateTocX(path string, absPaths bool) *GHToc {
 	htmlBody := GetHmtlBody(path)
 	if absPaths {
 		return GrabTocX(htmlBody, path)
@@ -170,8 +170,8 @@ func GenerateTocX(path string, absPaths bool) GHToc {
 }
 
 // PrintToc print on console string array
-func PrintToc(toc GHToc) {
-	for _, toc_item := range toc {
+func PrintToc(toc *GHToc) {
+	for _, toc_item := range *toc {
 		fmt.Println(toc_item)
 	}
 	fmt.Println()
@@ -182,6 +182,7 @@ func main() {
 	paths_desc := "Local path or URL of the document to grab TOC. " +
 		"If not entered, then read Markdown from stdin."
 	paths := kingpin.Arg("path", paths_desc).Strings()
+	serial := kingpin.Flag("serial", "Grab TOCs in the serial mode").Bool()
 	kingpin.Version(version)
 	kingpin.Parse()
 
@@ -196,8 +197,19 @@ func main() {
 
 	// read file paths | urls from args
 	absPathsInToc := pathsCount > 1
+	ch := make(chan *GHToc, pathsCount)
 	for _, p := range *paths {
-		PrintToc(GenerateTocX(p, absPathsInToc))
+		if *serial {
+			ch <- GenerateTocX(p, absPathsInToc)
+		} else {
+			go func(path string, showAbsPath bool) {
+				ch <- GenerateTocX(path, absPathsInToc)
+			}(p, absPathsInToc)
+		}
+	}
+
+	for i := 1; i <= pathsCount; i++ {
+		PrintToc(<-ch)
 	}
 
 	// read md from stdin

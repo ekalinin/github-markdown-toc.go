@@ -20,7 +20,7 @@ func Test_grab_toc_onerow(t *testing.T) {
 	toc_expected := []string{
 		"  * [README in another language](#readme-in-another-language)",
 	}
-	toc := GrabToc(`
+	toc := *GrabToc(`
 	<h1><a id="user-content-readme-in-another-language" class="anchor" href="#readme-in-another-language" aria-hidden="true"><span class="octicon octicon-link"></span></a>README in another language</h1>
 	`)
 	if toc[0] != toc_expected[0] {
@@ -32,7 +32,7 @@ func Test_grab_toc_onerow_with_newlines(t *testing.T) {
 	toc_expected := []string{
 		"  * [README in another language](#readme-in-another-language)",
 	}
-	toc := GrabToc(`
+	toc := *GrabToc(`
 	<h1>
 		<a id="user-content-readme-in-another-language" class="anchor" href="#readme-in-another-language" aria-hidden="true">
 			<span class="octicon octicon-link"></span>
@@ -52,7 +52,7 @@ func Test_grab_toc_multiline_origin_github(t *testing.T) {
 		"    * [Mandatory elements](#mandatory-elements)",
 		"      * [plug_list_versions](#plug_list_versions)",
 	}
-	toc := GrabToc(`
+	toc := *GrabToc(`
 <h1><a id="user-content-how-to-add-a-plugin" class="anchor" href="#how-to-add-a-plugin" aria-hidden="true"><span class="octicon octicon-link"></span></a>How to add a plugin?</h1>
 
 <p>All plugins are in the directory
@@ -85,7 +85,7 @@ func Test_GrabToc_backquoted(t *testing.T) {
 		"    * [The command bar2 is better](#the-command-bar2-is-better)",
 	}
 
-	toc := GrabToc(`
+	toc := *GrabToc(`
 <h1>
 <a id="user-content-the-command-foo1" class="anchor" href="#the-command-foo1" aria-hidden="true"><span class="octicon octicon-link"></span></a>The command <code>foo1</code>
 </h1>
@@ -121,7 +121,7 @@ func Test_grab_toc_with_abspath(t *testing.T) {
 	toc_expected := []string{
 		"  * [README in another language](" + link + "#readme-in-another-language)",
 	}
-	toc := GrabTocX(`
+	toc := *GrabTocX(`
 	<h1><a id="user-content-readme-in-another-language" class="anchor" href="#readme-in-another-language" aria-hidden="true"><span class="octicon octicon-link"></span></a>README in another language</h1>
 	`, link)
 	if toc[0] != toc_expected[0] {

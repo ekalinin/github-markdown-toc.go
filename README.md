@@ -9,6 +9,7 @@ The advantages of this implementation:
   * no dependencies (no need curl, wget, awk, etc.)
   * cross-platform (support for Windows, Mac OS, etc.)
   * regexp for parsing TOC
+  * parallel processing of multiple documents
 
 Table of Contents
 =================
@@ -22,6 +23,7 @@ Table of Contents
     * [STDIN](#stdin)
     * [Local files](#local-files)
     * [Remote files](#remote-files)
+    * [Multiple files](#multiple-files)
     * [Combo](#combo)
   * [LICENSE](#license)
 
@@ -40,11 +42,11 @@ See the releases page, "Downloads" section:
 For example:
 
 ```bash
-$ wget https://github.com/ekalinin/github-markdown-toc.go/releases/download/0.3.0/gh-md-toc.linux.amd64.tgz
+$ wget https://github.com/ekalinin/github-markdown-toc.go/releases/download/0.4.0/gh-md-toc.linux.amd64.tgz
 $ tar xzvf gh-md-toc.linux.amd64.tgz
 gh-md-toc
 $ ./gh-md-toc --version
-0.3.0
+0.4.0
 ```
 
 Compiling from source
@@ -173,6 +175,9 @@ And here is a result:
   * [README.md with TOC](https://github.com/ekalinin/envirius/blob/24ea3be0d3cc03f4235fa4879bb33dc122d0ae29/README.md)
 
 
+Multiple files
+--------------
+
 It supports multiple files as well:
 
 ```bash
@@ -195,6 +200,32 @@ It supports multiple files as well:
 
   * [Unique Pointers](https://github.com/aminb/rust-for-c/blob/master/unique_pointers/README.md#unique-pointers)
 ```
+
+Processing of multiple documents is in parallel mode since version 0.4.0
+You can use (old) serial mode by passing option ``--serial`` in the console:
+
+```bash
+$ ./gh-md-toc --serial ...
+```
+
+Timings:
+
+```bash
+➥ time (./gh-md-toc --serial README.md ../envirius/README.ru.md ../github-toc/README.md > /dev/null)
+
+real    0m1.200s
+user    0m0.040s
+sys     0m0.004s
+```
+
+```bash
+➥ time (./gh-md-toc README.md ../envirius/README.ru.md ../github-toc/README.md > /dev/null)
+
+real    0m0.784s
+user    0m0.036s
+sys     0m0.004s
+```
+
 
 Combo
 -----

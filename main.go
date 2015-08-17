@@ -89,6 +89,17 @@ func removeStuf(s string) string {
 
 // Public
 
+// Escapes special characters
+func EscapeSpecChars(s string) string {
+	specChar := []string{"\\", "`", "*", "_", "{", "}", "#", "+", "-", ".", "!"}
+	res := s
+
+	for _, c := range specChar {
+		res = strings.Replace(res, c, "\\"+c, -1)
+	}
+	return res
+}
+
 // If path is url then just executes HTTP GET and
 // Returns html for this url.
 //
@@ -146,7 +157,7 @@ func GrabTocX(html string, absPath string) *GHToc {
 			link = absPath + link
 		}
 		toc_item := strings.Repeat("  ", n) + "* " +
-			"[" + removeStuf(groups["name"]) + "]" +
+			"[" + EscapeSpecChars(removeStuf(groups["name"])) + "]" +
 			"(" + link + ")"
 		//fmt.Println(toc_item)
 		toc = append(toc, toc_item)

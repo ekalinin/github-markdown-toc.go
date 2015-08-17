@@ -50,7 +50,7 @@ func Test_grab_toc_multiline_origin_github(t *testing.T) {
 	toc_expected := []string{
 		"  * [How to add a plugin?](#how-to-add-a-plugin)",
 		"    * [Mandatory elements](#mandatory-elements)",
-		"      * [plug_list_versions](#plug_list_versions)",
+		"      * [plug\\_list\\_versions](#plug_list_versions)",
 	}
 	toc := *GrabToc(`
 <h1><a id="user-content-how-to-add-a-plugin" class="anchor" href="#how-to-add-a-plugin" aria-hidden="true"><span class="octicon octicon-link"></span></a>How to add a plugin?</h1>
@@ -124,6 +124,25 @@ func Test_grab_toc_with_abspath(t *testing.T) {
 	toc := *GrabTocX(`
 	<h1><a id="user-content-readme-in-another-language" class="anchor" href="#readme-in-another-language" aria-hidden="true"><span class="octicon octicon-link"></span></a>README in another language</h1>
 	`, link)
+	if toc[0] != toc_expected[0] {
+		t.Error("Res :", toc, "\nExpected     :", toc_expected)
+	}
+}
+
+func Test_EscapedChars(t *testing.T) {
+	toc_expected := []string{
+		"    * [mod\\_\\*](#mod_)",
+	}
+
+	toc := *GrabToc(`
+		<h2>
+			<a id="user-content-mod_" class="anchor" 
+			    href="#mod_" aria-hidden="true">
+				<span class="octicon octicon-link"></span>
+			</a>
+			mod_*
+		</h2>`)
+
 	if toc[0] != toc_expected[0] {
 		t.Error("Res :", toc, "\nExpected     :", toc_expected)
 	}

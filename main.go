@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"gopkg.in/alecthomas/kingpin.v2"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -13,10 +12,12 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+
+	"gopkg.in/alecthomas/kingpin.v2"
 )
 
 var (
-	version    = "0.4.1"
+	version    = "0.5.0"
 	user_agent = fmt.Sprint("github-markdown-toc.go v", version)
 )
 
@@ -137,7 +138,7 @@ func GrabTocX(html string, absPath string) *GHToc {
 	re := `(?si)<h(?P<num>[1-6])>\s*` +
 		`<a\s*id="user-content-[^"]*"\s*class="anchor"\s*` +
 		`href="(?P<href>[^"]*)"[^>]*>\s*` +
-		`<span[^<*]*</span>\s*</a>(?P<name>.*?)</h`
+		`.*?</a>(?P<name>.*?)</h`
 	r := regexp.MustCompile(re)
 
 	toc := GHToc{}

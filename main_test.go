@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"testing"
 )
 
@@ -22,7 +23,7 @@ func Test_grab_toc_onerow(t *testing.T) {
 	}
 	toc := *GrabToc(`
 	<h1><a id="user-content-readme-in-another-language" class="anchor" href="#readme-in-another-language" aria-hidden="true"><span class="octicon octicon-link"></span></a>README in another language</h1>
-	`)
+	`, Options{})
 	if toc[0] != toc_expected[0] {
 		t.Error("Res :", toc, "\nExpected     :", toc_expected)
 	}
@@ -39,7 +40,7 @@ func Test_grab_toc_onerow_with_newlines(t *testing.T) {
 		</a>
 		README in another language
 	</h1>
-	`)
+	`, Options{})
 	if toc[0] != toc_expected[0] {
 		t.Error("Res :", toc, "\nExpected     :", toc_expected)
 	}
@@ -69,7 +70,7 @@ case you need to implement 2 functions in the plugin's body:</p>
 
 <p>This function should return list of available versions of the plugin.
 For example:</p>
-	`)
+	`, Options{})
 	for i := 0; i <= len(toc_expected)-1; i++ {
 		if toc[i] != toc_expected[i] {
 			t.Error("Res :", toc[i], "\nExpected     :", toc_expected[i])
@@ -107,7 +108,46 @@ func Test_GrabToc_backquoted(t *testing.T) {
 <a id="user-content-the-command-bar2-is-better" class="anchor" href="#the-command-bar2-is-better" aria-hidden="true"><span class="octicon octicon-link"></span></a>The command <code>bar2</code> is better</h2>
 
 <p>Blabla...</p>
-	`)
+	`, Options{})
+
+	for i := 0; i <= len(toc_expected)-1; i++ {
+		if toc[i] != toc_expected[i] {
+			t.Error("Res :", toc[i], "\nExpected      :", toc_expected[i])
+		}
+	}
+}
+
+func Test_GrabToc_depth(t *testing.T) {
+	toc_expected := []string{
+		"  * [The command foo1](#the-command-foo1)",
+		"  * [The command bar1](#the-command-bar1)",
+	}
+
+	toc := *GrabToc(`
+<h1>
+<a id="user-content-the-command-foo1" class="anchor" href="#the-command-foo1" aria-hidden="true"><span class="octicon octicon-link"></span></a>The command <code>foo1</code>
+</h1>
+
+<p>Blabla...</p>
+
+<h2>
+<a id="user-content-the-command-foo2-is-better" class="anchor" href="#the-command-foo2-is-better" aria-hidden="true"><span class="octicon octicon-link"></span></a>The command <code>foo2</code> is better</h2>
+
+<p>Blabla...</p>
+
+<h1>
+<a id="user-content-the-command-bar1" class="anchor" href="#the-command-bar1" aria-hidden="true"><span class="octicon octicon-link"></span></a>The command <code>bar1</code>
+</h1>
+
+<p>Blabla...</p>
+
+<h2>
+<a id="user-content-the-command-bar2-is-better" class="anchor" href="#the-command-bar2-is-better" aria-hidden="true"><span class="octicon octicon-link"></span></a>The command <code>bar2</code> is better</h2>
+
+<p>Blabla...</p>
+	`, Options{Depth: 1})
+
+	fmt.Println(toc)
 
 	for i := 0; i <= len(toc_expected)-1; i++ {
 		if toc[i] != toc_expected[i] {
@@ -123,7 +163,7 @@ func Test_grab_toc_with_abspath(t *testing.T) {
 	}
 	toc := *GrabTocX(`
 	<h1><a id="user-content-readme-in-another-language" class="anchor" href="#readme-in-another-language" aria-hidden="true"><span class="octicon octicon-link"></span></a>README in another language</h1>
-	`, link)
+	`, link, Options{})
 	if toc[0] != toc_expected[0] {
 		t.Error("Res :", toc, "\nExpected     :", toc_expected)
 	}
@@ -141,7 +181,7 @@ func Test_EscapedChars(t *testing.T) {
 				<span class="octicon octicon-link"></span>
 			</a>
 			mod_*
-		</h2>`)
+		</h2>`, Options{})
 
 	if toc[0] != toc_expected[0] {
 		t.Error("Res :", toc, "\nExpected     :", toc_expected)

@@ -22,6 +22,9 @@ var (
 )
 
 type GHToc []string
+type Options struct {
+	Depth int
+}
 
 //
 // Internal
@@ -130,11 +133,11 @@ func ConvertMd2Html(localpath string) string {
 }
 
 // Create TOC by html from github
-func GrabToc(html string) *GHToc {
-	return GrabTocX(html, "")
+func GrabToc(html string, opts Options) *GHToc {
+	return GrabTocX(html, "", opts)
 }
 
-func GrabTocX(html string, absPath string) *GHToc {
+func GrabTocX(html string, absPath string, opts Options) *GHToc {
 	re := `(?si)<h(?P<num>[1-6])>\s*` +
 		`<a\s*id="user-content-[^"]*"\s*class="anchor"\s*` +
 		`href="(?P<href>[^"]*)"[^>]*>\s*` +
@@ -153,6 +156,10 @@ func GrabTocX(html string, absPath string) *GHToc {
 		}
 		// format result
 		n, _ := strconv.Atoi(groups["num"])
+		if opts.Depth > 0 && n > opts.Depth {
+			continue
+		}
+
 		link := groups["href"]
 		if len(absPath) > 0 {
 			link = absPath + link
@@ -168,16 +175,16 @@ func GrabTocX(html string, absPath string) *GHToc {
 }
 
 // Generate TOC for document (path in filesystem or url)
-func GenerateToc(path string) *GHToc {
-	return GenerateTocX(path, false)
+func GenerateToc(path string, opts Options) *GHToc {
+	return GenerateTocX(path, false, opts)
 }
 
-func GenerateTocX(path string, absPaths bool) *GHToc {
+func GenerateTocX(path string, absPaths bool, opts Options) *GHToc {
 	htmlBody := GetHmtlBody(path)
 	if absPaths {
-		return GrabTocX(htmlBody, path)
+		return GrabTocX(htmlBody, path, opts)
 	} else {
-		return GrabToc(htmlBody)
+		return GrabToc(htmlBody, opts)
 	}
 }
 
@@ -195,8 +202,13 @@ func main() {
 		"If not entered, then read Markdown from stdin."
 	paths := kingpin.Arg("path", paths_desc).Strings()
 	serial := kingpin.Flag("serial", "Grab TOCs in the serial mode").Bool()
+	depth := kingpin.Flag("depth", "How many levels of headings to include. Defaults to 0 (all)").Default("0").Int()
 	kingpin.Version(version)
 	kingpin.Parse()
+
+	opts := Options{
+		Depth: *depth,
+	}
 
 	pathsCount := len(*paths)
 
@@ -212,10 +224,10 @@ func main() {
 	ch := make(chan *GHToc, pathsCount)
 	for _, p := range *paths {
 		if *serial {
-			ch <- GenerateTocX(p, absPathsInToc)
+			ch <- GenerateTocX(p, absPathsInToc, opts)
 		} else {
 			go func(path string, showAbsPath bool) {
-				ch <- GenerateTocX(path, absPathsInToc)
+				ch <- GenerateTocX(path, absPathsInToc, opts)
 			}(p, absPathsInToc)
 		}
 	}
@@ -234,7 +246,7 @@ func main() {
 		bytes, err := ioutil.ReadAll(os.Stdin)
 		check(err)
 		check(ioutil.WriteFile(file.Name(), bytes, 0644))
-		PrintToc(GenerateToc(file_path))
+		PrintToc(GenerateToc(file_path, opts))
 	}
 
 	fmt.Println("Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc.go)")

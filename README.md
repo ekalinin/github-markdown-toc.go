@@ -63,6 +63,7 @@ usage: gh-md-toc [<flags>] [<path>...]
 Flags:
   --help     Show help (also see --help-long and --help-man).
   --version  Show application version.
+  --depth    How many levels of headings to include. Defaults to 0 (all)
 
 Args:
   [<path>]  Local path or URL of the document to grab TOC
@@ -114,6 +115,7 @@ Table of Contents
         * [OR using Vundle:](#or-using-vundle)
   * [License](#license)
 ```
+
 Remote files
 ------------
 
@@ -250,6 +252,23 @@ You can easily combine both ways:
     * [License](https://github.com/ekalinin/sitemap.js/blob/master/README.md#license)
 
 Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc)
+```
+
+Depth
+-----
+
+Use `--depth=INT` to control how many levels of headers to include in the TOC
+
+```bash
+➥ ./gh-md-toc --depth=1 ~/projects/Dockerfile.vim/README.md                                                                                                                                                Вс. марта 22 22:51:46 MSK 2015
+
+Table of Contents
+=================
+
+  * [Dockerfile.vim](#dockerfilevim)
+  * [Screenshot](#screenshot)
+  * [Installation](#installation)
+  * [License](#license)
 ```
 
 

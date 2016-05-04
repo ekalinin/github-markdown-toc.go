@@ -2,7 +2,7 @@ EXEC=gh-md-toc
 BUILD_DIR=build
 BUILD_OS="windows darwin freebsd linux"
 BUILD_ARCH="amd64 386"
-GOVER=1.5.3
+GOVER=1.6.2
 ENVNAME=github-toc${GOVER}
 
 env-init:

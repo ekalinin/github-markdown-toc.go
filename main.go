@@ -17,7 +17,7 @@ import (
 )
 
 var (
-	version    = "0.5.0"
+	version    = "0.6.0"
 	user_agent = fmt.Sprint("github-markdown-toc.go v", version)
 )
 

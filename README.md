@@ -11,6 +11,10 @@ The advantages of this implementation:
   * regexp for parsing TOC
   * parallel processing of multiple documents
 
+
+*Attention*: gh-md-toc is able to work properly only if your machine is
+connected to the Internet.
+
 Table of Contents
 =================
 

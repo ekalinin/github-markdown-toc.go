@@ -2,7 +2,7 @@ EXEC=gh-md-toc
 BUILD_DIR=build
 BUILD_OS="windows darwin freebsd linux"
 BUILD_ARCH="amd64 386"
-GOVER=1.6.2
+GOVER=1.7.3
 ENVNAME=github-toc${GOVER}
 
 env-init:
@@ -30,14 +30,6 @@ test: clean
 release: test buildall
 	@git tag `grep "version" main.go | grep -o -E '[0-9]\.[0-9]\.[0-9]{1,2}'`
 	@git push --tags origin master
-
-toolchain:
-	@cd `go env GOROOT`/src && \
-	 for os in "${BUILD_OS}" ; do \
-		for arch in "${BUILD_ARCH}" ; do \
-			echo " * toolchain $$os for $$arch"; \
-			GOOS=$$os GOARCH=$$arch CGO_ENABLED=0 ./make.bash --no-clean; \
-		done done
 
 buildall: clean
 	@mkdir -p ${BUILD_DIR}

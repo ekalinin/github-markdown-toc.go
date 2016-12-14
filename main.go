@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -17,11 +16,43 @@ import (
 )
 
 var (
-	version    = "0.6.0"
-	user_agent = fmt.Sprint("github-markdown-toc.go v", version)
+	version   = "0.6.0"
+	userAgent = fmt.Sprint("github-markdown-toc.go v", version)
 )
 
+// GHToc GitHub TOC
 type GHToc []string
+
+// Print print TOC to the console
+func (toc *GHToc) Print() {
+	for _, tocItem := range *toc {
+		fmt.Println(tocItem)
+	}
+	fmt.Println()
+}
+
+// GHDoc GitHub document
+type GHDoc struct {
+	Path     string
+	AbsPaths bool
+	Depth    int
+}
+
+// NewGHDoc create GHDoc
+func NewGHDoc(Path string, AbsPaths bool, Depth int) *GHDoc {
+	return &GHDoc{Path, AbsPaths, Depth}
+}
+
+// GetToc return GHToc for a document
+func (doc *GHDoc) GetToc() *GHToc {
+	htmlBody := GetHmtlBody(doc.Path)
+	if doc.AbsPaths {
+		return GrabToc(htmlBody, doc.Path, doc.Depth)
+	}
+	return GrabToc(htmlBody, "", doc.Depth)
+}
+
+// Options cli options
 type Options struct {
 	Depth int
 }
@@ -37,9 +68,9 @@ func check(e error) {
 	}
 }
 
-// doHttpReq executes a particullar http request
-func doHttpReq(req *http.Request) string {
-	req.Header.Set("User-Agent", user_agent)
+// doHTTPReq executes a particullar http request
+func doHTTPReq(req *http.Request) string {
+	req.Header.Set("User-Agent", userAgent)
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
@@ -56,17 +87,17 @@ func doHttpReq(req *http.Request) string {
 }
 
 // Executes HTTP GET request
-func httpGet(url_path string) string {
-	req, err := http.NewRequest("GET", url_path, nil)
+func httpGet(urlPath string) string {
+	req, err := http.NewRequest("GET", urlPath, nil)
 	if err != nil {
 		return ""
 	}
-	return doHttpReq(req)
+	return doHTTPReq(req)
 }
 
 // httpPost executes HTTP POST with file content
-func httpPost(url_path string, file_path string) string {
-	file, err := os.Open(file_path)
+func httpPost(urlPath string, filePath string) string {
+	file, err := os.Open(filePath)
 	if err != nil {
 		return ""
 	}
@@ -75,10 +106,10 @@ func httpPost(url_path string, file_path string) string {
 	body := &bytes.Buffer{}
 	io.Copy(body, file)
 
-	req, err := http.NewRequest("POST", url_path, body)
+	req, err := http.NewRequest("POST", urlPath, body)
 	req.Header.Set("Content-Type", "text/plain")
 
-	return doHttpReq(req)
+	return doHTTPReq(req)
 }
 
 // removeStuf trims spaces, removes new lines and code tag from a string
@@ -93,7 +124,7 @@ func removeStuf(s string) string {
 
 // Public
 
-// Escapes special characters
+// EscapeSpecChars Escapes special characters
 func EscapeSpecChars(s string) string {
 	specChar := []string{"\\", "`", "*", "_", "{", "}", "#", "+", "-", ".", "!"}
 	res := s
@@ -104,21 +135,20 @@ func EscapeSpecChars(s string) string {
 	return res
 }
 
-// If path is url then just executes HTTP GET and
+// GetHmtlBody If path is url then just executes HTTP GET and
 // Returns html for this url.
 //
 // If path is a local path then sends file to the GitHub's
 // Markdown -> Html converter and returns html.
 func GetHmtlBody(path string) string {
-	if IsUrl(path) {
+	if IsURL(path) {
 		return httpGet(path)
-	} else {
-		return ConvertMd2Html(path)
 	}
+	return ConvertMd2Html(path)
 }
 
-// Check if string is url
-func IsUrl(candidate string) bool {
+// IsURL Check if string is url
+func IsURL(candidate string) bool {
 	u, err := url.Parse(candidate)
 	if err != nil || u.Scheme == "" {
 		return false
@@ -126,18 +156,14 @@ func IsUrl(candidate string) bool {
 	return true
 }
 
-// Sends Markdown to the github converter
-// and returns html.
+// ConvertMd2Html Sends Markdown to the github converter
+// and returns html
 func ConvertMd2Html(localpath string) string {
 	return httpPost("https://api.github.com/markdown/raw", localpath)
 }
 
-// Create TOC by html from github
-func GrabToc(html string, opts Options) *GHToc {
-	return GrabTocX(html, "", opts)
-}
-
-func GrabTocX(html string, absPath string, opts Options) *GHToc {
+// GrabToc Create TOC by html from github
+func GrabToc(html string, absPath string, Depth int) *GHToc {
 	re := `(?si)<h(?P<num>[1-6])>\s*` +
 		`<a\s*id="user-content-[^"]*"\s*class="anchor"\s*` +
 		`href="(?P<href>[^"]*)"[^>]*>\s*` +
@@ -156,7 +182,7 @@ func GrabTocX(html string, absPath string, opts Options) *GHToc {
 		}
 		// format result
 		n, _ := strconv.Atoi(groups["num"])
-		if opts.Depth > 0 && n > opts.Depth {
+		if Depth > 0 && n > Depth {
 			continue
 		}
 
@@ -164,51 +190,25 @@ func GrabTocX(html string, absPath string, opts Options) *GHToc {
 		if len(absPath) > 0 {
 			link = absPath + link
 		}
-		toc_item := strings.Repeat("  ", n) + "* " +
+		tocItem := strings.Repeat("  ", n) + "* " +
 			"[" + EscapeSpecChars(removeStuf(groups["name"])) + "]" +
 			"(" + link + ")"
-		//fmt.Println(toc_item)
-		toc = append(toc, toc_item)
+		//fmt.Println(tocItem)
+		toc = append(toc, tocItem)
 	}
 
 	return &toc
 }
 
-// Generate TOC for document (path in filesystem or url)
-func GenerateToc(path string, opts Options) *GHToc {
-	return GenerateTocX(path, false, opts)
-}
-
-func GenerateTocX(path string, absPaths bool, opts Options) *GHToc {
-	htmlBody := GetHmtlBody(path)
-	if absPaths {
-		return GrabTocX(htmlBody, path, opts)
-	} else {
-		return GrabToc(htmlBody, opts)
-	}
-}
-
-// PrintToc print on console string array
-func PrintToc(toc *GHToc) {
-	for _, toc_item := range *toc {
-		fmt.Println(toc_item)
-	}
-	fmt.Println()
-}
-
 // Entry point
 func main() {
-	paths_desc := "Local path or URL of the document to grab TOC. " +
+	pathsDesc := "Local path or URL of the document to grab TOC. " +
 		"If not entered, then read Markdown from stdin."
-	paths := kingpin.Arg("path", paths_desc).Strings()
+	paths := kingpin.Arg("path", pathsDesc).Strings()
 	serial := kingpin.Flag("serial", "Grab TOCs in the serial mode").Bool()
 	depth := kingpin.Flag("depth", "How many levels of headings to include. Defaults to 0 (all)").Default("0").Int()
 	kingpin.Version(version)
 	kingpin.Parse()
-
-	opts := Options{
-		Depth: *depth,
-	}
 
 	pathsCount := len(*paths)
 
@@ -222,31 +222,32 @@ func main() {
 	// read file paths | urls from args
 	absPathsInToc := pathsCount > 1
 	ch := make(chan *GHToc, pathsCount)
+
 	for _, p := range *paths {
+		ghdoc := NewGHDoc(p, absPathsInToc, *depth)
 		if *serial {
-			ch <- GenerateTocX(p, absPathsInToc, opts)
+			ch <- ghdoc.GetToc()
 		} else {
-			go func(path string, showAbsPath bool) {
-				ch <- GenerateTocX(path, absPathsInToc, opts)
-			}(p, absPathsInToc)
+			go func(path string) { ch <- ghdoc.GetToc() }(p)
 		}
 	}
 
 	for i := 1; i <= pathsCount; i++ {
-		PrintToc(<-ch)
+		toc := <-ch
+		toc.Print()
 	}
 
 	// read md from stdin
 	if pathsCount == 0 {
+		bytes, err := ioutil.ReadAll(os.Stdin)
+		check(err)
+
 		file, err := ioutil.TempFile(os.TempDir(), "ghtoc")
 		check(err)
 		defer os.Remove(file.Name())
-		file_path, err := filepath.Abs(file.Name())
-		check(err)
-		bytes, err := ioutil.ReadAll(os.Stdin)
-		check(err)
+
 		check(ioutil.WriteFile(file.Name(), bytes, 0644))
-		PrintToc(GenerateToc(file_path, opts))
+		NewGHDoc(file.Name(), false, *depth).GetToc().Print()
 	}
 
 	fmt.Println("Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc.go)")

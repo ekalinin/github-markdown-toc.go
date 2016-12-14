@@ -1,36 +1,33 @@
 package main
 
-import (
-	"fmt"
-	"testing"
-)
+import "testing"
 
-func Test_is_url(t *testing.T) {
+func Test_IsUrl(t *testing.T) {
 	url1 := "https://github.com/ekalinin/envirius/blob/master/README.md"
-	if !IsUrl(url1) {
+	if !IsURL(url1) {
 		t.Error("This is url: ", url1)
 	}
 
 	url2 := "./README.md"
-	if IsUrl(url2) {
+	if IsURL(url2) {
 		t.Error("This is not url: ", url2)
 	}
 }
 
-func Test_grab_toc_onerow(t *testing.T) {
-	toc_expected := []string{
+func Test_GrabTocOneRow(t *testing.T) {
+	tocExpected := []string{
 		"  * [README in another language](#readme-in-another-language)",
 	}
 	toc := *GrabToc(`
 	<h1><a id="user-content-readme-in-another-language" class="anchor" href="#readme-in-another-language" aria-hidden="true"><span class="octicon octicon-link"></span></a>README in another language</h1>
-	`, Options{})
-	if toc[0] != toc_expected[0] {
-		t.Error("Res :", toc, "\nExpected     :", toc_expected)
+	`, "", 0)
+	if toc[0] != tocExpected[0] {
+		t.Error("Res :", toc, "\nExpected     :", tocExpected)
 	}
 }
 
-func Test_grab_toc_onerow_with_newlines(t *testing.T) {
-	toc_expected := []string{
+func Test_GrabTocOneRowWithNewLines(t *testing.T) {
+	tocExpected := []string{
 		"  * [README in another language](#readme-in-another-language)",
 	}
 	toc := *GrabToc(`
@@ -40,15 +37,15 @@ func Test_grab_toc_onerow_with_newlines(t *testing.T) {
 		</a>
 		README in another language
 	</h1>
-	`, Options{})
-	if toc[0] != toc_expected[0] {
-		t.Error("Res :", toc, "\nExpected     :", toc_expected)
+	`, "", 0)
+	if toc[0] != tocExpected[0] {
+		t.Error("Res :", toc, "\nExpected     :", tocExpected)
 	}
 }
 
-func Test_grab_toc_multiline_origin_github(t *testing.T) {
+func Test_GrabTocMultilineOriginGithub(t *testing.T) {
 
-	toc_expected := []string{
+	tocExpected := []string{
 		"  * [How to add a plugin?](#how-to-add-a-plugin)",
 		"    * [Mandatory elements](#mandatory-elements)",
 		"      * [plug\\_list\\_versions](#plug_list_versions)",
@@ -70,16 +67,16 @@ case you need to implement 2 functions in the plugin's body:</p>
 
 <p>This function should return list of available versions of the plugin.
 For example:</p>
-	`, Options{})
-	for i := 0; i <= len(toc_expected)-1; i++ {
-		if toc[i] != toc_expected[i] {
-			t.Error("Res :", toc[i], "\nExpected     :", toc_expected[i])
+	`, "", 0)
+	for i := 0; i <= len(tocExpected)-1; i++ {
+		if toc[i] != tocExpected[i] {
+			t.Error("Res :", toc[i], "\nExpected     :", tocExpected[i])
 		}
 	}
 }
 
-func Test_GrabToc_backquoted(t *testing.T) {
-	toc_expected := []string{
+func Test_GrabTocBackquoted(t *testing.T) {
+	tocExpected := []string{
 		"  * [The command foo1](#the-command-foo1)",
 		"    * [The command foo2 is better](#the-command-foo2-is-better)",
 		"  * [The command bar1](#the-command-bar1)",
@@ -108,17 +105,17 @@ func Test_GrabToc_backquoted(t *testing.T) {
 <a id="user-content-the-command-bar2-is-better" class="anchor" href="#the-command-bar2-is-better" aria-hidden="true"><span class="octicon octicon-link"></span></a>The command <code>bar2</code> is better</h2>
 
 <p>Blabla...</p>
-	`, Options{})
+	`, "", 0)
 
-	for i := 0; i <= len(toc_expected)-1; i++ {
-		if toc[i] != toc_expected[i] {
-			t.Error("Res :", toc[i], "\nExpected      :", toc_expected[i])
+	for i := 0; i <= len(tocExpected)-1; i++ {
+		if toc[i] != tocExpected[i] {
+			t.Error("Res :", toc[i], "\nExpected      :", tocExpected[i])
 		}
 	}
 }
 
-func Test_GrabToc_depth(t *testing.T) {
-	toc_expected := []string{
+func Test_GrabTocDepth(t *testing.T) {
+	tocExpected := []string{
 		"  * [The command foo1](#the-command-foo1)",
 		"  * [The command bar1](#the-command-bar1)",
 	}
@@ -145,32 +142,32 @@ func Test_GrabToc_depth(t *testing.T) {
 <a id="user-content-the-command-bar2-is-better" class="anchor" href="#the-command-bar2-is-better" aria-hidden="true"><span class="octicon octicon-link"></span></a>The command <code>bar2</code> is better</h2>
 
 <p>Blabla...</p>
-	`, Options{Depth: 1})
+	`, "", 1)
 
-	fmt.Println(toc)
+	// fmt.Println(toc)
 
-	for i := 0; i <= len(toc_expected)-1; i++ {
-		if toc[i] != toc_expected[i] {
-			t.Error("Res :", toc[i], "\nExpected      :", toc_expected[i])
+	for i := 0; i <= len(tocExpected)-1; i++ {
+		if toc[i] != tocExpected[i] {
+			t.Error("Res :", toc[i], "\nExpected      :", tocExpected[i])
 		}
 	}
 }
 
-func Test_grab_toc_with_abspath(t *testing.T) {
+func Test_GrabTocWithAbspath(t *testing.T) {
 	link := "https://github.com/ekalinin/envirius/blob/master/README.md"
-	toc_expected := []string{
+	tocExpected := []string{
 		"  * [README in another language](" + link + "#readme-in-another-language)",
 	}
-	toc := *GrabTocX(`
+	toc := *GrabToc(`
 	<h1><a id="user-content-readme-in-another-language" class="anchor" href="#readme-in-another-language" aria-hidden="true"><span class="octicon octicon-link"></span></a>README in another language</h1>
-	`, link, Options{})
-	if toc[0] != toc_expected[0] {
-		t.Error("Res :", toc, "\nExpected     :", toc_expected)
+	`, link, 0)
+	if toc[0] != tocExpected[0] {
+		t.Error("Res :", toc, "\nExpected     :", tocExpected)
 	}
 }
 
 func Test_EscapedChars(t *testing.T) {
-	toc_expected := []string{
+	tocExpected := []string{
 		"    * [mod\\_\\*](#mod_)",
 	}
 
@@ -181,9 +178,9 @@ func Test_EscapedChars(t *testing.T) {
 				<span class="octicon octicon-link"></span>
 			</a>
 			mod_*
-		</h2>`, Options{})
+		</h2>`, "", 0)
 
-	if toc[0] != toc_expected[0] {
-		t.Error("Res :", toc, "\nExpected     :", toc_expected)
+	if toc[0] != tocExpected[0] {
+		t.Error("Res :", toc, "\nExpected     :", tocExpected)
 	}
 }

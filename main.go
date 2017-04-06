@@ -171,27 +171,38 @@ func GrabToc(html string, absPath string, depth int) *GHToc {
 	r := regexp.MustCompile(re)
 
 	toc := GHToc{}
-	groups := make(map[string]string)
+	minHeaderNum := 6
+	var groups []map[string]string
 	for _, match := range r.FindAllStringSubmatch(html, -1) {
+		group := make(map[string]string)
 		// fill map for groups
 		for i, name := range r.SubexpNames() {
 			if i == 0 || name == "" {
 				continue
 			}
-			groups[name] = removeStuf(match[i])
+			group[name] = removeStuf(match[i])
 		}
+		// update minimum header number
+		n, _ := strconv.Atoi(group["num"])
+		if n < minHeaderNum {
+			minHeaderNum = n
+		}
+		groups = append(groups, group)
+	}
+
+	for _, group := range groups {
 		// format result
-		n, _ := strconv.Atoi(groups["num"])
+		n, _ := strconv.Atoi(group["num"])
 		if depth > 0 && n > depth {
 			continue
 		}
 
-		link := groups["href"]
+		link := group["href"]
 		if len(absPath) > 0 {
 			link = absPath + link
 		}
-		tocItem := strings.Repeat("  ", n-1) + "* " +
-			"[" + EscapeSpecChars(removeStuf(groups["name"])) + "]" +
+		tocItem := strings.Repeat("  ", n-minHeaderNum) + "* " +
+			"[" + EscapeSpecChars(removeStuf(group["name"])) + "]" +
 			"(" + link + ")"
 		//fmt.Println(tocItem)
 		toc = append(toc, tocItem)

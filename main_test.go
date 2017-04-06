@@ -168,7 +168,7 @@ func Test_GrabTocWithAbspath(t *testing.T) {
 
 func Test_EscapedChars(t *testing.T) {
 	tocExpected := []string{
-		"  * [mod\\_\\*](#mod_)",
+		"* [mod\\_\\*](#mod_)",
 	}
 
 	toc := *GrabToc(`
@@ -179,6 +179,32 @@ func Test_EscapedChars(t *testing.T) {
 			</a>
 			mod_*
 		</h2>`, "", 0)
+
+	if toc[0] != tocExpected[0] {
+		t.Error("Res :", toc, "\nExpected     :", tocExpected)
+	}
+}
+
+func Test_MinHeaderNumber(t *testing.T) {
+	tocExpected := []string{
+		"* [foo](#foo)",
+		"  * [bar](#bar)",
+	}
+
+	toc := *GrabToc(`
+		<h3>
+			<a id="user-content-" class="anchor" href="#foo" aria-hidden="true">
+				<span class="octicon octicon-link"></span>
+			</a>
+			foo
+		</h3>
+		<h4>
+			<a id="user-content-" class="anchor" href="#bar" aria-hidden="true">
+				<span class="octicon octicon-link"></span>
+			</a>
+			bar
+		</h3>
+		`, "", 0)
 
 	if toc[0] != tocExpected[0] {
 		t.Error("Res :", toc, "\nExpected     :", tocExpected)

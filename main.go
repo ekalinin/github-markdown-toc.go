@@ -206,13 +206,14 @@ func main() {
 		"If not entered, then read Markdown from stdin."
 	paths := kingpin.Arg("path", pathsDesc).Strings()
 	serial := kingpin.Flag("serial", "Grab TOCs in the serial mode").Bool()
+	hideHeader := kingpin.Flag("hide-header", "Hide TOC header").Bool()
 	depth := kingpin.Flag("depth", "How many levels of headings to include. Defaults to 0 (all)").Default("0").Int()
 	kingpin.Version(version)
 	kingpin.Parse()
 
 	pathsCount := len(*paths)
 
-	if pathsCount == 1 {
+	if !*hideHeader && pathsCount == 1 {
 		fmt.Println()
 		fmt.Println("Table of Contents")
 		fmt.Println("=================")

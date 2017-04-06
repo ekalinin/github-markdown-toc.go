@@ -45,7 +45,10 @@ func NewGHDoc(Path string, AbsPaths bool, Depth int) *GHDoc {
 
 // GetToc return GHToc for a document
 func (doc *GHDoc) GetToc() *GHToc {
-	htmlBody := GetHmtlBody(doc.Path)
+	htmlBody, err := GetHmtlBody(doc.Path)
+	if err != nil {
+		return nil
+	}
 	if doc.AbsPaths {
 		return GrabToc(htmlBody, doc.Path, doc.Depth)
 	}
@@ -69,37 +72,37 @@ func check(e error) {
 }
 
 // doHTTPReq executes a particullar http request
-func doHTTPReq(req *http.Request) string {
+func doHTTPReq(req *http.Request) (string, error) {
 	req.Header.Set("User-Agent", userAgent)
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return ""
+		return "", err
 	}
 
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return ""
+		return "", err
 	}
 
-	return string(body)
+	return string(body), nil
 }
 
 // Executes HTTP GET request
-func httpGet(urlPath string) string {
+func httpGet(urlPath string) (string, error) {
 	req, err := http.NewRequest("GET", urlPath, nil)
 	if err != nil {
-		return ""
+		return "", err
 	}
 	return doHTTPReq(req)
 }
 
 // httpPost executes HTTP POST with file content
-func httpPost(urlPath string, filePath string) string {
+func httpPost(urlPath string, filePath string) (string, error) {
 	file, err := os.Open(filePath)
 	if err != nil {
-		return ""
+		return "", err
 	}
 	defer file.Close()
 
@@ -107,6 +110,10 @@ func httpPost(urlPath string, filePath string) string {
 	io.Copy(body, file)
 
 	req, err := http.NewRequest("POST", urlPath, body)
+	if err != nil {
+		return "", err
+	}
+
 	req.Header.Set("Content-Type", "text/plain")
 
 	return doHTTPReq(req)
@@ -140,7 +147,7 @@ func EscapeSpecChars(s string) string {
 //
 // If path is a local path then sends file to the GitHub's
 // Markdown -> Html converter and returns html.
-func GetHmtlBody(path string) string {
+func GetHmtlBody(path string) (string, error) {
 	if IsURL(path) {
 		return httpGet(path)
 	}
@@ -158,7 +165,7 @@ func IsURL(candidate string) bool {
 
 // ConvertMd2Html Sends Markdown to the github converter
 // and returns html
-func ConvertMd2Html(localpath string) string {
+func ConvertMd2Html(localpath string) (string, error) {
 	return httpPost("https://api.github.com/markdown/raw", localpath)
 }
 

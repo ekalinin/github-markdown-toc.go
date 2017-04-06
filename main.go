@@ -190,7 +190,7 @@ func GrabToc(html string, absPath string, depth int) *GHToc {
 		if len(absPath) > 0 {
 			link = absPath + link
 		}
-		tocItem := strings.Repeat("  ", n) + "* " +
+		tocItem := strings.Repeat("  ", n-1) + "* " +
 			"[" + EscapeSpecChars(removeStuf(groups["name"])) + "]" +
 			"(" + link + ")"
 		//fmt.Println(tocItem)

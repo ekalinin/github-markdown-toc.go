@@ -163,7 +163,7 @@ func ConvertMd2Html(localpath string) string {
 }
 
 // GrabToc Create TOC by html from github
-func GrabToc(html string, absPath string, Depth int) *GHToc {
+func GrabToc(html string, absPath string, depth int) *GHToc {
 	re := `(?si)<h(?P<num>[1-6])>\s*` +
 		`<a\s*id="user-content-[^"]*"\s*class="anchor"\s*` +
 		`href="(?P<href>[^"]*)"[^>]*>\s*` +
@@ -182,7 +182,7 @@ func GrabToc(html string, absPath string, Depth int) *GHToc {
 		}
 		// format result
 		n, _ := strconv.Atoi(groups["num"])
-		if Depth > 0 && n > Depth {
+		if depth > 0 && n > depth {
 			continue
 		}
 

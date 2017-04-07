@@ -16,7 +16,7 @@ func Test_IsUrl(t *testing.T) {
 
 func Test_GrabTocOneRow(t *testing.T) {
 	tocExpected := []string{
-		"  * [README in another language](#readme-in-another-language)",
+		"* [README in another language](#readme-in-another-language)",
 	}
 	toc := *GrabToc(`
 	<h1><a id="user-content-readme-in-another-language" class="anchor" href="#readme-in-another-language" aria-hidden="true"><span class="octicon octicon-link"></span></a>README in another language</h1>
@@ -28,7 +28,7 @@ func Test_GrabTocOneRow(t *testing.T) {
 
 func Test_GrabTocOneRowWithNewLines(t *testing.T) {
 	tocExpected := []string{
-		"  * [README in another language](#readme-in-another-language)",
+		"* [README in another language](#readme-in-another-language)",
 	}
 	toc := *GrabToc(`
 	<h1>
@@ -46,9 +46,9 @@ func Test_GrabTocOneRowWithNewLines(t *testing.T) {
 func Test_GrabTocMultilineOriginGithub(t *testing.T) {
 
 	tocExpected := []string{
-		"  * [How to add a plugin?](#how-to-add-a-plugin)",
-		"    * [Mandatory elements](#mandatory-elements)",
-		"      * [plug\\_list\\_versions](#plug_list_versions)",
+		"* [How to add a plugin?](#how-to-add-a-plugin)",
+		"  * [Mandatory elements](#mandatory-elements)",
+		"    * [plug\\_list\\_versions](#plug_list_versions)",
 	}
 	toc := *GrabToc(`
 <h1><a id="user-content-how-to-add-a-plugin" class="anchor" href="#how-to-add-a-plugin" aria-hidden="true"><span class="octicon octicon-link"></span></a>How to add a plugin?</h1>
@@ -77,10 +77,10 @@ For example:</p>
 
 func Test_GrabTocBackquoted(t *testing.T) {
 	tocExpected := []string{
-		"  * [The command foo1](#the-command-foo1)",
-		"    * [The command foo2 is better](#the-command-foo2-is-better)",
-		"  * [The command bar1](#the-command-bar1)",
-		"    * [The command bar2 is better](#the-command-bar2-is-better)",
+		"* [The command foo1](#the-command-foo1)",
+		"  * [The command foo2 is better](#the-command-foo2-is-better)",
+		"* [The command bar1](#the-command-bar1)",
+		"  * [The command bar2 is better](#the-command-bar2-is-better)",
 	}
 
 	toc := *GrabToc(`
@@ -116,8 +116,8 @@ func Test_GrabTocBackquoted(t *testing.T) {
 
 func Test_GrabTocDepth(t *testing.T) {
 	tocExpected := []string{
-		"  * [The command foo1](#the-command-foo1)",
-		"  * [The command bar1](#the-command-bar1)",
+		"* [The command foo1](#the-command-foo1)",
+		"* [The command bar1](#the-command-bar1)",
 	}
 
 	toc := *GrabToc(`
@@ -156,7 +156,7 @@ func Test_GrabTocDepth(t *testing.T) {
 func Test_GrabTocWithAbspath(t *testing.T) {
 	link := "https://github.com/ekalinin/envirius/blob/master/README.md"
 	tocExpected := []string{
-		"  * [README in another language](" + link + "#readme-in-another-language)",
+		"* [README in another language](" + link + "#readme-in-another-language)",
 	}
 	toc := *GrabToc(`
 	<h1><a id="user-content-readme-in-another-language" class="anchor" href="#readme-in-another-language" aria-hidden="true"><span class="octicon octicon-link"></span></a>README in another language</h1>
@@ -168,17 +168,43 @@ func Test_GrabTocWithAbspath(t *testing.T) {
 
 func Test_EscapedChars(t *testing.T) {
 	tocExpected := []string{
-		"    * [mod\\_\\*](#mod_)",
+		"* [mod\\_\\*](#mod_)",
 	}
 
 	toc := *GrabToc(`
 		<h2>
-			<a id="user-content-mod_" class="anchor" 
+			<a id="user-content-mod_" class="anchor"
 			    href="#mod_" aria-hidden="true">
 				<span class="octicon octicon-link"></span>
 			</a>
 			mod_*
 		</h2>`, "", 0)
+
+	if toc[0] != tocExpected[0] {
+		t.Error("Res :", toc, "\nExpected     :", tocExpected)
+	}
+}
+
+func Test_MinHeaderNumber(t *testing.T) {
+	tocExpected := []string{
+		"* [foo](#foo)",
+		"  * [bar](#bar)",
+	}
+
+	toc := *GrabToc(`
+		<h3>
+			<a id="user-content-" class="anchor" href="#foo" aria-hidden="true">
+				<span class="octicon octicon-link"></span>
+			</a>
+			foo
+		</h3>
+		<h4>
+			<a id="user-content-" class="anchor" href="#bar" aria-hidden="true">
+				<span class="octicon octicon-link"></span>
+			</a>
+			bar
+		</h3>
+		`, "", 0)
 
 	if toc[0] != tocExpected[0] {
 		t.Error("Res :", toc, "\nExpected     :", tocExpected)

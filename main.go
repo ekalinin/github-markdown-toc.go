@@ -170,7 +170,7 @@ func ConvertMd2Html(localpath string) (string, error) {
 }
 
 // GrabToc Create TOC by html from github
-func GrabToc(html string, absPath string, Depth int) *GHToc {
+func GrabToc(html string, absPath string, depth int) *GHToc {
 	re := `(?si)<h(?P<num>[1-6])>\s*` +
 		`<a\s*id="user-content-[^"]*"\s*class="anchor"\s*` +
 		`href="(?P<href>[^"]*)"[^>]*>\s*` +
@@ -178,27 +178,38 @@ func GrabToc(html string, absPath string, Depth int) *GHToc {
 	r := regexp.MustCompile(re)
 
 	toc := GHToc{}
-	groups := make(map[string]string)
+	minHeaderNum := 6
+	var groups []map[string]string
 	for _, match := range r.FindAllStringSubmatch(html, -1) {
+		group := make(map[string]string)
 		// fill map for groups
 		for i, name := range r.SubexpNames() {
 			if i == 0 || name == "" {
 				continue
 			}
-			groups[name] = removeStuf(match[i])
+			group[name] = removeStuf(match[i])
 		}
+		// update minimum header number
+		n, _ := strconv.Atoi(group["num"])
+		if n < minHeaderNum {
+			minHeaderNum = n
+		}
+		groups = append(groups, group)
+	}
+
+	for _, group := range groups {
 		// format result
-		n, _ := strconv.Atoi(groups["num"])
-		if Depth > 0 && n > Depth {
+		n, _ := strconv.Atoi(group["num"])
+		if depth > 0 && n > depth {
 			continue
 		}
 
-		link := groups["href"]
+		link := group["href"]
 		if len(absPath) > 0 {
 			link = absPath + link
 		}
-		tocItem := strings.Repeat("  ", n) + "* " +
-			"[" + EscapeSpecChars(removeStuf(groups["name"])) + "]" +
+		tocItem := strings.Repeat("  ", n-minHeaderNum) + "* " +
+			"[" + EscapeSpecChars(removeStuf(group["name"])) + "]" +
 			"(" + link + ")"
 		//fmt.Println(tocItem)
 		toc = append(toc, tocItem)

@@ -36,11 +36,12 @@ type GHDoc struct {
 	Path     string
 	AbsPaths bool
 	Depth    int
+	Escape   bool
 }
 
 // NewGHDoc create GHDoc
-func NewGHDoc(Path string, AbsPaths bool, Depth int) *GHDoc {
-	return &GHDoc{Path, AbsPaths, Depth}
+func NewGHDoc(Path string, AbsPaths bool, Depth int, Escape bool) *GHDoc {
+	return &GHDoc{Path, AbsPaths, Depth, Escape}
 }
 
 // GetToc return GHToc for a document
@@ -50,14 +51,9 @@ func (doc *GHDoc) GetToc() *GHToc {
 		return nil
 	}
 	if doc.AbsPaths {
-		return GrabToc(htmlBody, doc.Path, doc.Depth)
+		return GrabTocX(htmlBody, doc.Path, doc.Depth, doc.Escape)
 	}
-	return GrabToc(htmlBody, "", doc.Depth)
-}
-
-// Options cli options
-type Options struct {
-	Depth int
+	return GrabTocX(htmlBody, "", doc.Depth, doc.Escape)
 }
 
 //
@@ -171,6 +167,11 @@ func ConvertMd2Html(localpath string) (string, error) {
 
 // GrabToc Create TOC by html from github
 func GrabToc(html string, absPath string, depth int) *GHToc {
+	return GrabTocX(html, absPath, depth, true)
+}
+
+// GrabTocX Create TOC
+func GrabTocX(html string, absPath string, depth int, escape bool) *GHToc {
 	re := `(?si)<h(?P<num>[1-6])>\s*` +
 		`<a\s*id="user-content-[^"]*"\s*class="anchor"\s*` +
 		`href="(?P<href>[^"]*)"[^>]*>\s*` +
@@ -197,6 +198,7 @@ func GrabToc(html string, absPath string, depth int) *GHToc {
 		groups = append(groups, group)
 	}
 
+	var tmpSection string
 	for _, group := range groups {
 		// format result
 		n, _ := strconv.Atoi(group["num"])
@@ -208,8 +210,13 @@ func GrabToc(html string, absPath string, depth int) *GHToc {
 		if len(absPath) > 0 {
 			link = absPath + link
 		}
+
+		tmpSection = removeStuf(group["name"])
+		if escape {
+			tmpSection = EscapeSpecChars(tmpSection)
+		}
 		tocItem := strings.Repeat("  ", n-minHeaderNum) + "* " +
-			"[" + EscapeSpecChars(removeStuf(group["name"])) + "]" +
+			"[" + tmpSection + "]" +
 			"(" + link + ")"
 		//fmt.Println(tocItem)
 		toc = append(toc, tocItem)
@@ -225,7 +232,9 @@ func main() {
 	paths := kingpin.Arg("path", pathsDesc).Strings()
 	serial := kingpin.Flag("serial", "Grab TOCs in the serial mode").Bool()
 	hideHeader := kingpin.Flag("hide-header", "Hide TOC header").Bool()
-	depth := kingpin.Flag("depth", "How many levels of headings to include. Defaults to 0 (all)").Default("0").Int()
+	depth := kingpin.Flag("depth",
+		"How many levels of headings to include. Defaults to 0 (all)").Default("0").Int()
+	noEscape := kingpin.Flag("no-escape", "Do not escape chars in sections").Bool()
 	kingpin.Version(version)
 	kingpin.Parse()
 
@@ -243,7 +252,7 @@ func main() {
 	ch := make(chan *GHToc, pathsCount)
 
 	for _, p := range *paths {
-		ghdoc := NewGHDoc(p, absPathsInToc, *depth)
+		ghdoc := NewGHDoc(p, absPathsInToc, *depth, !*noEscape)
 		if *serial {
 			ch <- ghdoc.GetToc()
 		} else {
@@ -266,7 +275,7 @@ func main() {
 		defer os.Remove(file.Name())
 
 		check(ioutil.WriteFile(file.Name(), bytes, 0644))
-		NewGHDoc(file.Name(), false, *depth).GetToc().Print()
+		NewGHDoc(file.Name(), false, *depth, !*noEscape).GetToc().Print()
 	}
 
 	fmt.Println("Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc.go)")

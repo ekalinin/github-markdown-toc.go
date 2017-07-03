@@ -10,7 +10,7 @@ clean:
 
 # http://tschottdorf.github.io/linking-golang-go-statically-cgo-testing/
 build: clean
-	@go build -a -tags netgo --ldflags '-s -extldflags "-lm -lstdc++ -static"' -i -o ${EXEC}
+	@go build --ldflags '-s' -i -o ${EXEC}
 
 test: clean
 	@go test -cover -o ${EXEC}

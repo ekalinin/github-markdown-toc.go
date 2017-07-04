@@ -147,6 +147,9 @@ func GetHmtlBody(path string) (string, error) {
 	if IsURL(path) {
 		return httpGet(path)
 	}
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		return "", err
+	}
 	return ConvertMd2Html(path)
 }
 
@@ -262,7 +265,10 @@ func main() {
 
 	for i := 1; i <= pathsCount; i++ {
 		toc := <-ch
-		toc.Print()
+		// #14, check if there's realy Toc?
+		if toc != nil {
+			toc.Print()
+		}
 	}
 
 	// read md from stdin

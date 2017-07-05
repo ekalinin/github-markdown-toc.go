@@ -29,6 +29,7 @@ Table of Contents
     * [Remote files](#remote-files)
     * [Multiple files](#multiple-files)
     * [Combo](#combo)
+    * [Depth](#depth)
   * [LICENSE](#license)
 
 Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc.go)
@@ -264,17 +265,27 @@ Depth
 Use `--depth=INT` to control how many levels of headers to include in the TOC
 
 ```bash
-➥ ./gh-md-toc --depth=1 ~/projects/Dockerfile.vim/README.md                                                                                                                                                Вс. марта 22 22:51:46 MSK 2015
+➥ ./gh-md-toc --depth=1 ~/projects/Dockerfile.vim/README.md
 
 Table of Contents
 =================
 
-  * [Dockerfile.vim](#dockerfilevim)
+  * [Dockerfile\.vim](#dockerfilevim)
   * [Screenshot](#screenshot)
   * [Installation](#installation)
   * [License](#license)
 ```
 
+No escape
+---------
+
+```
+➥ ./gh-md-toc ~/projects/my/Dockerfile.vim/README.md | grep Docker
+* [Dockerfile\.vim](#dockerfilevim)
+
+➥ ./gh-md-toc --no-escape ~/projects/my/Dockerfile.vim/README.md | grep Docker
+* [Dockerfile.vim](#dockerfilevim)
+```
 
 LICENSE
 =======

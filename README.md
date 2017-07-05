@@ -30,6 +30,7 @@ Table of Contents
     * [Multiple files](#multiple-files)
     * [Combo](#combo)
     * [Depth](#depth)
+    * [No Escape](#no-escape)
   * [LICENSE](#license)
 
 Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc.go)

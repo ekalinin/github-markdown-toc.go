@@ -61,7 +61,6 @@ Compiling from source
 You need golang installed is your OS:
 
 ```bash
-$ make get-deps
 $ make build
 $ ./gh-md-toc --help
 usage: gh-md-toc [<flags>] [<path>...]

@@ -37,16 +37,17 @@ type GHDoc struct {
 	AbsPaths bool
 	Depth    int
 	Escape   bool
+	GhToken  string
 }
 
 // NewGHDoc create GHDoc
-func NewGHDoc(Path string, AbsPaths bool, Depth int, Escape bool) *GHDoc {
-	return &GHDoc{Path, AbsPaths, Depth, Escape}
+func NewGHDoc(Path string, AbsPaths bool, Depth int, Escape bool, Token string) *GHDoc {
+	return &GHDoc{Path, AbsPaths, Depth, Escape, Token}
 }
 
 // GetToc return GHToc for a document
 func (doc *GHDoc) GetToc() *GHToc {
-	htmlBody, err := GetHmtlBody(doc.Path)
+	htmlBody, err := GetHmtlBody(doc.Path, doc.GhToken)
 	if err != nil {
 		return nil
 	}
@@ -143,14 +144,14 @@ func EscapeSpecChars(s string) string {
 //
 // If path is a local path then sends file to the GitHub's
 // Markdown -> Html converter and returns html.
-func GetHmtlBody(path string) (string, error) {
+func GetHmtlBody(path string, token string) (string, error) {
 	if IsURL(path) {
 		return httpGet(path)
 	}
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		return "", err
 	}
-	return ConvertMd2Html(path)
+	return ConvertMd2Html(path, token)
 }
 
 // IsURL Check if string is url
@@ -164,8 +165,12 @@ func IsURL(candidate string) bool {
 
 // ConvertMd2Html Sends Markdown to the github converter
 // and returns html
-func ConvertMd2Html(localpath string) (string, error) {
-	return httpPost("https://api.github.com/markdown/raw", localpath)
+func ConvertMd2Html(localpath string, token string) (string, error) {
+	url := "https://api.github.com/markdown/raw"
+	if token != "" {
+		url += "?access_token=" + token
+	}
+	return httpPost(url, localpath)
 }
 
 // GrabToc Create TOC by html from github
@@ -238,6 +243,8 @@ func main() {
 	depth := kingpin.Flag("depth",
 		"How many levels of headings to include. Defaults to 0 (all)").Default("0").Int()
 	noEscape := kingpin.Flag("no-escape", "Do not escape chars in sections").Bool()
+	token := kingpin.Flag("token", "GitHub personal token").String()
+
 	kingpin.Version(version)
 	kingpin.Parse()
 
@@ -250,12 +257,16 @@ func main() {
 		fmt.Println()
 	}
 
+	if *token == "" {
+		*token = os.Getenv("GH_TOC_TOKEN")
+	}
+
 	// read file paths | urls from args
 	absPathsInToc := pathsCount > 1
 	ch := make(chan *GHToc, pathsCount)
 
 	for _, p := range *paths {
-		ghdoc := NewGHDoc(p, absPathsInToc, *depth, !*noEscape)
+		ghdoc := NewGHDoc(p, absPathsInToc, *depth, !*noEscape, *token)
 		if *serial {
 			ch <- ghdoc.GetToc()
 		} else {
@@ -281,7 +292,7 @@ func main() {
 		defer os.Remove(file.Name())
 
 		check(ioutil.WriteFile(file.Name(), bytes, 0644))
-		NewGHDoc(file.Name(), false, *depth, !*noEscape).GetToc().Print()
+		NewGHDoc(file.Name(), false, *depth, !*noEscape, *token).GetToc().Print()
 	}
 
 	fmt.Println("Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc.go)")

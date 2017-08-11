@@ -31,6 +31,7 @@ Table of Contents
     * [Combo](#combo)
     * [Depth](#depth)
     * [No Escape](#no-escape)
+    * [Github token](#github-token)
   * [LICENSE](#license)
 
 Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc.go)
@@ -279,12 +280,49 @@ Table of Contents
 No escape
 ---------
 
-```
+```bash
 ➥ ./gh-md-toc ~/projects/my/Dockerfile.vim/README.md | grep Docker
 * [Dockerfile\.vim](#dockerfilevim)
 
 ➥ ./gh-md-toc --no-escape ~/projects/my/Dockerfile.vim/README.md | grep Docker
 * [Dockerfile.vim](#dockerfilevim)
+```
+
+Github token
+------------
+
+All your tokents are [here](https://github.com/settings/tokens).
+
+Example for cli argument:
+
+```bash
+➥ ./gh-md-toc --depth=1 --token=2a2dabe1f2c2399bd542ba93fe6ce70fe7898563 README.md
+
+Table of Contents
+=================
+
+* [github\-markdown\-toc](#github-markdown-toc)
+* [Table of Contents](#table-of-contents)
+* [Installation](#installation)
+* [Tests](#tests)
+* [Usage](#usage)
+* [LICENSE](#license)
+```
+
+Example for environment variable:
+
+```bash
+➥ GH_TOC_TOKEN=2a2dabe1f2c2399bd542ba93fe6ce70fe7898563 ./gh-md-toc --depth=1  README.md
+
+Table of Contents
+=================
+
+* [github\-markdown\-toc](#github-markdown-toc)
+* [Table of Contents](#table-of-contents)
+* [Installation](#installation)
+* [Tests](#tests)
+* [Usage](#usage)
+* [LICENSE](#license)
 ```
 
 LICENSE

@@ -76,6 +76,14 @@ Args:
 
 ```
 
+Homebew (Mac only)
+------------------
+
+
+```bash
+$ brew install github-markdown-toc
+```
+
 Tests
 =====
 

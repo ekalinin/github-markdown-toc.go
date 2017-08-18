@@ -22,6 +22,7 @@ Table of Contents
   * [Installation](#installation)
     * [Precompiled binaries](#precompiled-binaries)
     * [Compiling from source](#compiling-from-source)
+    * [Homebew (Mac only)](#homebew-mac-only)
   * [Tests](#tests)
   * [Usage](#usage)
     * [STDIN](#stdin)

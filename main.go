@@ -38,11 +38,12 @@ type GHDoc struct {
 	Depth    int
 	Escape   bool
 	GhToken  string
+	Indent   int
 }
 
 // NewGHDoc create GHDoc
-func NewGHDoc(Path string, AbsPaths bool, Depth int, Escape bool, Token string) *GHDoc {
-	return &GHDoc{Path, AbsPaths, Depth, Escape, Token}
+func NewGHDoc(Path string, AbsPaths bool, Depth int, Escape bool, Token string, Indent int) *GHDoc {
+	return &GHDoc{Path, AbsPaths, Depth, Escape, Token, Indent}
 }
 
 // GetToc return GHToc for a document
@@ -52,9 +53,9 @@ func (doc *GHDoc) GetToc() *GHToc {
 		return nil
 	}
 	if doc.AbsPaths {
-		return GrabTocX(htmlBody, doc.Path, doc.Depth, doc.Escape)
+		return GrabTocX(htmlBody, doc.Path, doc.Depth, doc.Escape, doc.Indent)
 	}
-	return GrabTocX(htmlBody, "", doc.Depth, doc.Escape)
+	return GrabTocX(htmlBody, "", doc.Depth, doc.Escape, doc.Indent)
 }
 
 //
@@ -126,6 +127,13 @@ func removeStuf(s string) string {
 	return res
 }
 
+// generate func of custom spaces indentation
+func generateListIndentation(spaces int) func() string {
+	return func() string {
+		return strings.Repeat(" ", spaces)
+	}
+}
+
 // Public
 
 // EscapeSpecChars Escapes special characters
@@ -174,17 +182,18 @@ func ConvertMd2Html(localpath string, token string) (string, error) {
 }
 
 // GrabToc Create TOC by html from github
-func GrabToc(html string, absPath string, depth int) *GHToc {
-	return GrabTocX(html, absPath, depth, true)
+func GrabToc(html string, absPath string, depth int, indent int) *GHToc {
+	return GrabTocX(html, absPath, depth, true, indent)
 }
 
 // GrabTocX Create TOC
-func GrabTocX(html string, absPath string, depth int, escape bool) *GHToc {
+func GrabTocX(html string, absPath string, depth int, escape bool, indent int) *GHToc {
 	re := `(?si)<h(?P<num>[1-6])>\s*` +
 		`<a\s*id="user-content-[^"]*"\s*class="anchor"\s*` +
 		`href="(?P<href>[^"]*)"[^>]*>\s*` +
 		`.*?</a>(?P<name>.*?)</h`
 	r := regexp.MustCompile(re)
+	listIndentation := generateListIndentation(indent)
 
 	toc := GHToc{}
 	minHeaderNum := 6
@@ -223,7 +232,7 @@ func GrabTocX(html string, absPath string, depth int, escape bool) *GHToc {
 		if escape {
 			tmpSection = EscapeSpecChars(tmpSection)
 		}
-		tocItem := strings.Repeat("  ", n-minHeaderNum) + "* " +
+		tocItem := strings.Repeat(listIndentation(), n-minHeaderNum) + "* " +
 			"[" + tmpSection + "]" +
 			"(" + link + ")"
 		//fmt.Println(tocItem)
@@ -244,6 +253,8 @@ func main() {
 		"How many levels of headings to include. Defaults to 0 (all)").Default("0").Int()
 	noEscape := kingpin.Flag("no-escape", "Do not escape chars in sections").Bool()
 	token := kingpin.Flag("token", "GitHub personal token").String()
+	indent := kingpin.Flag("indent",
+		"Indent space of generated list").Default("2").Int()
 
 	kingpin.Version(version)
 	kingpin.Parse()
@@ -266,7 +277,7 @@ func main() {
 	ch := make(chan *GHToc, pathsCount)
 
 	for _, p := range *paths {
-		ghdoc := NewGHDoc(p, absPathsInToc, *depth, !*noEscape, *token)
+		ghdoc := NewGHDoc(p, absPathsInToc, *depth, !*noEscape, *token, *indent)
 		if *serial {
 			ch <- ghdoc.GetToc()
 		} else {
@@ -292,7 +303,7 @@ func main() {
 		defer os.Remove(file.Name())
 
 		check(ioutil.WriteFile(file.Name(), bytes, 0644))
-		NewGHDoc(file.Name(), false, *depth, !*noEscape, *token).GetToc().Print()
+		NewGHDoc(file.Name(), false, *depth, !*noEscape, *token, *indent).GetToc().Print()
 	}
 
 	fmt.Println("Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc.go)")

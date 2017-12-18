@@ -20,7 +20,7 @@ func Test_GrabTocOneRow(t *testing.T) {
 	}
 	toc := *GrabToc(`
 	<h1><a id="user-content-readme-in-another-language" class="anchor" href="#readme-in-another-language" aria-hidden="true"><span class="octicon octicon-link"></span></a>README in another language</h1>
-	`, "", 0)
+	`, "", 0, 2)
 	if toc[0] != tocExpected[0] {
 		t.Error("Res :", toc, "\nExpected     :", tocExpected)
 	}
@@ -37,7 +37,7 @@ func Test_GrabTocOneRowWithNewLines(t *testing.T) {
 		</a>
 		README in another language
 	</h1>
-	`, "", 0)
+	`, "", 0, 2)
 	if toc[0] != tocExpected[0] {
 		t.Error("Res :", toc, "\nExpected     :", tocExpected)
 	}
@@ -67,7 +67,7 @@ case you need to implement 2 functions in the plugin's body:</p>
 
 <p>This function should return list of available versions of the plugin.
 For example:</p>
-	`, "", 0)
+	`, "", 0, 2)
 	for i := 0; i <= len(tocExpected)-1; i++ {
 		if toc[i] != tocExpected[i] {
 			t.Error("Res :", toc[i], "\nExpected     :", tocExpected[i])
@@ -105,7 +105,7 @@ func Test_GrabTocBackquoted(t *testing.T) {
 <a id="user-content-the-command-bar2-is-better" class="anchor" href="#the-command-bar2-is-better" aria-hidden="true"><span class="octicon octicon-link"></span></a>The command <code>bar2</code> is better</h2>
 
 <p>Blabla...</p>
-	`, "", 0)
+	`, "", 0, 2)
 
 	for i := 0; i <= len(tocExpected)-1; i++ {
 		if toc[i] != tocExpected[i] {
@@ -142,7 +142,7 @@ func Test_GrabTocDepth(t *testing.T) {
 <a id="user-content-the-command-bar2-is-better" class="anchor" href="#the-command-bar2-is-better" aria-hidden="true"><span class="octicon octicon-link"></span></a>The command <code>bar2</code> is better</h2>
 
 <p>Blabla...</p>
-	`, "", 1)
+	`, "", 1, 2)
 
 	// fmt.Println(toc)
 
@@ -160,7 +160,7 @@ func Test_GrabTocWithAbspath(t *testing.T) {
 	}
 	toc := *GrabToc(`
 	<h1><a id="user-content-readme-in-another-language" class="anchor" href="#readme-in-another-language" aria-hidden="true"><span class="octicon octicon-link"></span></a>README in another language</h1>
-	`, link, 0)
+	`, link, 0, 2)
 	if toc[0] != tocExpected[0] {
 		t.Error("Res :", toc, "\nExpected     :", tocExpected)
 	}
@@ -178,10 +178,36 @@ func Test_EscapedChars(t *testing.T) {
 				<span class="octicon octicon-link"></span>
 			</a>
 			mod_*
-		</h2>`, "", 0)
+		</h2>`, "", 0, 2)
 
 	if toc[0] != tocExpected[0] {
 		t.Error("Res :", toc, "\nExpected     :", tocExpected)
+	}
+}
+
+func Test_CustomSpaceIndentation(t *testing.T) {
+	tocExpected := []string{
+		"* [Header Level1](#header-level1)",
+		"    * [Header Level2](#header-level2)",
+		"        * [Header Level3](#header-level3)",
+	}
+
+	toc := *GrabToc(`
+<h1>
+<a id="user-content-the-command-level1" class="anchor" href="#header-level1" aria-hidden="true"><span class="octicon octicon-link"></span></a>Header Level1
+</h1>
+<h2>
+<a id="user-content-the-command-level2" class="anchor" href="#header-level2" aria-hidden="true"><span class="octicon octicon-link"></span></a>Header Level2
+</h2>
+<h3>
+<a id="user-content-the-command-level3" class="anchor" href="#header-level3" aria-hidden="true"><span class="octicon octicon-link"></span></a>Header Level3
+</h3>
+	`, "", 0, 4) // use 4 spaces indent
+
+	for i := 0; i <= len(tocExpected)-1; i++ {
+		if toc[i] != tocExpected[i] {
+			t.Error("Res :", toc[i], "\nExpected      :", tocExpected[i])
+		}
 	}
 }
 
@@ -204,7 +230,7 @@ func Test_MinHeaderNumber(t *testing.T) {
 			</a>
 			bar
 		</h3>
-		`, "", 0)
+		`, "", 0, 2)
 
 	if toc[0] != tocExpected[0] {
 		t.Error("Res :", toc, "\nExpected     :", tocExpected)

@@ -33,6 +33,7 @@ Table of Contents
     * [Depth](#depth)
     * [No Escape](#no-escape)
     * [Github token](#github-token)
+    * [Bash/ZSH auto\-complete](#bashzsh-auto-complete)
   * [LICENSE](#license)
 
 Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc.go)
@@ -332,6 +333,21 @@ Table of Contents
 * [Tests](#tests)
 * [Usage](#usage)
 * [LICENSE](#license)
+```
+
+Bash/ZSH auto-complete
+----------------------
+
+
+
+Just add a simple command into your `~/.bashrc` or `~/.zshrc`:
+
+```bash
+# for zsh
+eval "$(gh-md-toc --completion-script-zsh)"
+
+# for bash
+eval "$(gh-md-toc --completion-script-bash)"
 ```
 
 LICENSE

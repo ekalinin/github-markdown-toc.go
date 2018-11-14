@@ -3,14 +3,18 @@ package main
 import "testing"
 
 func Test_IsUrl(t *testing.T) {
-	url1 := "https://github.com/ekalinin/envirius/blob/master/README.md"
-	if !IsURL(url1) {
-		t.Error("This is url: ", url1)
+	doc1 := &GHDoc{
+		Path: "https://github.com/ekalinin/envirius/blob/master/README.md",
+	}
+	if !doc1.IsRemoteFile() {
+		t.Error("This is url: ", doc1.Path)
 	}
 
-	url2 := "./README.md"
-	if IsURL(url2) {
-		t.Error("This is not url: ", url2)
+	doc2 := &GHDoc{
+		Path: "./README.md",
+	}
+	if doc2.IsRemoteFile() {
+		t.Error("This is not url: ", doc2.Path)
 	}
 }
 
@@ -18,9 +22,15 @@ func Test_GrabTocOneRow(t *testing.T) {
 	tocExpected := []string{
 		"* [README in another language](#readme-in-another-language)",
 	}
-	toc := *GrabToc(`
-	<h1><a id="user-content-readme-in-another-language" class="anchor" href="#readme-in-another-language" aria-hidden="true"><span class="octicon octicon-link"></span></a>README in another language</h1>
-	`, "", 0, 2)
+	doc := &GHDoc{
+		html: `
+		<h1><a id="user-content-readme-in-another-language" class="anchor" href="#readme-in-another-language" aria-hidden="true"><span class="octicon octicon-link"></span></a>README in another language</h1>
+		`,
+		AbsPaths: false,
+		Depth:    0,
+		Indent:   2,
+	}
+	toc := *doc.GrabToc()
 	if toc[0] != tocExpected[0] {
 		t.Error("Res :", toc, "\nExpected     :", tocExpected)
 	}
@@ -30,14 +40,20 @@ func Test_GrabTocOneRowWithNewLines(t *testing.T) {
 	tocExpected := []string{
 		"* [README in another language](#readme-in-another-language)",
 	}
-	toc := *GrabToc(`
+	doc := &GHDoc{
+		html: `
 	<h1>
 		<a id="user-content-readme-in-another-language" class="anchor" href="#readme-in-another-language" aria-hidden="true">
 			<span class="octicon octicon-link"></span>
 		</a>
 		README in another language
 	</h1>
-	`, "", 0, 2)
+	`, AbsPaths: false,
+		Depth:  0,
+		Escape: true,
+		Indent: 2,
+	}
+	toc := *doc.GrabToc()
 	if toc[0] != tocExpected[0] {
 		t.Error("Res :", toc, "\nExpected     :", tocExpected)
 	}
@@ -50,7 +66,8 @@ func Test_GrabTocMultilineOriginGithub(t *testing.T) {
 		"  * [Mandatory elements](#mandatory-elements)",
 		"    * [plug\\_list\\_versions](#plug_list_versions)",
 	}
-	toc := *GrabToc(`
+	doc := &GHDoc{
+		html: `
 <h1><a id="user-content-how-to-add-a-plugin" class="anchor" href="#how-to-add-a-plugin" aria-hidden="true"><span class="octicon octicon-link"></span></a>How to add a plugin?</h1>
 
 <p>All plugins are in the directory
@@ -67,7 +84,12 @@ case you need to implement 2 functions in the plugin's body:</p>
 
 <p>This function should return list of available versions of the plugin.
 For example:</p>
-	`, "", 0, 2)
+	`, AbsPaths: false,
+		Escape: true,
+		Depth:  0,
+		Indent: 2,
+	}
+	toc := *doc.GrabToc()
 	for i := 0; i <= len(tocExpected)-1; i++ {
 		if toc[i] != tocExpected[i] {
 			t.Error("Res :", toc[i], "\nExpected     :", tocExpected[i])
@@ -83,7 +105,8 @@ func Test_GrabTocBackquoted(t *testing.T) {
 		"  * [The command bar2 is better](#the-command-bar2-is-better)",
 	}
 
-	toc := *GrabToc(`
+	doc := &GHDoc{
+		html: `
 <h1>
 <a id="user-content-the-command-foo1" class="anchor" href="#the-command-foo1" aria-hidden="true"><span class="octicon octicon-link"></span></a>The command <code>foo1</code>
 </h1>
@@ -105,8 +128,11 @@ func Test_GrabTocBackquoted(t *testing.T) {
 <a id="user-content-the-command-bar2-is-better" class="anchor" href="#the-command-bar2-is-better" aria-hidden="true"><span class="octicon octicon-link"></span></a>The command <code>bar2</code> is better</h2>
 
 <p>Blabla...</p>
-	`, "", 0, 2)
-
+	`, AbsPaths: false,
+		Depth:  0,
+		Indent: 2,
+	}
+	toc := *doc.GrabToc()
 	for i := 0; i <= len(tocExpected)-1; i++ {
 		if toc[i] != tocExpected[i] {
 			t.Error("Res :", toc[i], "\nExpected      :", tocExpected[i])
@@ -120,7 +146,8 @@ func Test_GrabTocDepth(t *testing.T) {
 		"* [The command bar1](#the-command-bar1)",
 	}
 
-	toc := *GrabToc(`
+	doc := &GHDoc{
+		html: `
 <h1>
 <a id="user-content-the-command-foo1" class="anchor" href="#the-command-foo1" aria-hidden="true"><span class="octicon octicon-link"></span></a>The command <code>foo1</code>
 </h1>
@@ -142,9 +169,12 @@ func Test_GrabTocDepth(t *testing.T) {
 <a id="user-content-the-command-bar2-is-better" class="anchor" href="#the-command-bar2-is-better" aria-hidden="true"><span class="octicon octicon-link"></span></a>The command <code>bar2</code> is better</h2>
 
 <p>Blabla...</p>
-	`, "", 1, 2)
-
-	// fmt.Println(toc)
+	`, AbsPaths: false,
+		Escape: true,
+		Depth:  1,
+		Indent: 2,
+	}
+	toc := *doc.GrabToc()
 
 	for i := 0; i <= len(tocExpected)-1; i++ {
 		if toc[i] != tocExpected[i] {
@@ -158,9 +188,15 @@ func Test_GrabTocWithAbspath(t *testing.T) {
 	tocExpected := []string{
 		"* [README in another language](" + link + "#readme-in-another-language)",
 	}
-	toc := *GrabToc(`
+	doc := &GHDoc{
+		html: `
 	<h1><a id="user-content-readme-in-another-language" class="anchor" href="#readme-in-another-language" aria-hidden="true"><span class="octicon octicon-link"></span></a>README in another language</h1>
-	`, link, 0, 2)
+	`, AbsPaths: true,
+		Path:   link,
+		Depth:  0,
+		Indent: 2,
+	}
+	toc := *doc.GrabToc()
 	if toc[0] != tocExpected[0] {
 		t.Error("Res :", toc, "\nExpected     :", tocExpected)
 	}
@@ -171,14 +207,21 @@ func Test_EscapedChars(t *testing.T) {
 		"* [mod\\_\\*](#mod_)",
 	}
 
-	toc := *GrabToc(`
+	doc := &GHDoc{
+		html: `
 		<h2>
 			<a id="user-content-mod_" class="anchor"
 			    href="#mod_" aria-hidden="true">
 				<span class="octicon octicon-link"></span>
 			</a>
 			mod_*
-		</h2>`, "", 0, 2)
+		</h2>`,
+		AbsPaths: false,
+		Escape:   true,
+		Depth:    0,
+		Indent:   2,
+	}
+	toc := *doc.GrabToc()
 
 	if toc[0] != tocExpected[0] {
 		t.Error("Res :", toc, "\nExpected     :", tocExpected)
@@ -192,7 +235,8 @@ func Test_CustomSpaceIndentation(t *testing.T) {
 		"        * [Header Level3](#header-level3)",
 	}
 
-	toc := *GrabToc(`
+	doc := &GHDoc{
+		html: `
 <h1>
 <a id="user-content-the-command-level1" class="anchor" href="#header-level1" aria-hidden="true"><span class="octicon octicon-link"></span></a>Header Level1
 </h1>
@@ -202,7 +246,12 @@ func Test_CustomSpaceIndentation(t *testing.T) {
 <h3>
 <a id="user-content-the-command-level3" class="anchor" href="#header-level3" aria-hidden="true"><span class="octicon octicon-link"></span></a>Header Level3
 </h3>
-	`, "", 0, 4) // use 4 spaces indent
+	`,
+		AbsPaths: false,
+		Depth:    0,
+		Indent:   4,
+	}
+	toc := *doc.GrabToc()
 
 	for i := 0; i <= len(tocExpected)-1; i++ {
 		if toc[i] != tocExpected[i] {
@@ -217,7 +266,8 @@ func Test_MinHeaderNumber(t *testing.T) {
 		"  * [bar](#bar)",
 	}
 
-	toc := *GrabToc(`
+	doc := &GHDoc{
+		html: `
 		<h3>
 			<a id="user-content-" class="anchor" href="#foo" aria-hidden="true">
 				<span class="octicon octicon-link"></span>
@@ -230,7 +280,12 @@ func Test_MinHeaderNumber(t *testing.T) {
 			</a>
 			bar
 		</h3>
-		`, "", 0, 2)
+		`,
+		AbsPaths: false,
+		Depth:    0,
+		Indent:   2,
+	}
+	toc := *doc.GrabToc()
 
 	if toc[0] != tocExpected[0] {
 		t.Error("Res :", toc, "\nExpected     :", tocExpected)

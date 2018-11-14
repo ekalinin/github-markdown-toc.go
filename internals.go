@@ -1,0 +1,111 @@
+package main
+
+import (
+	"bytes"
+	"errors"
+	"io"
+	"io/ioutil"
+	"net/http"
+	"os"
+	"strings"
+)
+
+// check checks if there whas an error and do panic if it was
+func check(e error) {
+	if e != nil {
+		panic(e)
+	}
+}
+
+// doHTTPReq executes a particullar http request
+func doHTTPReq(req *http.Request) ([]byte, string, error) {
+	req.Header.Set("User-Agent", userAgent)
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return []byte{}, "", err
+	}
+
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return []byte{}, "", err
+	}
+
+	if resp.StatusCode == http.StatusForbidden {
+		return []byte{}, resp.Header.Get("Content-type"), errors.New(string(body))
+	}
+
+	return body, resp.Header.Get("Content-type"), nil
+}
+
+// Executes HTTP GET request
+func httpGet(urlPath string) ([]byte, string, error) {
+	req, err := http.NewRequest("GET", urlPath, nil)
+	if err != nil {
+		return []byte{}, "", err
+	}
+	return doHTTPReq(req)
+}
+
+// httpPost executes HTTP POST with file content
+func httpPost(urlPath string, filePath string) (string, error) {
+	file, err := os.Open(filePath)
+	if err != nil {
+		return "", err
+	}
+	defer file.Close()
+
+	body := &bytes.Buffer{}
+	io.Copy(body, file)
+
+	req, err := http.NewRequest("POST", urlPath, body)
+	if err != nil {
+		return "", err
+	}
+
+	req.Header.Set("Content-Type", "text/plain")
+
+	resp, _, err := doHTTPReq(req)
+	return string(resp), err
+}
+
+// removeStuf trims spaces, removes new lines and code tag from a string
+func removeStuf(s string) string {
+	res := strings.Replace(s, "\n", "", -1)
+	res = strings.Replace(res, "<code>", "", -1)
+	res = strings.Replace(res, "</code>", "", -1)
+	res = strings.TrimSpace(res)
+
+	return res
+}
+
+// generate func of custom spaces indentation
+func generateListIndentation(spaces int) func() string {
+	return func() string {
+		return strings.Repeat(" ", spaces)
+	}
+}
+
+// Public
+
+// EscapeSpecChars Escapes special characters
+func EscapeSpecChars(s string) string {
+	specChar := []string{"\\", "`", "*", "_", "{", "}", "#", "+", "-", ".", "!"}
+	res := s
+
+	for _, c := range specChar {
+		res = strings.Replace(res, c, "\\"+c, -1)
+	}
+	return res
+}
+
+// ConvertMd2Html Sends Markdown to the github converter
+// and returns html
+func ConvertMd2Html(localpath string, token string) (string, error) {
+	url := "https://api.github.com/markdown/raw"
+	if token != "" {
+		url += "?access_token=" + token
+	}
+	return httpPost(url, localpath)
+}

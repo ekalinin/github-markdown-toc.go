@@ -350,6 +350,23 @@ eval "$(gh-md-toc --completion-script-zsh)"
 eval "$(gh-md-toc --completion-script-bash)"
 ```
 
+Alpine Linux
+============
+
+Alpine Linux uses _musl_ instead of _glibc_ by default. If you install [`binutils`](https://pkgs.alpinelinux.org/packages?name=binutils&repo=main&arch=x86_64) and run…
+
+```bash
+apk add binutils && \
+readelf -l /path/to/gh-md-toc
+```
+
+…you'll see that it relies on `/lib64/ld-linux-x86-64.so.2` as its _interpreter_. You can solve this by installing [libc6-compat](https://pkgs.alpinelinux.org/contents?file=ld-linux-x86-64*) alongside downloading the Linux `amd64` build.
+
+```bash
+apk add libc6-compat
+```
+
+
 LICENSE
 =======
 

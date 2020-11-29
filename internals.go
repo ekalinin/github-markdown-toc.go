@@ -49,7 +49,7 @@ func httpGet(urlPath string) ([]byte, string, error) {
 }
 
 // httpPost executes HTTP POST with file content
-func httpPost(urlPath string, filePath string) (string, error) {
+func httpPost(urlPath, filePath, token string) (string, error) {
 	file, err := os.Open(filePath)
 	if err != nil {
 		return "", err
@@ -64,7 +64,10 @@ func httpPost(urlPath string, filePath string) (string, error) {
 		return "", err
 	}
 
-	req.Header.Set("Content-Type", "text/plain")
+	if token != "" {
+		req.Header.Add("Authorization", "token "+token)
+	}
+	req.Header.Set("Content-Type", "text/plain;charset=utf-8")
 
 	resp, _, err := doHTTPReq(req)
 	return string(resp), err
@@ -104,8 +107,5 @@ func EscapeSpecChars(s string) string {
 // and returns html
 func ConvertMd2Html(localpath string, token string) (string, error) {
 	url := "https://api.github.com/markdown/raw"
-	if token != "" {
-		url += "?access_token=" + token
-	}
-	return httpPost(url, localpath)
+	return httpPost(url, localpath, token)
 }

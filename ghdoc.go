@@ -95,7 +95,11 @@ func (doc *GHDoc) Convert2HTML() error {
 	if err != nil {
 		return err
 	}
-	// doc.d("Convert2HTML: " + htmlBody)
+	if doc.Debug {
+		htmlFile := doc.Path + ".debug.html"
+		doc.d("Convert2HTML: write html file: " + htmlFile)
+		ioutil.WriteFile(htmlFile, []byte(htmlBody), 0644)
+	}
 	doc.html = htmlBody
 	return nil
 }
@@ -124,7 +128,7 @@ func (doc *GHDoc) GrabToc() *GHToc {
 			if i == 0 || name == "" {
 				continue
 			}
-			doc.d("GrabToc: process group: " + name + " ...")
+			doc.d("GrabToc: process group: " + name + ": " + match[i] + " ...")
 			group[name] = removeStuf(match[i])
 		}
 		// update minimum header number
@@ -144,7 +148,7 @@ func (doc *GHDoc) GrabToc() *GHToc {
 			continue
 		}
 
-		link := group["href"]
+		link, _ := url.QueryUnescape(group["href"])
 		if doc.AbsPaths {
 			link = doc.Path + link
 		}

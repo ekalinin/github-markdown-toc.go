@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	version   = "1.0.0"
+	version   = "1.1.0"
 	userAgent = "github-markdown-toc.go v" + version
 )
 

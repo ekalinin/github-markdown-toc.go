@@ -24,19 +24,20 @@ func (toc *GHToc) Print() {
 
 // GHDoc GitHub document
 type GHDoc struct {
-	Path     string
-	AbsPaths bool
-	Depth    int
-	Escape   bool
-	GhToken  string
-	Indent   int
-	Debug    bool
-	html     string
+	Path       string
+	AbsPaths   bool
+	StartDepth int
+	Depth      int
+	Escape     bool
+	GhToken    string
+	Indent     int
+	Debug      bool
+	html       string
 }
 
 // NewGHDoc create GHDoc
-func NewGHDoc(Path string, AbsPaths bool, Depth int, Escape bool, Token string, Indent int, Debug bool) *GHDoc {
-	return &GHDoc{Path, AbsPaths, Depth, Escape, Token, Indent, Debug, ""}
+func NewGHDoc(Path string, AbsPaths bool, StartDepth int, Depth int, Escape bool, Token string, Indent int, Debug bool) *GHDoc {
+	return &GHDoc{Path, AbsPaths, StartDepth, Depth, Escape, Token, Indent, Debug, ""}
 }
 
 func (doc *GHDoc) d(msg string) {
@@ -141,9 +142,13 @@ func (doc *GHDoc) GrabToc() *GHToc {
 
 	var tmpSection string
 	doc.d("GrabToc: processing groups ...")
+	doc.d("Including starting frome level " + strconv.Itoa(doc.StartDepth))
 	for _, group := range groups {
 		// format result
 		n, _ := strconv.Atoi(group["num"])
+		if n <= doc.StartDepth {
+			continue
+		}
 		if doc.Depth > 0 && n > doc.Depth {
 			continue
 		}
@@ -157,7 +162,7 @@ func (doc *GHDoc) GrabToc() *GHToc {
 		if doc.Escape {
 			tmpSection = EscapeSpecChars(tmpSection)
 		}
-		tocItem := strings.Repeat(listIndentation(), n-minHeaderNum) + "* " +
+		tocItem := strings.Repeat(listIndentation(), n-minHeaderNum-doc.StartDepth) + "* " +
 			"[" + tmpSection + "]" +
 			"(" + link + ")"
 		//fmt.Println(tocItem)

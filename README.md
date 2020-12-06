@@ -51,11 +51,11 @@ See the releases page, "Downloads" section:
 For example:
 
 ```bash
-$ wget https://github.com/ekalinin/github-markdown-toc.go/releases/download/0.4.0/gh-md-toc.linux.amd64.tgz
+$ wget https://github.com/ekalinin/github-markdown-toc.go/releases/download/1.1.0/gh-md-toc.linux.amd64.tgz
 $ tar xzvf gh-md-toc.linux.amd64.tgz
 gh-md-toc
 $ ./gh-md-toc --version
-0.4.0
+1.1.0
 ```
 
 Compiling from source
@@ -69,13 +69,20 @@ $ ./gh-md-toc --help
 usage: gh-md-toc [<flags>] [<path>...]
 
 Flags:
-  --help     Show help (also see --help-long and --help-man).
-  --version  Show application version.
-  --depth    How many levels of headings to include. Defaults to 0 (all)
+  --help           Show context-sensitive help (also try --help-long and --help-man).
+  --serial         Grab TOCs in the serial mode
+  --hide-header    Hide TOC header
+  --hide-footer    Hide TOC footer
+  --start-depth=0  Start including from this level. Defaults to 0 (include all levels)
+  --depth=0        How many levels of headings to include. Defaults to 0 (all)
+  --no-escape      Do not escape chars in sections
+  --token=TOKEN    GitHub personal token
+  --indent=2       Indent space of generated list
+  --debug          Show debug info
+  --version        Show application version.
 
 Args:
-  [<path>]  Local path or URL of the document to grab TOC
-
+  [<path>]  Local path or URL of the document to grab TOC. Read MD from stdin if not entered.
 ```
 
 Homebew (Mac only)
@@ -266,6 +273,24 @@ You can easily combine both ways:
     * [Installation](https://github.com/ekalinin/sitemap.js/blob/master/README.md#installation)
     * [Usage](https://github.com/ekalinin/sitemap.js/blob/master/README.md#usage)
     * [License](https://github.com/ekalinin/sitemap.js/blob/master/README.md#license)
+
+Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc)
+```
+
+Starting Depth
+--------------
+
+Use `--start-depth=INT` to control the starting header level (i.e. include only the levels
+starting with `INT`)
+
+```bash
+➥ ./gh-md-toc --start-depth=1 ~/projects/Dockerfile.vim/README.md
+
+Table of Contents
+=================
+
+  * [Or using Pathogen:](#or-using-pathogen)
+  * [Or using Vundle:](#or-using-vundle)
 
 Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc)
 ```

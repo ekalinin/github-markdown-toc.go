@@ -19,6 +19,7 @@ var (
 	serial     = kingpin.Flag("serial", "Grab TOCs in the serial mode").Bool()
 	hideHeader = kingpin.Flag("hide-header", "Hide TOC header").Bool()
 	hideFooter = kingpin.Flag("hide-footer", "Hide TOC footer").Bool()
+	startDepth = kingpin.Flag("start-depth", "Start including from this level. Defaults to 0 (include all levels)").Default("0").Int()
 	depth      = kingpin.Flag("depth", "How many levels of headings to include. Defaults to 0 (all)").Default("0").Int()
 	noEscape   = kingpin.Flag("no-escape", "Do not escape chars in sections").Bool()
 	token      = kingpin.Flag("token", "GitHub personal token").String()
@@ -42,7 +43,7 @@ func main() {
 	ch := make(chan *GHToc, pathsCount)
 
 	for _, p := range *paths {
-		ghdoc := NewGHDoc(p, absPathsInToc, *depth, !*noEscape, *token, *indent, *debug)
+		ghdoc := NewGHDoc(p, absPathsInToc, *startDepth, *depth, !*noEscape, *token, *indent, *debug)
 		if *serial {
 			ch <- ghdoc.GetToc()
 		} else {
@@ -75,7 +76,7 @@ func main() {
 		defer os.Remove(file.Name())
 
 		check(ioutil.WriteFile(file.Name(), bytes, 0644))
-		NewGHDoc(file.Name(), false, *depth, !*noEscape, *token, *indent, *debug).GetToc().Print()
+		NewGHDoc(file.Name(), false, *startDepth, *depth, !*noEscape, *token, *indent, *debug).GetToc().Print()
 	}
 
 	if !*hideFooter {

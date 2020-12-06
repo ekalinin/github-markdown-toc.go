@@ -183,6 +183,61 @@ func Test_GrabTocDepth(t *testing.T) {
 	}
 }
 
+func Test_GrabTocStartDepth(t *testing.T) {
+	tocExpected := []string{
+		"* [The command foo2 is better](#the-command-foo2-is-better)",
+		"  * [The command foo3 is even betterer](#the-command-foo3-is-even-betterer)",
+		"* [The command bar2 is better](#the-command-bar2-is-better)",
+		"  * [The command bar3 is even betterer](#the-command-bar3-is-even-betterer)",
+	}
+
+	doc := &GHDoc{
+		html: `
+<h1>
+<a id="user-content-the-command-foo1" class="anchor" href="#the-command-foo1" aria-hidden="true"><span class="octicon octicon-link"></span></a>The command <code>foo1</code>
+</h1>
+
+<p>Blabla...</p>
+
+<h2>
+<a id="user-content-the-command-foo2-is-better" class="anchor" href="#the-command-foo2-is-better" aria-hidden="true"><span class="octicon octicon-link"></span></a>The command <code>foo2</code> is better</h2>
+
+<p>Blabla...</p>
+
+<h3>
+<a id="user-content-the-command-foo3-is-even-betterer" class="anchor" href="#the-command-foo3-is-even-betterer" aria-hidden="true"><span class="octicon octicon-link"></span></a>The command <code>foo3</code> is even betterer</h2>
+
+<p>Blabla...</p>
+
+<h1>
+<a id="user-content-the-command-bar1" class="anchor" href="#the-command-bar1" aria-hidden="true"><span class="octicon octicon-link"></span></a>The command <code>bar1</code>
+</h1>
+
+<p>Blabla...</p>
+
+<h2>
+<a id="user-content-the-command-bar2-is-better" class="anchor" href="#the-command-bar2-is-better" aria-hidden="true"><span class="octicon octicon-link"></span></a>The command <code>bar2</code> is better</h2>
+
+<p>Blabla...</p>
+
+<h3>
+<a id="user-content-the-command-bar3-is-even-betterer" class="anchor" href="#the-command-bar3-is-even-betterer" aria-hidden="true"><span class="octicon octicon-link"></span></a>The command <code>bar3</code> is even betterer</h2>
+
+<p>Blabla...</p>
+	`, AbsPaths: false,
+		Escape: true,
+		StartDepth:  1,
+		Indent: 2,
+	}
+	toc := *doc.GrabToc()
+
+	for i := 0; i <= len(tocExpected)-1; i++ {
+		if toc[i] != tocExpected[i] {
+			t.Error("Res :", toc[i], "\nExpected      :", tocExpected[i])
+		}
+	}
+}
+
 func Test_GrabTocWithAbspath(t *testing.T) {
 	link := "https://github.com/ekalinin/envirius/blob/master/README.md"
 	tocExpected := []string{

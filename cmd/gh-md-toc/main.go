@@ -64,7 +64,7 @@ func main() {
 
 	for i := 1; i <= pathsCount; i++ {
 		toc := <-ch
-		// #14, check if there's realy TOC?
+		// #14, check if there's really TOC?
 		if toc != nil {
 			toc.Print()
 		}

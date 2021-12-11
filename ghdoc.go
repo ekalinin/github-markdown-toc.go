@@ -14,7 +14,7 @@ import (
 // GHToc GitHub TOC
 type GHToc []string
 
-// Print print TOC to the console
+// Print TOC to the console
 func (toc *GHToc) Print() {
 	for _, tocItem := range *toc {
 		fmt.Println(tocItem)
@@ -144,7 +144,7 @@ func (doc *GHDoc) GrabToc() *GHToc {
 
 	var tmpSection string
 	doc.d("GrabToc: processing groups ...")
-	doc.d("Including starting frome level " + strconv.Itoa(doc.StartDepth))
+	doc.d("Including starting from level " + strconv.Itoa(doc.StartDepth))
 	for _, group := range groups {
 		// format result
 		n, _ := strconv.Atoi(group["num"])

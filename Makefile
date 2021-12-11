@@ -1,7 +1,8 @@
 EXEC=gh-md-toc
+CMD_SRC=cmd/${EXEC}/main.go
 BUILD_DIR=build
-BUILD_OS="windows darwin freebsd linux"
-BUILD_ARCH="amd64 386"
+BUILD_OS="windows darwin linux"
+BUILD_ARCH="amd64"
 
 clean:
 	@rm -f ${EXEC}
@@ -12,9 +13,12 @@ lint:
 	@golint
 	@golangci-lint run
 
-# http://tschottdorf.github.io/linking-golang-go-statically-cgo-testing/
+# make run ARGS="--help"
+run:
+	@go run ${CMD_SRC} $(ARGS)
+
 build: clean lint
-	@go build --ldflags '-s' -i -o ${EXEC}
+	go build -race -o ${EXEC} ${CMD_SRC}
 
 test: clean lint
 	@go test -cover -o ${EXEC}
@@ -28,7 +32,7 @@ buildall: clean
 	@for os in "${BUILD_OS}" ; do \
 		for arch in "${BUILD_ARCH}" ; do \
 			echo " * build $$os for $$arch"; \
-			GOOS=$$os GOARCH=$$arch go build -ldflags "-s" -o ${BUILD_DIR}/${EXEC}; \
+			GOOS=$$os GOARCH=$$arch go build -o ${BUILD_DIR}/${EXEC} ${CMD_SRC}; \
 			cd ${BUILD_DIR}; \
 			tar czf ${EXEC}.$$os.$$arch.tgz ${EXEC}; \
 			cd - ; \

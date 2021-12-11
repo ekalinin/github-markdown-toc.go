@@ -8,11 +8,15 @@ clean:
 	@rm -f ${BUILD_DIR}/*
 	@go clean
 
+lint:
+	@golint
+	@golangci-lint run
+
 # http://tschottdorf.github.io/linking-golang-go-statically-cgo-testing/
-build: clean
+build: clean lint
 	@go build --ldflags '-s' -i -o ${EXEC}
 
-test: clean
+test: clean lint
 	@go test -cover -o ${EXEC}
 
 release: test buildall

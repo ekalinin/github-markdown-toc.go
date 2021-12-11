@@ -1,4 +1,4 @@
-package main
+package ghtoc
 
 import (
 	"bytes"
@@ -10,12 +10,11 @@ import (
 	"strings"
 )
 
-// check checks if there whas an error and do panic if it was
-func check(e error) {
-	if e != nil {
-		panic(e)
-	}
-}
+const (
+	// Version is a current app version
+	Version   = "1.2.0"
+	userAgent = "github-markdown-toc.go v" + Version
+)
 
 // doHTTPReq executes a particullar http request
 func doHTTPReq(req *http.Request) ([]byte, string, error) {

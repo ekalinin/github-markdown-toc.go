@@ -1,4 +1,4 @@
-package main
+package ghtoc
 
 import "testing"
 
@@ -225,9 +225,9 @@ func Test_GrabTocStartDepth(t *testing.T) {
 
 <p>Blabla...</p>
 	`, AbsPaths: false,
-		Escape: true,
-		StartDepth:  1,
-		Indent: 2,
+		Escape:     true,
+		StartDepth: 1,
+		Indent:     2,
 	}
 	toc := *doc.GrabToc()
 

@@ -6,11 +6,8 @@ import (
 	"os"
 
 	"gopkg.in/alecthomas/kingpin.v2"
-)
 
-const (
-	version   = "1.2.0"
-	userAgent = "github-markdown-toc.go v" + version
+	ghtoc "github.com/ekalinin/github-markdown-toc.go"
 )
 
 var (
@@ -27,9 +24,16 @@ var (
 	debug      = kingpin.Flag("debug", "Show debug info").Bool()
 )
 
+// check if there was an error (and panic if it was)
+func check(e error) {
+	if e != nil {
+		panic(e)
+	}
+}
+
 // Entry point
 func main() {
-	kingpin.Version(version)
+	kingpin.Version(ghtoc.Version)
 	kingpin.Parse()
 
 	if *token == "" {
@@ -40,10 +44,10 @@ func main() {
 
 	// read file paths | urls from args
 	absPathsInToc := pathsCount > 1
-	ch := make(chan *GHToc, pathsCount)
+	ch := make(chan *ghtoc.GHToc, pathsCount)
 
 	for _, p := range *paths {
-		ghdoc := NewGHDoc(p, absPathsInToc, *startDepth, *depth, !*noEscape, *token, *indent, *debug)
+		ghdoc := ghtoc.NewGHDoc(p, absPathsInToc, *startDepth, *depth, !*noEscape, *token, *indent, *debug)
 		if *serial {
 			ch <- ghdoc.GetToc()
 		} else {
@@ -76,7 +80,7 @@ func main() {
 		defer os.Remove(file.Name())
 
 		check(ioutil.WriteFile(file.Name(), bytes, 0644))
-		NewGHDoc(file.Name(), false, *startDepth, *depth, !*noEscape, *token, *indent, *debug).GetToc().Print()
+		ghtoc.NewGHDoc(file.Name(), false, *startDepth, *depth, !*noEscape, *token, *indent, *debug).GetToc().Print()
 	}
 
 	if !*hideFooter {

@@ -57,7 +57,10 @@ func httpPost(urlPath, filePath, token string) (string, error) {
 	defer file.Close()
 
 	body := &bytes.Buffer{}
-	io.Copy(body, file)
+	_, err = io.Copy(body, file)
+	if err != nil {
+		return "", err
+	}
 
 	req, err := http.NewRequest("POST", urlPath, body)
 	if err != nil {

@@ -99,7 +99,9 @@ func (doc *GHDoc) Convert2HTML() error {
 	if doc.Debug {
 		htmlFile := doc.Path + ".debug.html"
 		doc.d("Convert2HTML: write html file: " + htmlFile)
-		ioutil.WriteFile(htmlFile, []byte(htmlBody), 0644)
+		if err := ioutil.WriteFile(htmlFile, []byte(htmlBody), 0644); err != nil {
+			return err
+		}
 	}
 	doc.html = htmlBody
 	return nil

@@ -1,6 +1,13 @@
 github-markdown-toc
 ===================
 
+[![Go Report Card](https://goreportcard.com/badge/github.com/ekalinin/github-markdown-toc.go)](https://goreportcard.com/report/github.com/ekalinin/github-markdown-toc.go)
+[![codecov](https://codecov.io/gh/ekalinin/github-markdown-toc.go/branch/master/graph/badge.svg)](https://codecov.io/gh/ekalinin/github-markdown-toc.go)
+[![Go Reference](https://pkg.go.dev/badge/github.com/ekalinin/github-markdown-toc.go.svg)](https://pkg.go.dev/github.com/ekalinin/github-markdown-toc.go)
+[![MIT license](https://img.shields.io/badge/license-MIT-brightgreen.svg)](https://opensource.org/licenses/MIT)
+![GitHub release (latest by date)](https://img.shields.io/github/v/release/ekalinin/github-markdown-toc.go)
+
+
 This is a golang based implementation of the
 [github-markdown-toc](https://github.com/ekalinin/github-markdown-toc) tool.
 

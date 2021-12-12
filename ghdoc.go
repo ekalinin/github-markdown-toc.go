@@ -39,16 +39,28 @@ type GHDoc struct {
 	Indent     int
 	Debug      bool
 	html       string
+	logger     *log.Logger
 }
 
 // NewGHDoc create GHDoc
 func NewGHDoc(Path string, AbsPaths bool, StartDepth int, Depth int, Escape bool, Token string, Indent int, Debug bool) *GHDoc {
-	return &GHDoc{Path, AbsPaths, StartDepth, Depth, Escape, Token, Indent, Debug, ""}
+	return &GHDoc{
+		Path:       Path,
+		AbsPaths:   AbsPaths,
+		StartDepth: StartDepth,
+		Depth:      Depth,
+		Escape:     Escape,
+		GhToken:    Token,
+		Indent:     Indent,
+		Debug:      Debug,
+		html:       "",
+		logger:     log.New(os.Stderr, "", log.LstdFlags),
+	}
 }
 
 func (doc *GHDoc) d(msg string) {
 	if doc.Debug {
-		log.Println(msg)
+		doc.logger.Println(msg)
 	}
 }
 

@@ -2,6 +2,7 @@ package ghtoc
 
 import (
 	"bytes"
+	"log"
 	"testing"
 )
 
@@ -362,5 +363,18 @@ func TestGHToc_Print(t *testing.T) {
 }
 
 func TestNewGHDocWithDebug(t *testing.T) {
+	noMatterN := 1
+	noMatterS := "test"
+	noMatterB := false
+	var got bytes.Buffer
 
+	doc := NewGHDoc(noMatterS, noMatterB, noMatterN, noMatterN,
+		noMatterB, noMatterS, noMatterN, true)
+	doc.logger = log.New(&got, "", 0)
+
+	want := "test"
+	doc.d(want)
+	if got.String() != want+"\n" {
+		t.Error("\nGot :", got.String(), "\nWant:", want)
+	}
 }

@@ -2,6 +2,7 @@ package ghtoc
 
 import (
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/url"
@@ -15,11 +16,11 @@ import (
 type GHToc []string
 
 // Print TOC to the console
-func (toc *GHToc) Print() {
+func (toc *GHToc) Print(w io.Writer) {
 	for _, tocItem := range *toc {
-		fmt.Println(tocItem)
+		fmt.Fprint(w, tocItem)
 	}
-	fmt.Println()
+	fmt.Fprintln(w)
 }
 
 // GHDoc GitHub document

@@ -66,7 +66,7 @@ func main() {
 		toc := <-ch
 		// #14, check if there's really TOC?
 		if toc != nil {
-			toc.Print()
+			toc.Print(os.Stdout)
 		}
 	}
 
@@ -80,7 +80,8 @@ func main() {
 		defer os.Remove(file.Name())
 
 		check(ioutil.WriteFile(file.Name(), bytes, 0644))
-		ghtoc.NewGHDoc(file.Name(), false, *startDepth, *depth, !*noEscape, *token, *indent, *debug).GetToc().Print()
+		ghtoc.NewGHDoc(file.Name(), false, *startDepth, *depth, !*noEscape, *token, *indent, *debug).
+			GetToc().Print(os.Stdout)
 	}
 
 	if !*hideFooter {

@@ -1,6 +1,9 @@
 package ghtoc
 
-import "testing"
+import (
+	"bytes"
+	"testing"
+)
 
 func Test_IsUrl(t *testing.T) {
 	doc1 := &GHDoc{
@@ -344,5 +347,16 @@ func Test_MinHeaderNumber(t *testing.T) {
 
 	if toc[0] != tocExpected[0] {
 		t.Error("Res :", toc, "\nExpected     :", tocExpected)
+	}
+}
+
+func TestGHToc_Print(t *testing.T) {
+	toc := GHToc{"one", "two"}
+	want := "onetwo\n"
+	var got bytes.Buffer
+	toc.Print(&got)
+
+	if got.String() != want {
+		t.Error("\nGot :", got.String(), "\nWant:", want)
 	}
 }

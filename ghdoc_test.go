@@ -352,11 +352,15 @@ func Test_MinHeaderNumber(t *testing.T) {
 
 func TestGHToc_Print(t *testing.T) {
 	toc := GHToc{"one", "two"}
-	want := "onetwo\n"
+	want := "one\ntwo\n\n"
 	var got bytes.Buffer
 	toc.Print(&got)
 
 	if got.String() != want {
 		t.Error("\nGot :", got.String(), "\nWant:", want)
 	}
+}
+
+func TestNewGHDocWithDebug(t *testing.T) {
+
 }

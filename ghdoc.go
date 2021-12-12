@@ -16,11 +16,16 @@ import (
 type GHToc []string
 
 // Print TOC to the console
-func (toc *GHToc) Print(w io.Writer) {
+func (toc *GHToc) Print(w io.Writer) error {
 	for _, tocItem := range *toc {
-		fmt.Fprint(w, tocItem)
+		if _, err := fmt.Fprintln(w, tocItem); err != nil {
+			return err
+		}
 	}
-	fmt.Fprintln(w)
+	if _, err := fmt.Fprintln(w); err != nil {
+		return err
+	}
+	return nil
 }
 
 // GHDoc GitHub document

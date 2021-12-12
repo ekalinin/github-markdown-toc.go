@@ -150,7 +150,7 @@ func (doc *GHDoc) GrabToc() *GHToc {
 				continue
 			}
 			doc.d("GrabToc: process group: " + name + ": " + match[i] + " ...")
-			group[name] = removeStuf(match[i])
+			group[name] = removeStuff(match[i])
 		}
 		// update minimum header number
 		n, _ := strconv.Atoi(group["num"])
@@ -178,7 +178,7 @@ func (doc *GHDoc) GrabToc() *GHToc {
 			link = doc.Path + link
 		}
 
-		tmpSection = removeStuf(group["name"])
+		tmpSection = removeStuff(group["name"])
 		if doc.Escape {
 			tmpSection = EscapeSpecChars(tmpSection)
 		}

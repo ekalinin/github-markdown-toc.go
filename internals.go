@@ -16,7 +16,7 @@ const (
 	userAgent = "github-markdown-toc.go v" + Version
 )
 
-// doHTTPReq executes a particullar http request
+// doHTTPReq executes a particular http request
 func doHTTPReq(req *http.Request) ([]byte, string, error) {
 	req.Header.Set("User-Agent", userAgent)
 	client := &http.Client{}
@@ -75,8 +75,8 @@ func httpPost(urlPath, filePath, token string) (string, error) {
 	return string(resp), err
 }
 
-// removeStuf trims spaces, removes new lines and code tag from a string
-func removeStuf(s string) string {
+// removeStuff trims spaces, removes new lines and code tag from a string
+func removeStuff(s string) string {
 	res := strings.Replace(s, "\n", "", -1)
 	res = strings.Replace(res, "<code>", "", -1)
 	res = strings.Replace(res, "</code>", "", -1)
@@ -105,9 +105,9 @@ func EscapeSpecChars(s string) string {
 	return res
 }
 
-// ConvertMd2Html Sends Markdown to the github converter
+// ConvertMd2Html Sends Markdown to the GitHub converter
 // and returns html
-func ConvertMd2Html(localpath string, token string) (string, error) {
+func ConvertMd2Html(localPath string, token string) (string, error) {
 	url := "https://api.github.com/markdown/raw"
-	return httpPost(url, localpath, token)
+	return httpPost(url, localPath, token)
 }

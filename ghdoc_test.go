@@ -378,3 +378,37 @@ func TestNewGHDocWithDebug(t *testing.T) {
 		t.Error("\nGot :", got.String(), "\nWant:", want)
 	}
 }
+
+func TestGHDocConvert2HTML(t *testing.T) {
+	remotePath := "https://github.com/some/readme.md"
+	token := "some-gh-token"
+	doc := NewGHDoc(remotePath, true, 0, 0,
+		true, token, 4, false)
+
+	// mock for getting remote raw README text
+	htmlResponse := []byte("raw md text")
+	doc.httpGetter = func(urlPath string) ([]byte, string, error) {
+		if urlPath != remotePath {
+			t.Error("Wrong urlPath. \nGot :", urlPath, "\nWant:", remotePath)
+		}
+		return htmlResponse, "text/plain;utf-8", nil
+	}
+
+	// mock for converting md to txt
+	ghURL := "https://api.github.com/markdown/raw"
+	htmlBody := `<h1>header></h1>some text`
+	doc.httpPoster = func(urlPath, filePath, token string) (string, error) {
+		if urlPath != ghURL {
+			if urlPath != remotePath {
+				t.Error("Wrong urlPath. \nGot :", urlPath, "\nWant:", ghURL)
+			}
+		}
+		return htmlBody, nil
+	}
+	if err := doc.Convert2HTML(); err != nil {
+		t.Error("Got error:", err)
+	}
+	if doc.html != htmlBody {
+		t.Error("Wrong html. \nGot :", doc.html, "\nWant:", htmlBody)
+	}
+}

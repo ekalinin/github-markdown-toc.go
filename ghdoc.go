@@ -28,6 +28,9 @@ func (toc *GHToc) Print(w io.Writer) error {
 	return nil
 }
 
+type httpGetter func(urlPath string) ([]byte, string, error)
+type httpPoster func(urlPath, filePath, token string) (string, error)
+
 // GHDoc GitHub document
 type GHDoc struct {
 	Path       string
@@ -40,6 +43,8 @@ type GHDoc struct {
 	Debug      bool
 	html       string
 	logger     *log.Logger
+	httpGetter httpGetter
+	httpPoster httpPoster
 }
 
 // NewGHDoc create GHDoc
@@ -55,6 +60,8 @@ func NewGHDoc(Path string, AbsPaths bool, StartDepth int, Depth int, Escape bool
 		Debug:      Debug,
 		html:       "",
 		logger:     log.New(os.Stderr, "", log.LstdFlags),
+		httpGetter: httpGet,
+		httpPoster: httpPost,
 	}
 }
 
@@ -75,13 +82,18 @@ func (doc *GHDoc) IsRemoteFile() bool {
 	return true
 }
 
+func (doc *GHDoc) convertMd2Html(localPath string, token string) (string, error) {
+	ghURL := "https://api.github.com/markdown/raw"
+	return doc.httpPoster(ghURL, localPath, token)
+}
+
 // Convert2HTML downloads remote file
 func (doc *GHDoc) Convert2HTML() error {
 	doc.d("Convert2HTML: start.")
 	defer doc.d("Convert2HTML: done.")
 
 	if doc.IsRemoteFile() {
-		htmlBody, ContentType, err := httpGet(doc.Path)
+		htmlBody, ContentType, err := doc.httpGetter(doc.Path)
 		doc.d("Convert2HTML: remote file. content-type: " + ContentType)
 		if err != nil {
 			return err
@@ -109,7 +121,7 @@ func (doc *GHDoc) Convert2HTML() error {
 	if _, err := os.Stat(doc.Path); os.IsNotExist(err) {
 		return err
 	}
-	htmlBody, err := ConvertMd2Html(doc.Path, doc.GhToken)
+	htmlBody, err := doc.convertMd2Html(doc.Path, doc.GhToken)
 	doc.d("Convert2HTML: converted to html, size: " + strconv.Itoa(len(htmlBody)))
 	if err != nil {
 		return err

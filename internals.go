@@ -104,10 +104,3 @@ func EscapeSpecChars(s string) string {
 	}
 	return res
 }
-
-// ConvertMd2Html Sends Markdown to the GitHub converter
-// and returns html
-func ConvertMd2Html(localPath string, token string) (string, error) {
-	url := "https://api.github.com/markdown/raw"
-	return httpPost(url, localPath, token)
-}

@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func Test_IsUrl(t *testing.T) {
+func TestIsUrl(t *testing.T) {
 	doc1 := &GHDoc{
 		Path: "https://github.com/ekalinin/envirius/blob/master/README.md",
 	}
@@ -22,7 +22,7 @@ func Test_IsUrl(t *testing.T) {
 	}
 }
 
-func Test_GrabTocOneRow(t *testing.T) {
+func TestGrabTocOneRow(t *testing.T) {
 	tocExpected := []string{
 		"* [README in another language](#readme-in-another-language)",
 	}
@@ -40,7 +40,7 @@ func Test_GrabTocOneRow(t *testing.T) {
 	}
 }
 
-func Test_GrabTocOneRowWithNewLines(t *testing.T) {
+func TestGrabTocOneRowWithNewLines(t *testing.T) {
 	tocExpected := []string{
 		"* [README in another language](#readme-in-another-language)",
 	}
@@ -63,7 +63,7 @@ func Test_GrabTocOneRowWithNewLines(t *testing.T) {
 	}
 }
 
-func Test_GrabTocMultilineOriginGithub(t *testing.T) {
+func TestGrabTocMultilineOriginGithub(t *testing.T) {
 
 	tocExpected := []string{
 		"* [How to add a plugin?](#how-to-add-a-plugin)",
@@ -101,7 +101,7 @@ For example:</p>
 	}
 }
 
-func Test_GrabTocBackquoted(t *testing.T) {
+func TestGrabTocBackquoted(t *testing.T) {
 	tocExpected := []string{
 		"* [The command foo1](#the-command-foo1)",
 		"  * [The command foo2 is better](#the-command-foo2-is-better)",
@@ -144,7 +144,7 @@ func Test_GrabTocBackquoted(t *testing.T) {
 	}
 }
 
-func Test_GrabTocDepth(t *testing.T) {
+func TestGrabTocDepth(t *testing.T) {
 	tocExpected := []string{
 		"* [The command foo1](#the-command-foo1)",
 		"* [The command bar1](#the-command-bar1)",
@@ -187,7 +187,7 @@ func Test_GrabTocDepth(t *testing.T) {
 	}
 }
 
-func Test_GrabTocStartDepth(t *testing.T) {
+func TestGrabTocStartDepth(t *testing.T) {
 	tocExpected := []string{
 		"* [The command foo2 is better](#the-command-foo2-is-better)",
 		"  * [The command foo3 is even betterer](#the-command-foo3-is-even-betterer)",
@@ -242,7 +242,7 @@ func Test_GrabTocStartDepth(t *testing.T) {
 	}
 }
 
-func Test_GrabTocWithAbspath(t *testing.T) {
+func TestGrabTocWithAbspath(t *testing.T) {
 	link := "https://github.com/ekalinin/envirius/blob/master/README.md"
 	tocExpected := []string{
 		"* [README in another language](" + link + "#readme-in-another-language)",
@@ -261,7 +261,7 @@ func Test_GrabTocWithAbspath(t *testing.T) {
 	}
 }
 
-func Test_EscapedChars(t *testing.T) {
+func TestEscapedChars(t *testing.T) {
 	tocExpected := []string{
 		"* [mod\\_\\*](#mod_)",
 	}
@@ -287,7 +287,7 @@ func Test_EscapedChars(t *testing.T) {
 	}
 }
 
-func Test_CustomSpaceIndentation(t *testing.T) {
+func TestCustomSpaceIndentation(t *testing.T) {
 	tocExpected := []string{
 		"* [Header Level1](#header-level1)",
 		"    * [Header Level2](#header-level2)",
@@ -319,7 +319,7 @@ func Test_CustomSpaceIndentation(t *testing.T) {
 	}
 }
 
-func Test_MinHeaderNumber(t *testing.T) {
+func TestMinHeaderNumber(t *testing.T) {
 	tocExpected := []string{
 		"* [foo](#foo)",
 		"  * [bar](#bar)",
@@ -351,7 +351,7 @@ func Test_MinHeaderNumber(t *testing.T) {
 	}
 }
 
-func TestGHToc_Print(t *testing.T) {
+func TestGHTocPrint(t *testing.T) {
 	toc := GHToc{"one", "two"}
 	want := "one\ntwo\n\n"
 	var got bytes.Buffer

@@ -10,7 +10,7 @@ import (
 	"testing"
 )
 
-func Test_httpGet(t *testing.T) {
+func TestHttpGet(t *testing.T) {
 	expected := "dummy data"
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		_, err := fmt.Fprint(w, expected)
@@ -31,7 +31,7 @@ func Test_httpGet(t *testing.T) {
 	}
 }
 
-func Test_httpGetForbidden(t *testing.T) {
+func TestHttpGetForbidden(t *testing.T) {
 	txt := "please, do not try"
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusForbidden)
@@ -55,7 +55,9 @@ func createTmp(content string) (string, error) {
 	}
 
 	if _, err := tmpFile.Write([]byte(content)); err != nil {
-		tmpFile.Close()
+		if err := tmpFile.Close(); err != nil {
+			return "", err
+		}
 		log.Fatal(err)
 	}
 	if err := tmpFile.Close(); err != nil {
@@ -65,7 +67,7 @@ func createTmp(content string) (string, error) {
 	return tmpFile.Name(), nil
 }
 
-func Test_httpPost(t *testing.T) {
+func TestHttpPost(t *testing.T) {
 	token := "xxx-token-yyy"
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != "POST" {

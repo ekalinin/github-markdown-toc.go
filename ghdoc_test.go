@@ -2,7 +2,9 @@ package ghtoc
 
 import (
 	"bytes"
+	"errors"
 	"log"
+	"os"
 	"testing"
 )
 
@@ -410,5 +412,73 @@ func TestGHDocConvert2HTML(t *testing.T) {
 	}
 	if doc.html != htmlBody {
 		t.Error("Wrong html. \nGot :", doc.html, "\nWant:", htmlBody)
+	}
+}
+
+func TestGHDocConvert2HTMLNonPlainText(t *testing.T) {
+	remotePath := "https://github.com/some/readme.md"
+	token := "some-gh-token"
+	doc := NewGHDoc(remotePath, true, 0, 0,
+		true, token, 4, false)
+
+	// mock for getting remote raw README text
+	htmlResponse := []byte("raw md text")
+	doc.httpGetter = func(_ string) ([]byte, string, error) {
+		return htmlResponse, "text/html;utf-8", nil
+	}
+	// should not call converter to HTML
+	doc.httpPoster = func(urlPath, filePath, token string) (string, error) {
+		t.Error("Should not call httpPost (via convertMd2Html)")
+		return "", nil
+	}
+	if err := doc.Convert2HTML(); err != nil {
+		t.Error("Got error:", err)
+	}
+	if doc.html != string(htmlResponse) {
+		t.Error("Wrong html. \nGot :", doc.html, "\nWant:", string(htmlResponse))
+	}
+}
+
+func TestGHDocConvert2HTMLErrorConvert(t *testing.T) {
+	remotePath := "https://github.com/some/readme.md"
+	token := "some-gh-token"
+	errGet := errors.New("error from http get")
+	doc := NewGHDoc(remotePath, true, 0, 0,
+		true, token, 4, false)
+
+	// mock for getting remote raw README text
+	doc.httpGetter = func(urlPath string) ([]byte, string, error) {
+		return nil, "", errGet
+	}
+
+	err := doc.Convert2HTML()
+	if err == nil {
+		t.Error("Should get error from http get!")
+	}
+
+	if !errors.Is(err, errGet) {
+		t.Error("Wrong error. \nGot :", err, "\nWant:", errGet)
+	}
+}
+
+func TestGHDocConvert2HTMLLocalFileNotExists(t *testing.T) {
+	localPath := "/some/readme.md"
+	token := "some-gh-token"
+	doc := NewGHDoc(localPath, true, 0, 0,
+		true, token, 4, false)
+
+	// should not be called
+	doc.httpGetter = func(_ string) ([]byte, string, error) {
+		t.Error("Should not call httpGet")
+		return nil, "", nil
+	}
+
+	err := doc.Convert2HTML()
+	if err == nil {
+		t.Error("Should get error from file checking.")
+	}
+
+	if !errors.Is(err, os.ErrNotExist) {
+		t.Error("Wrong error. \nGot :", err, "\nWant:", os.ErrNotExist)
 	}
 }

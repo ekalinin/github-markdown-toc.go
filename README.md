@@ -68,7 +68,7 @@ $ ./gh-md-toc --version
 Compiling from source
 ---------------------
 
-You need golang installed is your OS:
+You need golang installed in your OS:
 
 ```bash
 $ make build
@@ -90,6 +90,15 @@ Flags:
 
 Args:
   [<path>]  Local path or URL of the document to grab TOC. Read MD from stdin if not entered.
+```
+
+Go Install
+------------------
+
+You need golang installed in your OS:
+
+```bash
+go install "github.com/ekalinin/github-markdown-toc.go/cmd/gh-md-toc@latest"
 ```
 
 Homebew (Mac only)

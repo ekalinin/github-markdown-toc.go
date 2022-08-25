@@ -482,3 +482,38 @@ func TestGHDocConvert2HTMLLocalFileNotExists(t *testing.T) {
 		t.Error("Wrong error. \nGot :", err, "\nWant:", os.ErrNotExist)
 	}
 }
+
+func TestGrabToc_issue35(t *testing.T) {
+	// As of 2022-08-25, GitHub API returns the HTML in the below format.
+	doc := &GHDoc{
+		html: `
+<h1><a id="user-content-one" class="anchor" aria-hidden="true" href="#one"><span aria-hidden="true" class="octicon octicon-link"></span></a>One</h1>
+<p>Uno</p>
+<h2><a id="user-content-two" class="anchor" aria-hidden="true" href="#two"><span aria-hidden="true" class="octicon octicon-link"></span></a>Two</h2>
+<p>Dos</p>
+<h3><a id="user-content-three" class="anchor" aria-hidden="true" href="#three"><span aria-hidden="true" class="octicon octicon-link"></span></a>Three</h3>
+<p>Tres</p>`,
+		AbsPaths: false,
+		Depth:    0,
+		Indent:   2,
+	}
+
+	tocExpected := []string{
+		"* [One](#one)",
+		"  * [Two](#two)",
+		"    * [Three](#three)",
+	}
+	toc := *doc.GrabToc()
+
+	// Require not empty
+	if len(toc) == 0 {
+		t.Fatal("returned ToC is empty. GrabToc could not parse the HTML")
+	}
+
+	// Assert equal
+	for i, tocActual := range toc {
+		if tocExpected[i] != tocActual {
+			t.Error("Res :", tocActual, "\nExpected     :", tocExpected)
+		}
+	}
+}

@@ -144,6 +144,7 @@ func (doc *GHDoc) GrabToc() *GHToc {
 
 	re := `(?si)<h(?P<num>[1-6])>\s*` +
 		`<a\s*id="user-content-[^"]*"\s*class="anchor"\s*` +
+		`(aria-hidden="[^"]*"\s*)?` +
 		`href="(?P<href>[^"]*)"[^>]*>\s*` +
 		`.*?</a>(?P<name>.*?)</h`
 	r := regexp.MustCompile(re)

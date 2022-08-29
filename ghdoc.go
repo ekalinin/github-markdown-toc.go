@@ -3,7 +3,6 @@ package ghtoc
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/url"
 	"os"
@@ -107,13 +106,13 @@ func (doc *GHDoc) Convert2HTML() error {
 
 		// if remote file's content is a plain text
 		// we need to convert it to html
-		tmpfile, err := ioutil.TempFile("", "ghtoc-remote-txt")
+		tmpfile, err := os.CreateTemp("", "ghtoc-remote-txt")
 		if err != nil {
 			return err
 		}
 		defer tmpfile.Close()
 		doc.Path = tmpfile.Name()
-		if err = ioutil.WriteFile(tmpfile.Name(), htmlBody, 0644); err != nil {
+		if err = os.WriteFile(tmpfile.Name(), htmlBody, 0644); err != nil {
 			return err
 		}
 	}
@@ -129,7 +128,7 @@ func (doc *GHDoc) Convert2HTML() error {
 	if doc.Debug {
 		htmlFile := doc.Path + ".debug.html"
 		doc.d("Convert2HTML: write html file: " + htmlFile)
-		if err := ioutil.WriteFile(htmlFile, []byte(htmlBody), 0644); err != nil {
+		if err := os.WriteFile(htmlFile, []byte(htmlBody), 0644); err != nil {
 			return err
 		}
 	}

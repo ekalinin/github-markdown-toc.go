@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"errors"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"strings"
@@ -26,7 +25,7 @@ func doHTTPReq(req *http.Request) ([]byte, string, error) {
 	}
 
 	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return []byte{}, "", err
 	}

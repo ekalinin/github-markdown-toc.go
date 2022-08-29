@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 
 	"gopkg.in/alecthomas/kingpin.v2"
@@ -72,14 +72,14 @@ func main() {
 
 	// read md from stdin
 	if pathsCount == 0 {
-		bytes, err := ioutil.ReadAll(os.Stdin)
+		bytes, err := io.ReadAll(os.Stdin)
 		check(err)
 
-		file, err := ioutil.TempFile(os.TempDir(), "ghtoc")
+		file, err := os.CreateTemp(os.TempDir(), "ghtoc")
 		check(err)
 		defer os.Remove(file.Name())
 
-		check(ioutil.WriteFile(file.Name(), bytes, 0644))
+		check(os.WriteFile(file.Name(), bytes, 0644))
 		check(ghtoc.NewGHDoc(file.Name(), false, *startDepth, *depth, !*noEscape, *token, *indent, *debug).
 			GetToc().
 			Print(os.Stdout))

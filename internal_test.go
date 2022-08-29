@@ -2,7 +2,6 @@ package ghtoc
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"net/http/httptest"
@@ -49,7 +48,7 @@ func TestHttpGetForbidden(t *testing.T) {
 }
 
 func createTmp(content string) (string, error) {
-	tmpFile, err := ioutil.TempFile("", "example.*.txt")
+	tmpFile, err := os.CreateTemp("", "example.*.txt")
 	if err != nil {
 		log.Fatal(err)
 	}

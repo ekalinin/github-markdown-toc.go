@@ -483,6 +483,35 @@ func TestGHDocConvert2HTMLLocalFileNotExists(t *testing.T) {
 	}
 }
 
+// Cover the changes of `ioutil.*` to `os.*` in Convert2HTML.
+func TestGHDocConvert2HTML_issue35(t *testing.T) {
+	remotePath := "https://github.com/some/readme.md"
+	token := "some-gh-token"
+
+	// enable debug
+	doc := NewGHDoc(remotePath, true, 0, 0, true, token, 4, true)
+
+	// mock for getting remote raw README text
+	htmlResponse := []byte("raw md text")
+	doc.httpGetter = func(urlPath string) ([]byte, string, error) {
+		return htmlResponse, "text/plain;utf-8", nil
+	}
+
+	// mock for converting md to txt
+	htmlBody := `<h1>header></h1>some text`
+	doc.httpPoster = func(urlPath, filePath, token string) (string, error) {
+		return htmlBody, nil
+	}
+
+	if err := doc.Convert2HTML(); err != nil {
+		t.Error("Got error:", err)
+	}
+
+	if doc.html != htmlBody {
+		t.Error("Wrong html. \nGot :", doc.html, "\nWant:", htmlBody)
+	}
+}
+
 func TestGrabToc_issue35(t *testing.T) {
 	// As of 2022-08-25, GitHub API returns the HTML in the below format.
 	doc := &GHDoc{

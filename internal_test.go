@@ -2,7 +2,6 @@ package ghtoc
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"net/http/httptest"
@@ -49,7 +48,7 @@ func TestHttpGetForbidden(t *testing.T) {
 }
 
 func createTmp(content string) (string, error) {
-	tmpFile, err := ioutil.TempFile("", "example.*.txt")
+	tmpFile, err := os.CreateTemp("", "example.*.txt")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -90,5 +89,36 @@ func TestHttpPost(t *testing.T) {
 	_, err = httpPost(srv.URL, fileName, token)
 	if err != nil {
 		t.Error("Should not be err", err)
+	}
+}
+
+// Cover the changes of ioutil.ReadAll to io.ReadAll in doHTTPReq.
+func Test_doHTTPReq_issue35(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintln(w, "Hello, client")
+	}))
+	defer srv.Close()
+
+	dummyURL := srv.URL
+
+	req, err := http.NewRequest("POST", dummyURL, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	resBody, resHeader, err := doHTTPReq(req)
+
+	// Require no error
+	if err != nil {
+		t.Fatal("doHTTPReq should not be err:", err.Error())
+	}
+
+	// Assert response body
+	if string(resBody) != "Hello, client\n" {
+		t.Error("response body should be \"Hello, client\", but got:", string(resBody))
+	}
+	// Assert response header
+	if resHeader != "text/plain; charset=utf-8" {
+		t.Error("response header should be \"Hello, client\", but got:", resHeader)
 	}
 }

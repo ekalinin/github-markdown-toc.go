@@ -1,6 +1,6 @@
 module github.com/ekalinin/github-markdown-toc.go
 
-go 1.17
+go 1.19
 
 require gopkg.in/alecthomas/kingpin.v2 v2.2.4
 
@@ -14,4 +14,6 @@ require (
 	github.com/mattn/go-isatty v0.0.14 // indirect
 	github.com/sergi/go-diff v1.2.0 // indirect
 	github.com/stretchr/testify v1.7.0 // indirect
+	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616 // indirect
+	golang.org/x/tools v0.2.0 // indirect
 )

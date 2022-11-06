@@ -6,7 +6,6 @@ import (
 	"log"
 	"net/url"
 	"os"
-	"regexp"
 	"strconv"
 	"strings"
 )
@@ -141,12 +140,7 @@ func (doc *GHDoc) GrabToc() *GHToc {
 	doc.d("GrabToc: start, html size: " + strconv.Itoa(len(doc.html)))
 	defer doc.d("GrabToc: done.")
 
-	re := `(?si)<h(?P<num>[1-6])>\s*` +
-		`<a\s*id="user-content-[^"]*"\s*class="anchor"\s*` +
-		`(aria-hidden="[^"]*"\s*)?` +
-		`href="(?P<href>[^"]*)"[^>]*>\s*` +
-		`.*?</a>(?P<name>.*?)</h`
-	r := regexp.MustCompile(re)
+	r := headerRegexp()
 	listIndentation := generateListIndentation(doc.Indent)
 
 	toc := GHToc{}

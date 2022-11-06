@@ -30,7 +30,7 @@ func TestGrabTocOneRow(t *testing.T) {
 	}
 	doc := &GHDoc{
 		html: `
-		<h1><a id="user-content-readme-in-another-language" class="anchor" href="#readme-in-another-language" aria-hidden="true"><span class="octicon octicon-link"></span></a>README in another language</h1>
+		<h1><a id="user-content-readme-in-another-language" class="anchor" aria-hidden="true" href="#readme-in-another-language"><span class="octicon octicon-link"></span></a>README in another language</h1>
 		`,
 		AbsPaths: false,
 		Depth:    0,

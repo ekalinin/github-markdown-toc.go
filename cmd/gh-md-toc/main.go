@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io"
+	"log"
 	"os"
 
 	"gopkg.in/alecthomas/kingpin.v2"
@@ -48,10 +49,11 @@ func main() {
 
 	for _, p := range *paths {
 		ghdoc := ghtoc.NewGHDoc(p, absPathsInToc, *startDepth, *depth, !*noEscape, *token, *indent, *debug)
+		getFn := func(ch chan *ghtoc.GHToc, ghdoc *ghtoc.GHDoc) { ch <- ghdoc.GetToc() }
 		if *serial {
-			ch <- ghdoc.GetToc()
+			getFn(ch, ghdoc)
 		} else {
-			go func(path string) { ch <- ghdoc.GetToc() }(p)
+			go getFn(ch, ghdoc)
 		}
 	}
 
@@ -62,8 +64,15 @@ func main() {
 		fmt.Println()
 	}
 
+	// DEBUG BEGIN
+	log.Printf("*** CHUCK:  pathsCount: %+#v", pathsCount)
+	// DEBUG END
+
 	for i := 1; i <= pathsCount; i++ {
 		toc := <-ch
+		// DEBUG BEGIN
+		log.Printf("*** CHUCK: in loop toc: %+#v", toc)
+		// DEBUG END
 		// #14, check if there's really TOC?
 		if toc != nil {
 			check(toc.Print(os.Stdout))

@@ -75,13 +75,6 @@ func findHeaders(r io.Reader) []Header {
 			return hdrs
 		case html.StartTagToken:
 			t := tokenizer.Token()
-
-			// DEBUG BEGIN
-			log.Printf("*** CHUCK:  default t: %+#v", t)
-			// log.Printf("*** CHUCK: default t.Type: %+#v", t.Type)
-			// log.Printf("*** CHUCK: default t.DataAtom: %+#v", t.DataAtom)
-			// DEBUG END
-
 			if hdr, ok := createHeader(tokenizer, t); ok {
 				hdrs = append(hdrs, hdr)
 			}
@@ -118,10 +111,15 @@ func createHeader(tokenizer *html.Tokenizer, token html.Token) (Header, bool) {
 	}
 
 	var href, name string
-	tokenDepth := 0
+	// Start at 1 because we are inside the Hx tag
+	tokenDepth := 1
 	for {
 		tokenizer.Next()
 		t := tokenizer.Token()
+		// DEBUG BEGIN
+		log.Printf("*** CHUCK: createHeader t: %+#v", t)
+		log.Printf("*** CHUCK: createHeader tokenDepth: %+#v", tokenDepth)
+		// DEBUG END
 		switch t.Type {
 		case html.ErrorToken:
 			return Header{}, false
@@ -147,7 +145,7 @@ func createHeader(tokenizer *html.Tokenizer, token html.Token) (Header, bool) {
 			tokenDepth--
 		case html.TextToken:
 			if tokenDepth == 1 {
-				name = t.Data
+				name = strings.TrimSpace(t.Data)
 			}
 		}
 	}

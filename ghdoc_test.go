@@ -95,9 +95,6 @@ For example:</p>
 		Depth:  0,
 		Indent: 2,
 	}
-	// DEBUG BEGIN
-	log.Printf("*** CHUCK: ========")
-	// DEBUG END
 	toc := *doc.GrabToc()
 	for i := 0; i <= len(tocExpected)-1; i++ {
 		if toc[i] != tocExpected[i] {

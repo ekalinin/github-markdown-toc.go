@@ -161,19 +161,9 @@ func (doc *GHDoc) GrabToc() *GHToc {
 
 	toc := GHToc{}
 	for _, hdr := range hdrs {
-		// DEBUG BEGIN
-		log.Printf("*** CHUCK: GrabToc hdr: %+#v", hdr)
-		log.Printf("*** CHUCK: GrabToc minDepth: %+#v", minDepth)
-		log.Printf("*** CHUCK: GrabToc maxDepth: %+#v", maxDepth)
-		// DEBUG END
 		hDepth := int(hdr.Depth)
 		if hDepth >= minDepth && hDepth <= maxDepth {
 			indentDepth := int(hdr.Depth) - int(minHxDepth) - doc.StartDepth
-			// DEBUG BEGIN
-			log.Printf("*** CHUCK: GrabToc minHxDepth: %+#v", minHxDepth)
-			log.Printf("*** CHUCK: GrabToc doc.StartDepth: %+#v", doc.StartDepth)
-			log.Printf("*** CHUCK: GrabToc indentDepth: %+#v", indentDepth)
-			// DEBUG END
 			indent := strings.Repeat(listIndentation(), indentDepth)
 			toc = append(toc, doc.tocEntry(indent, hdr))
 		}

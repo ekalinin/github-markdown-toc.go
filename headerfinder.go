@@ -2,7 +2,6 @@ package ghtoc
 
 import (
 	"io"
-	"log"
 	"regexp"
 	"strings"
 
@@ -116,10 +115,6 @@ func createHeader(tokenizer *html.Tokenizer, token html.Token) (Header, bool) {
 	for {
 		tokenizer.Next()
 		t := tokenizer.Token()
-		// DEBUG BEGIN
-		log.Printf("*** CHUCK: createHeader t: %+#v", t)
-		log.Printf("*** CHUCK: createHeader tokenDepth: %+#v", tokenDepth)
-		// DEBUG END
 		switch t.Type {
 		case html.ErrorToken:
 			return Header{}, false

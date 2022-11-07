@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"golang.org/x/net/html"
 )
 
 const singleH1 = `
@@ -76,5 +77,23 @@ func TestFindHeaders(t *testing.T) {
 			Header{Depth: 3, Href: "#second-subsection", Name: "Second Subsection"},
 			results[4],
 		)
+	})
+}
+
+func TestFindAttribute(t *testing.T) {
+	worldGreeting := html.Attribute{Namespace: "", Key: "greeting", Val: "Hello, World!"}
+	spaceGreeting := html.Attribute{Namespace: "outer-space", Key: "greeting", Val: "Hello, Space!"}
+	attrs := []html.Attribute{spaceGreeting, worldGreeting}
+	t.Run("attribute exists", func(t *testing.T) {
+		attr, ok := findAttribute(attrs, "", "greeting")
+		assert.True(t, ok)
+		assert.Equal(t, worldGreeting, attr)
+
+		attr, ok = findAttribute(attrs, "outer-space", "greeting")
+		assert.True(t, ok)
+		assert.Equal(t, spaceGreeting, attr)
+	})
+	t.Run("attribute does not exist", func(t *testing.T) {
+		t.Error("IMPLEMENT ME!")
 	})
 }

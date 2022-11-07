@@ -2,7 +2,6 @@ package ghtoc
 
 import (
 	"io"
-	"regexp"
 	"strings"
 
 	"golang.org/x/net/html"
@@ -14,42 +13,6 @@ type HxDepth int
 
 // InvalidDepth designates that the data atom is not a valid Hx.
 const InvalidDepth HxDepth = -1
-
-const _headerRegexpStr = `(?si)<h(?P<num>[1-6])>\s*` +
-	`<a\s*id="user-content-[^"]*"\s*class="anchor"\s*` +
-	`href="(?P<href>[^"]*)"[^>]*>\s*` +
-	`.*?</a>(?P<name>.*?)</h`
-
-// const _headerRegexpStr = `(?si)<h(?P<num>[1-6])>\s*` +
-// 	`<a\s.*` +
-// 	`\bid="user-content-[^"]*"\s.*` +
-// 	`\bclass="anchor"\s.*` +
-// 	`\bhref="(?P<href>[^"]*)"\s.*` +
-// 	`[^>]*>` +
-// 	`.*?</a>(?P<name>.*?)</h`
-
-// const _newHeaderRegexpStr = `(?si)<h(?P<num>[1-6])>\s*` +
-// 	`<a\s.*\bid="user-content-[^"]*"\s.*\bclass="anchor"\s.*` +
-// 	`\bhref="(?P<href>[^"]*)"[^>]*>\s*` +
-// 	`.*?</a>(?P<name>.*?)</h`
-
-var _headerRegexp *regexp.Regexp
-
-// var _newHeaderRegexp *regexp.Regexp
-
-func headerRegexp() *regexp.Regexp {
-	if _headerRegexp == nil {
-		_headerRegexp = regexp.MustCompile(_headerRegexpStr)
-	}
-	return _headerRegexp
-}
-
-// func newHeaderRegexp() *regexp.Regexp {
-// 	if _newHeaderRegexp == nil {
-// 		_newHeaderRegexp = regexp.MustCompile(_newHeaderRegexpStr)
-// 	}
-// 	return _newHeaderRegexp
-// }
 
 // Header represents an HTML header
 type Header struct {
@@ -81,11 +44,6 @@ func findHeaders(r io.Reader) []Header {
 	}
 }
 
-// func isHxTag(dataAtom atom.Atom) bool {
-// 	depth := getHxDepth(dataAtom)
-// 	return (depth != InvalidDepth)
-// }
-
 func getHxDepth(dataAtom atom.Atom) HxDepth {
 	depths := []atom.Atom{
 		atom.H1,
@@ -109,9 +67,11 @@ func createHeader(tokenizer *html.Tokenizer, token html.Token) (Header, bool) {
 		return Header{}, false
 	}
 
-	var href, name string
+	var href string
+	var nameParts []string
 	// Start at 1 because we are inside the Hx tag
 	tokenDepth := 1
+	afterAnchor := false
 	for {
 		tokenizer.Next()
 		t := tokenizer.Token()
@@ -129,18 +89,21 @@ func createHeader(tokenizer *html.Tokenizer, token html.Token) (Header, bool) {
 				}
 			}
 		case html.EndTagToken:
-			// If we encountered the matching end tag for the Hx, then we are done
-			if t.DataAtom == token.DataAtom {
+			switch t.DataAtom {
+			case token.DataAtom:
+				// If we encountered the matching end tag for the Hx, then we are done
 				return Header{
 					Depth: hxDepth,
-					Name:  name,
+					Name:  removeStuff(strings.Join(nameParts, " ")),
 					Href:  href,
 				}, true
+			case atom.A:
+				afterAnchor = true
 			}
 			tokenDepth--
 		case html.TextToken:
-			if tokenDepth == 1 {
-				name = strings.TrimSpace(t.Data)
+			if afterAnchor {
+				nameParts = append(nameParts, removeStuff(t.Data))
 			}
 		}
 	}

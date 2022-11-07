@@ -142,9 +142,25 @@ func (doc *GHDoc) GrabToc() *GHToc {
 
 	listIndentation := generateListIndentation(doc.Indent)
 
+	minDepth := doc.StartDepth
+	var maxDepth int
+	if doc.Depth > 0 {
+		maxDepth = doc.Depth - 1
+	} else {
+		maxDepth = int(MaxHxDepth)
+	}
+
 	toc := GHToc{}
 	for _, hdr := range findHeadersInString(doc.html) {
-		toc = append(toc, doc.tocEntry(listIndentation(), hdr))
+		// DEBUG BEGIN
+		log.Printf("*** CHUCK: GrabToc hdr: %+#v", hdr)
+		log.Printf("*** CHUCK: GrabToc minDepth: %+#v", minDepth)
+		log.Printf("*** CHUCK: GrabToc maxDepth: %+#v", maxDepth)
+		// DEBUG END
+		hDepth := int(hdr.Depth)
+		if hDepth >= minDepth && hDepth <= maxDepth {
+			toc = append(toc, doc.tocEntry(listIndentation(), hdr))
+		}
 	}
 
 	return &toc

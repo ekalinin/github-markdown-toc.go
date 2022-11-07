@@ -180,8 +180,16 @@ func TestGrabTocDepth(t *testing.T) {
 		Depth:  1,
 		Indent: 2,
 	}
+	// DEBUG BEGIN
+	log.Printf("*** CHUCK: ==========")
+	// DEBUG END
 	toc := *doc.GrabToc()
-
+	// DEBUG BEGIN
+	log.Printf("*** CHUCK toc: ")
+	for idx, item := range toc {
+		log.Printf("*** CHUCK %d: %+#v", idx, item)
+	}
+	// DEBUG END
 	for i := 0; i <= len(tocExpected)-1; i++ {
 		if toc[i] != tocExpected[i] {
 			t.Error("Res :", toc[i], "\nExpected      :", tocExpected[i])

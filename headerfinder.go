@@ -14,6 +14,10 @@ type HxDepth int
 // InvalidDepth designates that the data atom is not a valid Hx.
 const InvalidDepth HxDepth = -1
 
+// MaxHxDepth is the maximum HxDepth value.
+// H6 is the last Hx tag (5 = 6 - 1)
+const MaxHxDepth HxDepth = 5
+
 // Header represents an HTML header
 type Header struct {
 	Depth HxDepth

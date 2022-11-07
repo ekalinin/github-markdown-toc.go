@@ -150,8 +150,17 @@ func (doc *GHDoc) GrabToc() *GHToc {
 		maxDepth = int(MaxHxDepth)
 	}
 
+	hdrs := findHeadersInString(doc.html)
+
+	minHxDepth := MaxHxDepth
+	for _, hdr := range hdrs {
+		if hdr.Depth < minHxDepth {
+			minHxDepth = hdr.Depth
+		}
+	}
+
 	toc := GHToc{}
-	for _, hdr := range findHeadersInString(doc.html) {
+	for _, hdr := range hdrs {
 		// DEBUG BEGIN
 		log.Printf("*** CHUCK: GrabToc hdr: %+#v", hdr)
 		log.Printf("*** CHUCK: GrabToc minDepth: %+#v", minDepth)
@@ -159,7 +168,14 @@ func (doc *GHDoc) GrabToc() *GHToc {
 		// DEBUG END
 		hDepth := int(hdr.Depth)
 		if hDepth >= minDepth && hDepth <= maxDepth {
-			toc = append(toc, doc.tocEntry(listIndentation(), hdr))
+			indentDepth := int(hdr.Depth) - int(minHxDepth) - doc.StartDepth
+			// DEBUG BEGIN
+			log.Printf("*** CHUCK: GrabToc minHxDepth: %+#v", minHxDepth)
+			log.Printf("*** CHUCK: GrabToc doc.StartDepth: %+#v", doc.StartDepth)
+			log.Printf("*** CHUCK: GrabToc indentDepth: %+#v", indentDepth)
+			// DEBUG END
+			indent := strings.Repeat(listIndentation(), indentDepth)
+			toc = append(toc, doc.tocEntry(indent, hdr))
 		}
 	}
 
@@ -167,8 +183,7 @@ func (doc *GHDoc) GrabToc() *GHToc {
 }
 
 func (doc *GHDoc) tocEntry(indent string, hdr Header) string {
-	indentDepth := int(hdr.Depth) - doc.StartDepth
-	return strings.Repeat(indent, indentDepth) + "* " +
+	return indent + "* " +
 		"[" + doc.tocName(hdr.Name) + "]" +
 		"(" + doc.tocLink(hdr.Href) + ")"
 }

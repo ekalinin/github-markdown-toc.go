@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/net/html"
+	"golang.org/x/net/html/atom"
 )
 
 const singleH1 = `
@@ -97,4 +98,14 @@ func TestFindAttribute(t *testing.T) {
 		_, ok := findAttribute(attrs, "", "doesnotexist")
 		assert.False(t, ok)
 	})
+}
+
+func TestGetHxDepth(t *testing.T) {
+	assert.Equal(t, HxDepth(0), getHxDepth(atom.H1))
+	assert.Equal(t, HxDepth(1), getHxDepth(atom.H2))
+	assert.Equal(t, HxDepth(2), getHxDepth(atom.H3))
+	assert.Equal(t, HxDepth(3), getHxDepth(atom.H4))
+	assert.Equal(t, HxDepth(4), getHxDepth(atom.H5))
+	assert.Equal(t, HxDepth(5), getHxDepth(atom.H6))
+	assert.Equal(t, InvalidDepth, getHxDepth(atom.A))
 }

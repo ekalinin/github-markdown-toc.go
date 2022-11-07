@@ -167,8 +167,8 @@ func (doc *GHDoc) GrabToc() *GHToc {
 }
 
 func (doc *GHDoc) tocEntry(indent string, hdr Header) string {
-	// TODO(chuck): Calculate the repeat count with the doc.StartDepth
-	return strings.Repeat(indent, int(hdr.Depth)) + "* " +
+	indentDepth := int(hdr.Depth) - doc.StartDepth
+	return strings.Repeat(indent, indentDepth) + "* " +
 		"[" + doc.tocName(hdr.Name) + "]" +
 		"(" + doc.tocLink(hdr.Href) + ")"
 }

@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"io"
-	"log"
 	"os"
 
 	"gopkg.in/alecthomas/kingpin.v2"
@@ -64,15 +63,8 @@ func main() {
 		fmt.Println()
 	}
 
-	// DEBUG BEGIN
-	log.Printf("*** CHUCK:  pathsCount: %+#v", pathsCount)
-	// DEBUG END
-
 	for i := 1; i <= pathsCount; i++ {
 		toc := <-ch
-		// DEBUG BEGIN
-		log.Printf("*** CHUCK: in loop toc: %+#v", toc)
-		// DEBUG END
 		// #14, check if there's really TOC?
 		if toc != nil {
 			check(toc.Print(os.Stdout))

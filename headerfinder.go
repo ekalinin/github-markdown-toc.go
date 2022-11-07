@@ -48,7 +48,7 @@ func findHeaders(r io.Reader) []Header {
 }
 
 func getHxDepth(dataAtom atom.Atom) HxDepth {
-	depths := []atom.Atom{
+	hxAtoms := []atom.Atom{
 		atom.H1,
 		atom.H2,
 		atom.H3,
@@ -56,8 +56,8 @@ func getHxDepth(dataAtom atom.Atom) HxDepth {
 		atom.H5,
 		atom.H6,
 	}
-	for depth, v := range depths {
-		if dataAtom == v {
+	for depth, hxAtom := range hxAtoms {
+		if dataAtom == hxAtom {
 			return HxDepth(depth)
 		}
 	}

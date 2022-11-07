@@ -94,6 +94,7 @@ func TestFindAttribute(t *testing.T) {
 		assert.Equal(t, spaceGreeting, attr)
 	})
 	t.Run("attribute does not exist", func(t *testing.T) {
-		t.Error("IMPLEMENT ME!")
+		_, ok := findAttribute(attrs, "", "doesnotexist")
+		assert.False(t, ok)
 	})
 }

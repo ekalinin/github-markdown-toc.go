@@ -37,7 +37,6 @@ func findHeaders(r io.Reader) []Header {
 		tt := tokenizer.Next()
 		switch tt {
 		case html.ErrorToken:
-			// TODO(chuck): Check if this is io.EOF?
 			return hdrs
 		case html.StartTagToken:
 			t := tokenizer.Token()

@@ -152,6 +152,8 @@ func (doc *GHDoc) GrabToc() *GHToc {
 
 	hdrs := findHeadersInString(doc.html)
 
+	// Determine the min depth represented by the slice of headers. For example, if a document only
+	// has H2 tags and no H1 tags. We want the H2 TOC entries to not have an indent.
 	minHxDepth := MaxHxDepth
 	for _, hdr := range hdrs {
 		if hdr.Depth < minHxDepth {
@@ -159,6 +161,7 @@ func (doc *GHDoc) GrabToc() *GHToc {
 		}
 	}
 
+	// Populate the toc with entries
 	toc := GHToc{}
 	for _, hdr := range hdrs {
 		hDepth := int(hdr.Depth)
@@ -192,68 +195,6 @@ func (doc *GHDoc) tocLink(href string) string {
 	}
 	return link
 }
-
-//func (doc *GHDoc) GrabToc() *GHToc {
-//	doc.d("GrabToc: start, html size: " + strconv.Itoa(len(doc.html)))
-//	defer doc.d("GrabToc: done.")
-
-//	r := headerRegexp()
-//	listIndentation := generateListIndentation(doc.Indent)
-
-//	toc := GHToc{}
-//	minHeaderNum := 6
-//	var groups []map[string]string
-//	doc.d("GrabToc: matching ...")
-//	for idx, match := range r.FindAllStringSubmatch(doc.html, -1) {
-//		doc.d("GrabToc: match #" + strconv.Itoa(idx) + " ...")
-//		group := make(map[string]string)
-//		// fill map for groups
-//		for i, name := range r.SubexpNames() {
-//			if i == 0 || name == "" {
-//				continue
-//			}
-//			doc.d("GrabToc: process group: " + name + ": " + match[i] + " ...")
-//			group[name] = removeStuff(match[i])
-//		}
-//		// update minimum header number
-//		n, _ := strconv.Atoi(group["num"])
-//		if n < minHeaderNum {
-//			minHeaderNum = n
-//		}
-//		groups = append(groups, group)
-//	}
-
-//	var tmpSection string
-//	doc.d("GrabToc: processing groups ...")
-//	doc.d("Including starting from level " + strconv.Itoa(doc.StartDepth))
-//	for _, group := range groups {
-//		// format result
-//		n, _ := strconv.Atoi(group["num"])
-//		if n <= doc.StartDepth {
-//			continue
-//		}
-//		if doc.Depth > 0 && n > doc.Depth {
-//			continue
-//		}
-
-//		link, _ := url.QueryUnescape(group["href"])
-//		if doc.AbsPaths {
-//			link = doc.Path + link
-//		}
-
-//		tmpSection = removeStuff(group["name"])
-//		if doc.Escape {
-//			tmpSection = EscapeSpecChars(tmpSection)
-//		}
-//		tocItem := strings.Repeat(listIndentation(), n-minHeaderNum-doc.StartDepth) + "* " +
-//			"[" + tmpSection + "]" +
-//			"(" + link + ")"
-//		//fmt.Println(tocItem)
-//		toc = append(toc, tocItem)
-//	}
-
-//	return &toc
-//}
 
 // GetToc return GHToc for a document
 func (doc *GHDoc) GetToc() *GHToc {

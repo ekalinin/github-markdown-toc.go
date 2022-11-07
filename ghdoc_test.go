@@ -180,16 +180,7 @@ func TestGrabTocDepth(t *testing.T) {
 		Depth:  1,
 		Indent: 2,
 	}
-	// DEBUG BEGIN
-	log.Printf("*** CHUCK: ==========")
-	// DEBUG END
 	toc := *doc.GrabToc()
-	// DEBUG BEGIN
-	log.Printf("*** CHUCK toc: ")
-	for idx, item := range toc {
-		log.Printf("*** CHUCK %d: %+#v", idx, item)
-	}
-	// DEBUG END
 	for i := 0; i <= len(tocExpected)-1; i++ {
 		if toc[i] != tocExpected[i] {
 			t.Error("Res :", toc[i], "\nExpected      :", tocExpected[i])
@@ -219,7 +210,7 @@ func TestGrabTocStartDepth(t *testing.T) {
 <p>Blabla...</p>
 
 <h3>
-<a id="user-content-the-command-foo3-is-even-betterer" class="anchor" href="#the-command-foo3-is-even-betterer" aria-hidden="true"><span class="octicon octicon-link"></span></a>The command <code>foo3</code> is even betterer</h2>
+<a id="user-content-the-command-foo3-is-even-betterer" class="anchor" href="#the-command-foo3-is-even-betterer" aria-hidden="true"><span class="octicon octicon-link"></span></a>The command <code>foo3</code> is even betterer</h3>
 
 <p>Blabla...</p>
 
@@ -235,7 +226,7 @@ func TestGrabTocStartDepth(t *testing.T) {
 <p>Blabla...</p>
 
 <h3>
-<a id="user-content-the-command-bar3-is-even-betterer" class="anchor" href="#the-command-bar3-is-even-betterer" aria-hidden="true"><span class="octicon octicon-link"></span></a>The command <code>bar3</code> is even betterer</h2>
+<a id="user-content-the-command-bar3-is-even-betterer" class="anchor" href="#the-command-bar3-is-even-betterer" aria-hidden="true"><span class="octicon octicon-link"></span></a>The command <code>bar3</code> is even betterer</h3>
 
 <p>Blabla...</p>
 	`, AbsPaths: false,
@@ -243,8 +234,16 @@ func TestGrabTocStartDepth(t *testing.T) {
 		StartDepth: 1,
 		Indent:     2,
 	}
+	// DEBUG BEGIN
+	log.Printf("*** CHUCK: =======")
+	// DEBUG END
 	toc := *doc.GrabToc()
-
+	// DEBUG BEGIN
+	log.Printf("*** CHUCK toc: ")
+	for idx, item := range toc {
+		log.Printf("*** CHUCK %d: %+#v", idx, item)
+	}
+	// DEBUG END
 	for i := 0; i <= len(tocExpected)-1; i++ {
 		if toc[i] != tocExpected[i] {
 			t.Error("Res :", toc[i], "\nExpected      :", tocExpected[i])

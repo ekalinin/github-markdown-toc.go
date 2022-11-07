@@ -59,13 +59,13 @@ type Header struct {
 	Name  string
 }
 
-func findHeadersInString(str string) []*Header {
+func findHeadersInString(str string) []Header {
 	r := strings.NewReader(str)
 	return findHeaders(r)
 }
 
-func findHeaders(r io.Reader) []*Header {
-	hdrs := make([]*Header, 0)
+func findHeaders(r io.Reader) []Header {
+	hdrs := make([]Header, 0)
 	tokenizer := html.NewTokenizer(r)
 	for {
 		tt := tokenizer.Next()
@@ -82,8 +82,7 @@ func findHeaders(r io.Reader) []*Header {
 			// log.Printf("*** CHUCK: default t.DataAtom: %+#v", t.DataAtom)
 			// DEBUG END
 
-			hdr := createHeader(tokenizer, t)
-			if hdr != nil {
+			if hdr, ok := createHeader(tokenizer, t); ok {
 				hdrs = append(hdrs, hdr)
 			}
 		}
@@ -112,10 +111,10 @@ func getHxDepth(dataAtom atom.Atom) HxDepth {
 	return InvalidDepth
 }
 
-func createHeader(tokenizer *html.Tokenizer, token html.Token) *Header {
+func createHeader(tokenizer *html.Tokenizer, token html.Token) (Header, bool) {
 	hxDepth := getHxDepth(token.DataAtom)
 	if hxDepth == InvalidDepth {
-		return nil
+		return Header{}, false
 	}
 
 	var href, name string
@@ -125,7 +124,7 @@ func createHeader(tokenizer *html.Tokenizer, token html.Token) *Header {
 		t := tokenizer.Token()
 		switch t.Type {
 		case html.ErrorToken:
-			return nil
+			return Header{}, false
 		case html.StartTagToken:
 			tokenDepth++
 			if t.DataAtom == atom.A {
@@ -133,17 +132,17 @@ func createHeader(tokenizer *html.Tokenizer, token html.Token) *Header {
 					href = hrefAttr.Val
 				} else {
 					// Expected to find href attribute
-					return nil
+					return Header{}, false
 				}
 			}
 		case html.EndTagToken:
 			// If we encountered the matching end tag for the Hx, then we are done
 			if t.DataAtom == token.DataAtom {
-				return &Header{
+				return Header{
 					Depth: hxDepth,
 					Name:  name,
 					Href:  href,
-				}
+				}, true
 			}
 			tokenDepth--
 		case html.TextToken:

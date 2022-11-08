@@ -15,7 +15,7 @@ The advantages of this implementation:
 
   * no dependencies (no need curl, wget, awk, etc.)
   * cross-platform (support for Windows, Mac OS, etc.)
-  * regexp for parsing TOC
+  * `golang.org/x/net/html` for parsing TOC
   * parallel processing of multiple documents
 
 

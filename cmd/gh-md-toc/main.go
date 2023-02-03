@@ -48,10 +48,11 @@ func main() {
 
 	for _, p := range *paths {
 		ghdoc := ghtoc.NewGHDoc(p, absPathsInToc, *startDepth, *depth, !*noEscape, *token, *indent, *debug)
+		getFn := func(ch chan *ghtoc.GHToc, ghdoc *ghtoc.GHDoc) { ch <- ghdoc.GetToc() }
 		if *serial {
-			ch <- ghdoc.GetToc()
+			getFn(ch, ghdoc)
 		} else {
-			go func(path string) { ch <- ghdoc.GetToc() }(p)
+			go getFn(ch, ghdoc)
 		}
 	}
 

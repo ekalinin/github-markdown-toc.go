@@ -23,18 +23,10 @@ build: clean lint
 test: clean lint
 	@go test -cover -o ${EXEC}
 
-release: test buildall
-	@git tag `grep "version" main.go | grep -o -E '[0-9]\.[0-9]\.[0-9]{1,2}'`
+release: test
+	@git tag v`grep "\tVersion" internals.go | grep -o -E '[0-9]\.[0-9]\.[0-9]{1,2}'`
 	@git push --tags origin master
 
-buildall: clean
-	@mkdir -p ${BUILD_DIR}
-	@for os in "${BUILD_OS}" ; do \
-		for arch in "${BUILD_ARCH}" ; do \
-			echo " * build $$os for $$arch"; \
-			GOOS=$$os GOARCH=$$arch go build -o ${BUILD_DIR}/${EXEC} ${CMD_SRC}; \
-			cd ${BUILD_DIR}; \
-			tar czf ${EXEC}.$$os.$$arch.tgz ${EXEC}; \
-			cd - ; \
-		done done
-	@rm ${BUILD_DIR}/${EXEC}
+release-local:
+	@goreleaser check
+	@goreleaser release --snapshot --clean

@@ -10,7 +10,7 @@ clean:
 	@go clean
 
 lint:
-	@golint
+	@go vet
 	@golangci-lint run
 
 # make run ARGS="--help"

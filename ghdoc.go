@@ -40,10 +40,13 @@ type GHDoc struct {
 	GhToken    string
 	Indent     int
 	Debug      bool
+
+	// internals
 	html       string
 	logger     *log.Logger
 	httpGetter httpGetter
 	httpPoster httpPoster
+	ghURL      string
 }
 
 // NewGHDoc create GHDoc
@@ -61,6 +64,7 @@ func NewGHDoc(Path string, AbsPaths bool, StartDepth int, Depth int, Escape bool
 		logger:     log.New(os.Stderr, "", log.LstdFlags),
 		httpGetter: httpGet,
 		httpPoster: httpPost,
+		ghURL:      "https://api.github.com",
 	}
 }
 
@@ -68,6 +72,14 @@ func (doc *GHDoc) d(msg string) {
 	if doc.Debug {
 		doc.logger.Println(msg)
 	}
+}
+
+// SetGHURL sets new GitHub URL (protocol + host)
+func (doc *GHDoc) SetGHURL(url string) *GHDoc {
+	if url != "" {
+		doc.ghURL = url
+	}
+	return doc
 }
 
 // IsRemoteFile checks if path is for remote file or not
@@ -82,7 +94,7 @@ func (doc *GHDoc) IsRemoteFile() bool {
 }
 
 func (doc *GHDoc) convertMd2Html(localPath string, token string) (string, error) {
-	ghURL := "https://api.github.com/markdown/raw"
+	ghURL := doc.ghURL + "/markdown/raw"
 	return doc.httpPoster(ghURL, localPath, token)
 }
 

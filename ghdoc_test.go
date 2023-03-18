@@ -546,3 +546,32 @@ func TestGrabToc_issue35(t *testing.T) {
 		}
 	}
 }
+
+func TestSetGHURL(t *testing.T) {
+	noSense := "xxx"
+	doc := NewGHDoc(noSense, true, 0, 0, true, noSense, 4, true)
+
+	ghURL := "https://api.github.com"
+	if doc.ghURL != ghURL {
+		t.Error("Res :", doc.ghURL, "\nExpected     :", ghURL)
+	}
+
+	ghURL = "https://api.xxx.com"
+	doc.SetGHURL(ghURL)
+	if doc.ghURL != ghURL {
+		t.Error("Res :", doc.ghURL, "\nExpected     :", ghURL)
+	}
+
+	// mock for converting md to txt (just to check passing new GH URL)
+	doc.httpPoster = func(urlPath, filePath, token string) (string, error) {
+		ghURLFull := ghURL + "/markdown/raw"
+		if urlPath != ghURLFull {
+			t.Error("Res :", urlPath, "\nExpected     :", ghURL)
+		}
+		return noSense, nil
+	}
+
+	if _, err := doc.convertMd2Html(noSense, noSense); err != nil {
+		t.Error("Convert error:", err)
+	}
+}

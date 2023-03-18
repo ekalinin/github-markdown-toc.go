@@ -22,6 +22,7 @@ var (
 	token      = kingpin.Flag("token", "GitHub personal token").String()
 	indent     = kingpin.Flag("indent", "Indent space of generated list").Default("2").Int()
 	debug      = kingpin.Flag("debug", "Show debug info").Bool()
+	ghurl      = kingpin.Flag("github-url", "GitHub URL, default=https://api.github.com").String()
 )
 
 // check if there was an error (and panic if it was)
@@ -40,6 +41,10 @@ func main() {
 		*token = os.Getenv("GH_TOC_TOKEN")
 	}
 
+	if *ghurl == "" {
+		*ghurl = os.Getenv("GH_TOC_URL")
+	}
+
 	pathsCount := len(*paths)
 
 	// read file paths | urls from args
@@ -48,6 +53,8 @@ func main() {
 
 	for _, p := range *paths {
 		ghdoc := ghtoc.NewGHDoc(p, absPathsInToc, *startDepth, *depth, !*noEscape, *token, *indent, *debug)
+		ghdoc.SetGHURL(*ghurl)
+
 		if *serial {
 			ch <- ghdoc.GetToc()
 		} else {
@@ -81,6 +88,7 @@ func main() {
 
 		check(os.WriteFile(file.Name(), bytes, 0644))
 		check(ghtoc.NewGHDoc(file.Name(), false, *startDepth, *depth, !*noEscape, *token, *indent, *debug).
+			SetGHURL(*ghurl).
 			GetToc().
 			Print(os.Stdout))
 	}

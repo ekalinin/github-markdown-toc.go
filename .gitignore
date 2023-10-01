@@ -1,7 +1,7 @@
 *.swp
 *.tgz
 TODO.md
-gh-md-toc
+/gh-md-toc
 build
 
 dist/

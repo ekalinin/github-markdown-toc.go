@@ -22,6 +22,6 @@ Table of Contents
   * [Github token](#github-token)
   * [Bash/ZSH auto\-complete](#bashzsh-auto-complete)
 * [Alpine Linux](#alpine-linux)
-* [LICENSE](license)
+* [LICENSE](#license)
 
 Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc.go)

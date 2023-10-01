@@ -6,6 +6,7 @@ github-markdown-toc
 [![Go Reference](https://pkg.go.dev/badge/github.com/ekalinin/github-markdown-toc.go.svg)](https://pkg.go.dev/github.com/ekalinin/github-markdown-toc.go)
 [![MIT license](https://img.shields.io/badge/license-MIT-brightgreen.svg)](https://opensource.org/licenses/MIT)
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/ekalinin/github-markdown-toc.go)
+[![e2e test](https://github.com/ekalinin/github-markdown-toc.go/actions/workflows/e2e.yaml/badge.svg)](https://github.com/ekalinin/github-markdown-toc.go/actions/workflows/e2e.yaml)
 
 
 This is a golang based implementation of the

@@ -3,6 +3,7 @@ CMD_SRC=cmd/${EXEC}/main.go
 BUILD_DIR=build
 BUILD_OS="windows darwin linux"
 BUILD_ARCH="amd64"
+E2E_DIR=e2e-tests
 
 clean:
 	@rm -f ${EXEC}
@@ -22,6 +23,10 @@ build: clean lint
 
 test: clean lint
 	@go test -cover -o ${EXEC}
+
+e2e:
+	go run cmd/gh-md-toc/main.go ./README.md > ${E2E_DIR}/got.md
+	diff ${E2E_DIR}/want.md ${E2E_DIR}/got.md
 
 release: test
 	@git tag v`grep "\tVersion" internals.go | grep -o -E '[0-9]\.[0-9]\.[0-9]{1,2}'`

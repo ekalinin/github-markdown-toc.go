@@ -1,0 +1,23 @@
+name: e2e test
+
+on:
+  schedule:
+    # once a week, on mondays at 7:30am
+    - cron: "30 7 * * 1"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.19
+
+      - name: Run converting
+        run: make e2e

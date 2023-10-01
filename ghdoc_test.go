@@ -25,12 +25,16 @@ func TestIsUrl(t *testing.T) {
 }
 
 func TestGrabTocOneRow(t *testing.T) {
+	// https://raw.githubusercontent.com/ekalinin/envirius/f939d3b6882bfb6ecb28ef7b6e62862f934ba945/README.md
+	// $ go run cmd/gh-md-toc/main.go --debug https://raw.githubusercontent.com/ekalinin/envirius/f939d3b6882bfb6ecb28ef7b6e62862f934ba945/README.md
 	tocExpected := []string{
 		"* [README in another language](#readme-in-another-language)",
 	}
 	doc := &GHDoc{
+		// prev version:
+		// <h1><a id="user-content-readme-in-another-language" class="anchor" href="#readme-in-another-language" aria-hidden="true"><span class="octicon octicon-link"></span></a>README in another language</h1>
 		html: `
-		<h1><a id="user-content-readme-in-another-language" class="anchor" href="#readme-in-another-language" aria-hidden="true"><span class="octicon octicon-link"></span></a>README in another language</h1>
+		<h1 id="user-content-readme-in-another-language"><a class="heading-link" href="#readme-in-another-language">README in another language<span aria-hidden="true" class="octicon octicon-link"></span></a></h1>
 		`,
 		AbsPaths: false,
 		Depth:    0,
@@ -43,17 +47,19 @@ func TestGrabTocOneRow(t *testing.T) {
 }
 
 func TestGrabTocOneRowWithNewLines(t *testing.T) {
+	// https://raw.githubusercontent.com/ekalinin/envirius/f939d3b6882bfb6ecb28ef7b6e62862f934ba945/README.md
+	// $ go run cmd/gh-md-toc/main.go --debug https://raw.githubusercontent.com/ekalinin/envirius/f939d3b6882bfb6ecb28ef7b6e62862f934ba945/README.md
 	tocExpected := []string{
 		"* [README in another language](#readme-in-another-language)",
 	}
 	doc := &GHDoc{
 		html: `
-	<h1>
-		<a id="user-content-readme-in-another-language" class="anchor" href="#readme-in-another-language" aria-hidden="true">
-			<span class="octicon octicon-link"></span>
-		</a>
-		README in another language
-	</h1>
+		<h1 id="user-content-readme-in-another-language">
+			<a class="heading-link" href="#readme-in-another-language">
+				README in another language
+				<span aria-hidden="true" class="octicon octicon-link"></span>
+			</a>
+		</h1>
 	`, AbsPaths: false,
 		Depth:  0,
 		Escape: true,
@@ -66,7 +72,8 @@ func TestGrabTocOneRowWithNewLines(t *testing.T) {
 }
 
 func TestGrabTocMultilineOriginGithub(t *testing.T) {
-
+	// https://github.com/ekalinin/envirius/blob/master/README.md#how-to-add-a-plugin
+	// $ go run cmd/gh-md-toc/main.go --debug https://raw.githubusercontent.com/ekalinin/envirius/f939d3b6882bfb6ecb28ef7b6e62862f934ba945/README.md
 	tocExpected := []string{
 		"* [How to add a plugin?](#how-to-add-a-plugin)",
 		"  * [Mandatory elements](#mandatory-elements)",
@@ -74,20 +81,15 @@ func TestGrabTocMultilineOriginGithub(t *testing.T) {
 	}
 	doc := &GHDoc{
 		html: `
-<h1><a id="user-content-how-to-add-a-plugin" class="anchor" href="#how-to-add-a-plugin" aria-hidden="true"><span class="octicon octicon-link"></span></a>How to add a plugin?</h1>
-
+<h1 id="user-content-how-to-add-a-plugin"><a class="heading-link" href="#how-to-add-a-plugin">How to add a plugin?<span aria-hidden="true" class="octicon octicon-link"></span></a></h1>
 <p>All plugins are in the directory
 <a href="https://github.com/ekalinin/envirius/tree/master/src/nv-plugins">nv-plugins</a>.
 If you need to add support for a new language you should add it as plugin
 inside this directory.</p>
-
-<h2><a id="user-content-mandatory-elements" class="anchor" href="#mandatory-elements" aria-hidden="true"><span class="octicon octicon-link"></span></a>Mandatory elements</h2>
-
+<h2 id="user-content-mandatory-elements"><a class="heading-link" href="#mandatory-elements">Mandatory elements<span aria-hidden="true" class="octicon octicon-link"></span></a></h2>
 <p>If you create a plugin which builds all stuff from source then In a simplest
 case you need to implement 2 functions in the plugin's body:</p>
-
-<h3><a id="user-content-plug_list_versions" class="anchor" href="#plug_list_versions" aria-hidden="true"><span class="octicon octicon-link"></span></a>plug_list_versions</h3>
-
+<h3 id="user-content-plug_list_versions"><a class="heading-link" href="#plug_list_versions">plug_list_versions<span aria-hidden="true" class="octicon octicon-link"></span></a></h3>
 <p>This function should return list of available versions of the plugin.
 For example:</p>
 	`, AbsPaths: false,
@@ -104,6 +106,8 @@ For example:</p>
 }
 
 func TestGrabTocBackquoted(t *testing.T) {
+	// https://github.com/ekalinin/github-markdown-toc/blob/656b34011a482544a9ebb4116332c044834bdbbf/tests/test%20directory/test_backquote.md
+	// $ go run cmd/gh-md-toc/main.go --debug https://raw.githubusercontent.com/ekalinin/github-markdown-toc/656b34011a482544a9ebb4116332c044834bdbbf/tests/test%20directory/test_backquote.md
 	tocExpected := []string{
 		"* [The command foo1](#the-command-foo1)",
 		"  * [The command foo2 is better](#the-command-foo2-is-better)",
@@ -113,26 +117,17 @@ func TestGrabTocBackquoted(t *testing.T) {
 
 	doc := &GHDoc{
 		html: `
-<h1>
-<a id="user-content-the-command-foo1" class="anchor" href="#the-command-foo1" aria-hidden="true"><span class="octicon octicon-link"></span></a>The command <code>foo1</code>
-</h1>
-
+<h1 id="user-content-the-command-foo1"><a class="heading-link" href="#the-command-foo1">The command <code>foo1</code>
+<span aria-hidden="true" class="octicon octicon-link"></span></a></h1>
 <p>Blabla...</p>
-
-<h2>
-<a id="user-content-the-command-foo2-is-better" class="anchor" href="#the-command-foo2-is-better" aria-hidden="true"><span class="octicon octicon-link"></span></a>The command <code>foo2</code> is better</h2>
-
+<h2 id="user-content-the-command-foo2-is-better"><a class="heading-link" href="#the-command-foo2-is-better">The command <code>foo2</code> is better<span aria-hidden="true" class="octicon octicon-link"></span></a></h2>
 <p>Blabla...</p>
-
-<h1>
-<a id="user-content-the-command-bar1" class="anchor" href="#the-command-bar1" aria-hidden="true"><span class="octicon octicon-link"></span></a>The command <code>bar1</code>
-</h1>
-
+<h1 id="user-content-the-command-bar1"><a class="heading-link" href="#the-command-bar1">The command <code>bar1</code>
+<span aria-hidden="true" class="octicon octicon-link"></span></a></h1>
 <p>Blabla...</p>
-
-<h2>
-<a id="user-content-the-command-bar2-is-better" class="anchor" href="#the-command-bar2-is-better" aria-hidden="true"><span class="octicon octicon-link"></span></a>The command <code>bar2</code> is better</h2>
-
+<h2 id="user-content-the-command-bar2-is-better"><a class="heading-link" href="#the-command-bar2-is-better">The command <code>bar2</code> is better<span aria-hidden="true" class="octicon octicon-link"></span></a></h2>
+<p>Blabla...</p>
+<h3 id="user-content-the-command-bar3-is-the-best"><a class="heading-link" href="#the-command-bar3-is-the-best">The command <code>bar3</code> is the best<span aria-hidden="true" class="octicon octicon-link"></span></a></h3>
 <p>Blabla...</p>
 	`, AbsPaths: false,
 		Depth:  0,
@@ -147,6 +142,8 @@ func TestGrabTocBackquoted(t *testing.T) {
 }
 
 func TestGrabTocDepth(t *testing.T) {
+	// https://github.com/ekalinin/github-markdown-toc/blob/656b34011a482544a9ebb4116332c044834bdbbf/tests/test%20directory/test_backquote.md
+	// $ go run cmd/gh-md-toc/main.go --debug https://raw.githubusercontent.com/ekalinin/github-markdown-toc/656b34011a482544a9ebb4116332c044834bdbbf/tests/test%20directory/test_backquote.md
 	tocExpected := []string{
 		"* [The command foo1](#the-command-foo1)",
 		"* [The command bar1](#the-command-bar1)",
@@ -154,26 +151,17 @@ func TestGrabTocDepth(t *testing.T) {
 
 	doc := &GHDoc{
 		html: `
-<h1>
-<a id="user-content-the-command-foo1" class="anchor" href="#the-command-foo1" aria-hidden="true"><span class="octicon octicon-link"></span></a>The command <code>foo1</code>
-</h1>
-
+<h1 id="user-content-the-command-foo1"><a class="heading-link" href="#the-command-foo1">The command <code>foo1</code>
+<span aria-hidden="true" class="octicon octicon-link"></span></a></h1>
 <p>Blabla...</p>
-
-<h2>
-<a id="user-content-the-command-foo2-is-better" class="anchor" href="#the-command-foo2-is-better" aria-hidden="true"><span class="octicon octicon-link"></span></a>The command <code>foo2</code> is better</h2>
-
+<h2 id="user-content-the-command-foo2-is-better"><a class="heading-link" href="#the-command-foo2-is-better">The command <code>foo2</code> is better<span aria-hidden="true" class="octicon octicon-link"></span></a></h2>
 <p>Blabla...</p>
-
-<h1>
-<a id="user-content-the-command-bar1" class="anchor" href="#the-command-bar1" aria-hidden="true"><span class="octicon octicon-link"></span></a>The command <code>bar1</code>
-</h1>
-
+<h1 id="user-content-the-command-bar1"><a class="heading-link" href="#the-command-bar1">The command <code>bar1</code>
+<span aria-hidden="true" class="octicon octicon-link"></span></a></h1>
 <p>Blabla...</p>
-
-<h2>
-<a id="user-content-the-command-bar2-is-better" class="anchor" href="#the-command-bar2-is-better" aria-hidden="true"><span class="octicon octicon-link"></span></a>The command <code>bar2</code> is better</h2>
-
+<h2 id="user-content-the-command-bar2-is-better"><a class="heading-link" href="#the-command-bar2-is-better">The command <code>bar2</code> is better<span aria-hidden="true" class="octicon octicon-link"></span></a></h2>
+<p>Blabla...</p>
+<h3 id="user-content-the-command-bar3-is-the-best"><a class="heading-link" href="#the-command-bar3-is-the-best">The command <code>bar3</code> is the best<span aria-hidden="true" class="octicon octicon-link"></span></a></h3>
 <p>Blabla...</p>
 	`, AbsPaths: false,
 		Escape: true,
@@ -190,45 +178,27 @@ func TestGrabTocDepth(t *testing.T) {
 }
 
 func TestGrabTocStartDepth(t *testing.T) {
+	// https://github.com/ekalinin/github-markdown-toc/blob/656b34011a482544a9ebb4116332c044834bdbbf/tests/test%20directory/test_backquote.md
+	// $ go run cmd/gh-md-toc/main.go --debug https://raw.githubusercontent.com/ekalinin/github-markdown-toc/656b34011a482544a9ebb4116332c044834bdbbf/tests/test%20directory/test_backquote.md
 	tocExpected := []string{
 		"* [The command foo2 is better](#the-command-foo2-is-better)",
-		"  * [The command foo3 is even betterer](#the-command-foo3-is-even-betterer)",
 		"* [The command bar2 is better](#the-command-bar2-is-better)",
-		"  * [The command bar3 is even betterer](#the-command-bar3-is-even-betterer)",
+		"  * [The command bar3 is the best](#the-command-bar3-is-the-best)",
 	}
 
 	doc := &GHDoc{
 		html: `
-<h1>
-<a id="user-content-the-command-foo1" class="anchor" href="#the-command-foo1" aria-hidden="true"><span class="octicon octicon-link"></span></a>The command <code>foo1</code>
-</h1>
-
+<h1 id="user-content-the-command-foo1"><a class="heading-link" href="#the-command-foo1">The command <code>foo1</code>
+<span aria-hidden="true" class="octicon octicon-link"></span></a></h1>
 <p>Blabla...</p>
-
-<h2>
-<a id="user-content-the-command-foo2-is-better" class="anchor" href="#the-command-foo2-is-better" aria-hidden="true"><span class="octicon octicon-link"></span></a>The command <code>foo2</code> is better</h2>
-
+<h2 id="user-content-the-command-foo2-is-better"><a class="heading-link" href="#the-command-foo2-is-better">The command <code>foo2</code> is better<span aria-hidden="true" class="octicon octicon-link"></span></a></h2>
 <p>Blabla...</p>
-
-<h3>
-<a id="user-content-the-command-foo3-is-even-betterer" class="anchor" href="#the-command-foo3-is-even-betterer" aria-hidden="true"><span class="octicon octicon-link"></span></a>The command <code>foo3</code> is even betterer</h2>
-
+<h1 id="user-content-the-command-bar1"><a class="heading-link" href="#the-command-bar1">The command <code>bar1</code>
+<span aria-hidden="true" class="octicon octicon-link"></span></a></h1>
 <p>Blabla...</p>
-
-<h1>
-<a id="user-content-the-command-bar1" class="anchor" href="#the-command-bar1" aria-hidden="true"><span class="octicon octicon-link"></span></a>The command <code>bar1</code>
-</h1>
-
+<h2 id="user-content-the-command-bar2-is-better"><a class="heading-link" href="#the-command-bar2-is-better">The command <code>bar2</code> is better<span aria-hidden="true" class="octicon octicon-link"></span></a></h2>
 <p>Blabla...</p>
-
-<h2>
-<a id="user-content-the-command-bar2-is-better" class="anchor" href="#the-command-bar2-is-better" aria-hidden="true"><span class="octicon octicon-link"></span></a>The command <code>bar2</code> is better</h2>
-
-<p>Blabla...</p>
-
-<h3>
-<a id="user-content-the-command-bar3-is-even-betterer" class="anchor" href="#the-command-bar3-is-even-betterer" aria-hidden="true"><span class="octicon octicon-link"></span></a>The command <code>bar3</code> is even betterer</h2>
-
+<h3 id="user-content-the-command-bar3-is-the-best"><a class="heading-link" href="#the-command-bar3-is-the-best">The command <code>bar3</code> is the best<span aria-hidden="true" class="octicon octicon-link"></span></a></h3>
 <p>Blabla...</p>
 	`, AbsPaths: false,
 		Escape:     true,
@@ -251,7 +221,7 @@ func TestGrabTocWithAbspath(t *testing.T) {
 	}
 	doc := &GHDoc{
 		html: `
-	<h1><a id="user-content-readme-in-another-language" class="anchor" href="#readme-in-another-language" aria-hidden="true"><span class="octicon octicon-link"></span></a>README in another language</h1>
+	<h1 id="user-content-readme-in-another-language"><a class="heading-link" href="#readme-in-another-language">README in another language<span aria-hidden="true" class="octicon octicon-link"></span></a></h1>
 	`, AbsPaths: true,
 		Path:   link,
 		Depth:  0,
@@ -270,13 +240,8 @@ func TestEscapedChars(t *testing.T) {
 
 	doc := &GHDoc{
 		html: `
-		<h2>
-			<a id="user-content-mod_" class="anchor"
-			    href="#mod_" aria-hidden="true">
-				<span class="octicon octicon-link"></span>
-			</a>
-			mod_*
-		</h2>`,
+		<h2 id="user-content-mod_"><a class="heading-link" href="#mod_">mod_*<span aria-hidden="true" class="octicon octicon-link"></span></a></h2>
+		`,
 		AbsPaths: false,
 		Escape:   true,
 		Depth:    0,
@@ -298,15 +263,9 @@ func TestCustomSpaceIndentation(t *testing.T) {
 
 	doc := &GHDoc{
 		html: `
-<h1>
-<a id="user-content-the-command-level1" class="anchor" href="#header-level1" aria-hidden="true"><span class="octicon octicon-link"></span></a>Header Level1
-</h1>
-<h2>
-<a id="user-content-the-command-level2" class="anchor" href="#header-level2" aria-hidden="true"><span class="octicon octicon-link"></span></a>Header Level2
-</h2>
-<h3>
-<a id="user-content-the-command-level3" class="anchor" href="#header-level3" aria-hidden="true"><span class="octicon octicon-link"></span></a>Header Level3
-</h3>
+<h1 id="user-content-header-level1"><a class="heading-link" href="#header-level1">Header Level1<span aria-hidden="true" class="octicon octicon-link"></span></a></h1>
+<h2 id="user-content-header-level2"><a class="heading-link" href="#header-level2">Header Level2<span aria-hidden="true" class="octicon octicon-link"></span></a></h2>
+<h3 id="user-content-header-level3"><a class="heading-link" href="#header-level3">Header Level3<span aria-hidden="true" class="octicon octicon-link"></span></a></h3>
 	`,
 		AbsPaths: false,
 		Depth:    0,
@@ -329,18 +288,8 @@ func TestMinHeaderNumber(t *testing.T) {
 
 	doc := &GHDoc{
 		html: `
-		<h3>
-			<a id="user-content-" class="anchor" href="#foo" aria-hidden="true">
-				<span class="octicon octicon-link"></span>
-			</a>
-			foo
-		</h3>
-		<h4>
-			<a id="user-content-" class="anchor" href="#bar" aria-hidden="true">
-				<span class="octicon octicon-link"></span>
-			</a>
-			bar
-		</h3>
+		<h3 id="user-content-foo"><a class="heading-link" href="#foo">foo<span aria-hidden="true" class="octicon octicon-link"></span></a></h3>
+		<h4 id="user-content-bar"><a class="heading-link" href="#bar">bar<span aria-hidden="true" class="octicon octicon-link"></span></a></h4>
 		`,
 		AbsPaths: false,
 		Depth:    0,
@@ -513,15 +462,13 @@ func TestGHDocConvert2HTML_issue35(t *testing.T) {
 }
 
 func TestGrabToc_issue35(t *testing.T) {
-	// As of 2022-08-25, GitHub API returns the HTML in the below format.
+	// As of 2023-08-31, GitHub API returns the HTML in the below format.
 	doc := &GHDoc{
 		html: `
-<h1><a id="user-content-one" class="anchor" aria-hidden="true" href="#one"><span aria-hidden="true" class="octicon octicon-link"></span></a>One</h1>
-<p>Uno</p>
-<h2><a id="user-content-two" class="anchor" aria-hidden="true" href="#two"><span aria-hidden="true" class="octicon octicon-link"></span></a>Two</h2>
-<p>Dos</p>
-<h3><a id="user-content-three" class="anchor" aria-hidden="true" href="#three"><span aria-hidden="true" class="octicon octicon-link"></span></a>Three</h3>
-<p>Tres</p>`,
+<h1 id="user-content-one"><a class="heading-link" href="#one">One<span aria-hidden="true" class="octicon octicon-link"></span></a></h1>
+<h2 id="user-content-two"><a class="heading-link" href="#two">Two<span aria-hidden="true" class="octicon octicon-link"></span></a></h2>
+<h3 id="user-content-three"><a class="heading-link" href="#three">Three<span aria-hidden="true" class="octicon octicon-link"></span></a></h3>
+`,
 		AbsPaths: false,
 		Depth:    0,
 		Indent:   2,

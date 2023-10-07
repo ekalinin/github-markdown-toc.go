@@ -32,19 +32,7 @@ func check(e error) {
 	}
 }
 
-// Entry point
-func main() {
-	kingpin.Version(ghtoc.Version)
-	kingpin.Parse()
-
-	if *token == "" {
-		*token = os.Getenv("GH_TOC_TOKEN")
-	}
-
-	if *ghurl == "" {
-		*ghurl = os.Getenv("GH_TOC_URL")
-	}
-
+func processPaths() {
 	pathsCount := len(*paths)
 
 	// read file paths | urls from args
@@ -76,21 +64,40 @@ func main() {
 			check(toc.Print(os.Stdout))
 		}
 	}
+}
 
-	// read md from stdin
-	if pathsCount == 0 {
-		bytes, err := io.ReadAll(os.Stdin)
-		check(err)
+func processSTDIN() {
+	bytes, err := io.ReadAll(os.Stdin)
+	check(err)
 
-		file, err := os.CreateTemp(os.TempDir(), "ghtoc")
-		check(err)
-		defer os.Remove(file.Name())
+	file, err := os.CreateTemp(os.TempDir(), "ghtoc")
+	check(err)
+	defer os.Remove(file.Name())
 
-		check(os.WriteFile(file.Name(), bytes, 0644))
-		check(ghtoc.NewGHDoc(file.Name(), false, *startDepth, *depth, !*noEscape, *token, *indent, *debug).
-			SetGHURL(*ghurl).
-			GetToc().
-			Print(os.Stdout))
+	check(os.WriteFile(file.Name(), bytes, 0644))
+	check(ghtoc.NewGHDoc(file.Name(), false, *startDepth, *depth, !*noEscape, *token, *indent, *debug).
+		SetGHURL(*ghurl).
+		GetToc().
+		Print(os.Stdout))
+}
+
+// Entry point
+func main() {
+	kingpin.Version(ghtoc.Version)
+	kingpin.Parse()
+
+	if *token == "" {
+		*token = os.Getenv("GH_TOC_TOKEN")
+	}
+
+	if *ghurl == "" {
+		*ghurl = os.Getenv("GH_TOC_URL")
+	}
+
+	if len(*paths) > 0 {
+		processPaths()
+	} else {
+		processSTDIN()
 	}
 
 	if !*hideFooter {

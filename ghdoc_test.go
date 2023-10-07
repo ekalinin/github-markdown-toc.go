@@ -438,7 +438,7 @@ func TestGHDocConvert2HTML_issue35(t *testing.T) {
 	token := "some-gh-token"
 
 	// enable debug
-	doc := NewGHDoc(remotePath, true, 0, 0, true, token, 4, true)
+	doc := NewGHDoc(remotePath, true, 0, 0, true, token, 4, false)
 
 	// mock for getting remote raw README text
 	htmlResponse := []byte("raw md text")

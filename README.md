@@ -30,6 +30,7 @@ Table of Contents
   * [Installation](#installation)
     * [Precompiled binaries](#precompiled-binaries)
     * [Compiling from source](#compiling-from-source)
+    * [Go Install](#go-install)
     * [Homebew (Mac only)](#homebew-mac-only)
   * [Tests](#tests)
   * [Usage](#usage)
@@ -38,10 +39,13 @@ Table of Contents
     * [Remote files](#remote-files)
     * [Multiple files](#multiple-files)
     * [Combo](#combo)
+    * [Starting Depth](#starting-depth)
     * [Depth](#depth)
     * [No Escape](#no-escape)
     * [Github token](#github-token)
+    * [GitHub Enterprise Server](#github-enterprise-server)
     * [Bash/ZSH auto\-complete](#bashzsh-auto-complete)
+  * [Alpine Linux](#alpine-linux)
   * [LICENSE](#license)
 
 Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc.go)
@@ -340,7 +344,7 @@ No escape
 * [Dockerfile.vim](#dockerfilevim)
 ```
 
-Github token
+GitHub token
 ------------
 
 All your tokents are [here](https://github.com/settings/tokens).
@@ -377,10 +381,17 @@ Table of Contents
 * [LICENSE](#license)
 ```
 
+GitHub Enterprise Server
+------------------------
+
+If you're using GitHub Enterprise Server, you can override default URL for API:
+
+```bash
+➥ GH_TOC_URL=https://api.github.mycompany.com ./gh-md-toc README.md
+```
+
 Bash/ZSH auto-complete
 ----------------------
-
-
 
 Just add a simple command into your `~/.bashrc` or `~/.zshrc`:
 

@@ -3,7 +3,7 @@ name: e2e test
 on:
   schedule:
     # once a week, on mondays at 7:30am
-    - cron: "30 7 * * 1"
+    - cron: "30 7 * * 1,4"
 
   workflow_dispatch:
 

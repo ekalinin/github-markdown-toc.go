@@ -11,9 +11,6 @@ import (
 	"strings"
 )
 
-// GHToc GitHub TOC
-type GHToc []string
-
 // Print TOC to the console
 func (toc *GHToc) Print(w io.Writer) error {
 	for _, tocItem := range *toc {
@@ -103,16 +100,21 @@ func (doc *GHDoc) Convert2HTML() error {
 	doc.d("Convert2HTML: start.")
 	defer doc.d("Convert2HTML: done.")
 
+	// remote file may be of 2 types:
+	// - raw md file (we need to download it locally and convert t HTML)
+	// - html file (we need just to load it and parse TOC from it)
 	if doc.IsRemoteFile() {
 		htmlBody, ContentType, err := doc.httpGetter(doc.Path)
 		doc.d("Convert2HTML: remote file. content-type: " + ContentType)
 		if err != nil {
+			doc.d("Convert2HTML: err=" + err.Error())
 			return err
 		}
 
 		// if not a plain text - return the result (should be html)
 		if strings.Split(ContentType, ";")[0] != "text/plain" {
 			doc.html = string(htmlBody)
+			doc.d("Convert2HTML: not a plain text, body" + string(htmlBody)[:200])
 			return nil
 		}
 

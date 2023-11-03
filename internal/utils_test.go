@@ -1,4 +1,4 @@
-package ghtoc
+package internal
 
 import (
 	"fmt"
@@ -19,7 +19,7 @@ func TestHttpGet(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	body, _, err := httpGet(srv.URL)
+	body, _, err := HttpGet(srv.URL)
 	got := string(body)
 
 	if err != nil {
@@ -41,7 +41,7 @@ func TestHttpGetForbidden(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	_, _, err := httpGet(srv.URL)
+	_, _, err := HttpGet(srv.URL)
 	if err == nil {
 		t.Error("Should not not be nil")
 	}
@@ -86,7 +86,7 @@ func TestHttpPost(t *testing.T) {
 	}
 	defer os.Remove(fileName)
 
-	_, err = httpPost(srv.URL, fileName, token)
+	_, err = HttpPost(srv.URL, fileName, token)
 	if err != nil {
 		t.Error("Should not be err", err)
 	}

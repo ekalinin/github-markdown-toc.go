@@ -1,13 +1,13 @@
 package main
 
 import (
-	"fmt"
 	"io"
 	"os"
 
 	"gopkg.in/alecthomas/kingpin.v2"
 
 	ghtoc "github.com/ekalinin/github-markdown-toc.go"
+	"github.com/ekalinin/github-markdown-toc.go/internal"
 )
 
 var (
@@ -51,10 +51,7 @@ func processPaths() {
 	}
 
 	if !*hideHeader && pathsCount == 1 {
-		fmt.Println()
-		fmt.Println("Table of Contents")
-		fmt.Println("=================")
-		fmt.Println()
+		internal.ShowHeader(os.Stdout)
 	}
 
 	for i := 1; i <= pathsCount; i++ {
@@ -83,7 +80,7 @@ func processSTDIN() {
 
 // Entry point
 func main() {
-	kingpin.Version(ghtoc.Version)
+	kingpin.Version(internal.Version)
 	kingpin.Parse()
 
 	if *token == "" {
@@ -101,6 +98,6 @@ func main() {
 	}
 
 	if !*hideFooter {
-		fmt.Println("Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc.go)")
+		internal.ShowFooter(os.Stdout)
 	}
 }

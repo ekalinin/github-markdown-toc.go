@@ -9,6 +9,8 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/ekalinin/github-markdown-toc.go/internal"
 )
 
 // Print TOC to the console
@@ -59,8 +61,8 @@ func NewGHDoc(Path string, AbsPaths bool, StartDepth int, Depth int, Escape bool
 		Debug:      Debug,
 		html:       "",
 		logger:     log.New(os.Stderr, "", log.LstdFlags),
-		httpGetter: httpGet,
-		httpPoster: httpPost,
+		httpGetter: internal.HttpGet,
+		httpPoster: internal.HttpPost,
 		ghURL:      "https://api.github.com",
 	}
 }
@@ -114,7 +116,7 @@ func (doc *GHDoc) Convert2HTML() error {
 		// if not a plain text - return the result (should be html)
 		if strings.Split(ContentType, ";")[0] != "text/plain" {
 			doc.html = string(htmlBody)
-			doc.d("Convert2HTML: not a plain text, body" + string(htmlBody)[:200])
+			doc.d("Convert2HTML: not a plain text, body")
 			return nil
 		}
 
@@ -163,7 +165,7 @@ func (doc *GHDoc) GrabToc() *GHToc {
 		`href="(?P<href>[^"]+)">\s*` +
 		`(?P<name>.*?)<span`
 	r := regexp.MustCompile(re)
-	listIndentation := generateListIndentation(doc.Indent)
+	listIndentation := internal.GenerateListIndentation(doc.Indent)
 
 	toc := GHToc{}
 	minHeaderNum := 6
@@ -178,7 +180,7 @@ func (doc *GHDoc) GrabToc() *GHToc {
 				continue
 			}
 			doc.d("GrabToc: process group: " + name + ": " + match[i] + " ...")
-			group[name] = removeStuff(match[i])
+			group[name] = internal.RemoveStuff(match[i])
 		}
 		// update minimum header number
 		n, _ := strconv.Atoi(group["num"])
@@ -206,9 +208,9 @@ func (doc *GHDoc) GrabToc() *GHToc {
 			link = doc.Path + link
 		}
 
-		tmpSection = removeStuff(group["name"])
+		tmpSection = internal.RemoveStuff(group["name"])
 		if doc.Escape {
-			tmpSection = EscapeSpecChars(tmpSection)
+			tmpSection = internal.EscapeSpecChars(tmpSection)
 		}
 		tocItem := strings.Repeat(listIndentation(), n-minHeaderNum-doc.StartDepth) + "* " +
 			"[" + tmpSection + "]" +

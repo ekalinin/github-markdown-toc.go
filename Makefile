@@ -4,6 +4,7 @@ BUILD_DIR=build
 BUILD_OS="windows darwin linux"
 BUILD_ARCH="amd64"
 E2E_DIR=e2e-tests
+E2E_RUN=go run cmd/gh-md-toc/main.go ./README.md
 
 clean:
 	@rm -f ${EXEC}
@@ -25,8 +26,13 @@ test: clean lint
 	@go test -cover -o ${EXEC}
 
 e2e:
-	go run cmd/gh-md-toc/main.go ./README.md > ${E2E_DIR}/got.md
+	echo " >> Local MD & options ..."
+	${E2E_RUN} > ${E2E_DIR}/got.md
 	diff ${E2E_DIR}/want.md ${E2E_DIR}/got.md
+	${E2E_RUN} --hide-header --hide-footer --depth=1 --no-escape > ${E2E_DIR}/got2.md
+	diff ${E2E_DIR}/want2.md ${E2E_DIR}/got2.md
+	${E2E_RUN} --hide-header --hide-footer --indent=4 > ${E2E_DIR}/got3.md
+	diff ${E2E_DIR}/want3.md ${E2E_DIR}/got3.md
 
 release: test
 	@git tag v`grep "\tVersion" internals.go | grep -o -E '[0-9]\.[0-9]\.[0-9]{1,2}'`

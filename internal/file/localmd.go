@@ -24,7 +24,7 @@ type LocalMD struct {
 }
 
 // Toc converts MD file into HTML & grab TOC.
-func (md *LocalMD) Toc() ghtoc.GHToc {
+func (md *LocalMD) GetToc() ghtoc.GHToc {
 	md.Log("local file: %s", md.Path)
 	if _, err := os.Stat(md.Path); os.IsNotExist(err) {
 		md.Log("local file is not exists.")

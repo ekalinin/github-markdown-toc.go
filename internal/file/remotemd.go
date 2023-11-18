@@ -7,7 +7,7 @@ import (
 	ghtoc "github.com/ekalinin/github-markdown-toc.go"
 )
 
-var _ Tocer = (*LocalMD)(nil)
+var _ Tocer = (*RemoteMD)(nil)
 
 type HttpGetter func(urlPath string) ([]byte, string, error)
 
@@ -53,12 +53,12 @@ func (md *RemoteMD) download() error {
 	return nil
 }
 
-// Toc downloads file, converts it into HTML & grab TOC.
-func (md *RemoteMD) Toc() ghtoc.GHToc {
+// GetToc downloads file, converts it into HTML & grab TOC.
+func (md *RemoteMD) GetToc() ghtoc.GHToc {
 	if err := md.download(); err != nil {
 		md.Log("Error while downloading file: %s", err)
 		return nil
 	}
 
-	return md.LocalMD.Toc()
+	return md.LocalMD.GetToc()
 }

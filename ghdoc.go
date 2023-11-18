@@ -46,6 +46,7 @@ type GHDoc struct {
 	httpGetter httpGetter
 	httpPoster httpPoster
 	ghURL      string
+	reVersion  string
 }
 
 // NewGHDoc create GHDoc
@@ -64,6 +65,7 @@ func NewGHDoc(Path string, AbsPaths bool, StartDepth int, Depth int, Escape bool
 		httpGetter: internal.HttpGet,
 		httpPoster: internal.HttpPost,
 		ghURL:      "https://api.github.com",
+		reVersion:  "0",
 	}
 }
 
@@ -78,6 +80,12 @@ func (doc *GHDoc) SetGHURL(url string) *GHDoc {
 	if url != "" {
 		doc.ghURL = url
 	}
+	return doc
+}
+
+// SetReVersion sets reg exp version
+func (doc *GHDoc) SetReVersion(v string) *GHDoc {
+	doc.reVersion = v
 	return doc
 }
 
@@ -160,16 +168,18 @@ func (doc *GHDoc) GrabToc() *GHToc {
 	// si:
 	// 	- s - let . match \n (single-line mode)
 	//  - i - case-insensitive
-	// re := `(?si)<h(?P<num>[1-6]) id="[^"]+">\s*` +
-	// 	`<a class="heading-link"\s*` +
-	// 	`href="(?P<href>[^"]+)">\s*` +
-	// 	`(?P<name>.*?)<span`
-	re := `(?si)<h(?P<num>[1-6])>\s*` +
-		`<a\s*id="user-content-[^"]*"\s*class="anchor"\s*` +
-		`(aria-hidden="[^"]*"\s*)?` +
-		`(tabindex="[^"]*"\s*)?` +
-		`href="(?P<href>[^"]*)"[^>]*>\s*` +
-		`.*?</a>(?P<name>.*?)</h`
+	re := `(?si)<h(?P<num>[1-6]) id="[^"]+">\s*` +
+		`<a class="heading-link"\s*` +
+		`href="(?P<href>[^"]+)">\s*` +
+		`(?P<name>.*?)<span`
+	if doc.reVersion == "0" {
+		re = `(?si)<h(?P<num>[1-6])>\s*` +
+			`<a\s*id="user-content-[^"]*"\s*class="anchor"\s*` +
+			`(aria-hidden="[^"]*"\s*)?` +
+			`(tabindex="[^"]*"\s*)?` +
+			`href="(?P<href>[^"]*)"[^>]*>\s*` +
+			`.*?</a>(?P<name>.*?)</h`
+	}
 	r := regexp.MustCompile(re)
 	listIndentation := internal.GenerateListIndentation(doc.Indent)
 

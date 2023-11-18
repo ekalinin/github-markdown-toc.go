@@ -23,6 +23,7 @@ var (
 	indent     = kingpin.Flag("indent", "Indent space of generated list").Default("2").Int()
 	debug      = kingpin.Flag("debug", "Show debug info").Bool()
 	ghurl      = kingpin.Flag("github-url", "GitHub URL, default=https://api.github.com").String()
+	reVersion  = kingpin.Flag("re-version", "RegExp version, default=0").Default("0").String()
 )
 
 // check if there was an error (and panic if it was)
@@ -41,7 +42,7 @@ func processPaths() {
 
 	for _, p := range *paths {
 		ghdoc := ghtoc.NewGHDoc(p, absPathsInToc, *startDepth, *depth, !*noEscape, *token, *indent, *debug)
-		ghdoc.SetGHURL(*ghurl)
+		ghdoc.SetGHURL(*ghurl).SetReVersion(*reVersion)
 
 		if *serial {
 			ch <- ghdoc.GetToc()
@@ -74,6 +75,7 @@ func processSTDIN() {
 	check(os.WriteFile(file.Name(), bytes, 0644))
 	check(ghtoc.NewGHDoc(file.Name(), false, *startDepth, *depth, !*noEscape, *token, *indent, *debug).
 		SetGHURL(*ghurl).
+		SetReVersion(*reVersion).
 		GetToc().
 		Print(os.Stdout))
 }

@@ -7,7 +7,7 @@ import (
 	"github.com/ekalinin/github-markdown-toc.go/internal/grabber"
 )
 
-var _ Tocer = (*LocalMD)(nil)
+var _ Tocer = (*RemoteHTML)(nil)
 
 // RemoteHTML represents a remote HTML file.
 // Main steps to get a TOC:
@@ -19,7 +19,8 @@ type RemoteHTML struct {
 	tocGrabber grabber.Grabber
 }
 
-func (md *RemoteHTML) Toc() ghtoc.GHToc {
+// GetToc returns TOC for a file.
+func (md *RemoteHTML) GetToc() ghtoc.GHToc {
 	md.Log("downloading remote file=%s ...", md.Path)
 	jsonBody, ContentType, err := md.HttpGet(md.Path)
 	md.Log(" ... remote file. content-type=%s", ContentType)

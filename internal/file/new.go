@@ -11,7 +11,7 @@ import (
 
 // Tocer is an interface to get a TOC.
 type Tocer interface {
-	Toc() ghtoc.GHToc
+	GetToc() ghtoc.GHToc
 }
 
 // Option describes an option for a New function.

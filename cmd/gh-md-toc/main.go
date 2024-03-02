@@ -23,7 +23,7 @@ var (
 	indent     = kingpin.Flag("indent", "Indent space of generated list").Default("2").Int()
 	debug      = kingpin.Flag("debug", "Show debug info").Bool()
 	ghurl      = kingpin.Flag("github-url", "GitHub URL, default=https://api.github.com").String()
-	reVersion  = kingpin.Flag("re-version", "RegExp version, default=0").Default("0").String()
+	reVersion  = kingpin.Flag("re-version", "RegExp version, default=0").Default(internal.GH_2024_03).String()
 )
 
 // check if there was an error (and panic if it was)

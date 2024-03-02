@@ -65,7 +65,7 @@ func NewGHDoc(Path string, AbsPaths bool, StartDepth int, Depth int, Escape bool
 		httpGetter: internal.HttpGet,
 		httpPoster: internal.HttpPost,
 		ghURL:      "https://api.github.com",
-		reVersion:  "0",
+		reVersion:  internal.GH_2024_03,
 	}
 }
 
@@ -168,11 +168,8 @@ func (doc *GHDoc) GrabToc() *GHToc {
 	// si:
 	// 	- s - let . match \n (single-line mode)
 	//  - i - case-insensitive
-	re := `(?si)<h(?P<num>[1-6]) id="[^"]+">\s*` +
-		`<a class="heading-link"\s*` +
-		`href="(?P<href>[^"]+)">\s*` +
-		`(?P<name>.*?)<span`
-	if doc.reVersion == "0" {
+	re := ""
+	if doc.reVersion == internal.GH_V0 {
 		re = `(?si)<h(?P<num>[1-6])>\s*` +
 			`<a\s*id="user-content-[^"]*"\s*class="anchor"\s*` +
 			`(aria-hidden="[^"]*"\s*)?` +
@@ -180,6 +177,20 @@ func (doc *GHDoc) GrabToc() *GHToc {
 			`href="(?P<href>[^"]*)"[^>]*>\s*` +
 			`.*?</a>(?P<name>.*?)</h`
 	}
+	if doc.reVersion == internal.GH_2023_10 {
+		re = `(?si)<h(?P<num>[1-6]) id="[^"]+">\s*` +
+			`<a class="heading-link"\s*` +
+			`href="(?P<href>[^"]+)">\s*` +
+			`(?P<name>.*?)<span`
+	}
+	if doc.reVersion == internal.GH_2024_03 {
+		re = `(?si)<h(?P<num>[1-6]) class="heading-element">(?P<name>[^<]+)</h\d>` +
+			`<a\s*id="user-content-[^"]*"\s*` +
+			`class="[^"]*"\s*` +
+			`aria-label="[^"]*"\s*` +
+			`href="(?P<href>[^"]+)">`
+	}
+
 	r := regexp.MustCompile(re)
 	listIndentation := internal.GenerateListIndentation(doc.Indent)
 

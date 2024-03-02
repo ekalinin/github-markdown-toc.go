@@ -184,7 +184,7 @@ func (doc *GHDoc) GrabToc() *GHToc {
 			`(?P<name>.*?)<span`
 	}
 	if doc.reVersion == internal.GH_2024_03 {
-		re = `(?si)<h(?P<num>[1-6]) class="heading-element">(?P<name>[^<]+)</h\d>` +
+		re = `(?si)<h(?P<num>[1-6]) class="heading-element">(?P<name>.*?)</h\d>` +
 			`<a\s*id="user-content-[^"]*"\s*` +
 			`class="[^"]*"\s*` +
 			`aria-label="[^"]*"\s*` +

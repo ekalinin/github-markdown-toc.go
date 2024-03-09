@@ -23,3 +23,5 @@ jobs:
 
       - name: Run converting
         run: make e2e
+        env:
+          GH_TOC_TOKEN: ${{ secrets.GITHUB_TOKEN }}

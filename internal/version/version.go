@@ -1,9 +1,9 @@
-package internal
+package version
 
 const (
 	// Version is a current app version
 	Version   = "1.4.0"
-	userAgent = "github-markdown-toc.go v" + Version
+	UserAgent = "github-markdown-toc.go v" + Version
 )
 
 // Versions of GH layouts

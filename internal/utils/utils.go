@@ -1,4 +1,4 @@
-package internal
+package utils
 
 import (
 	"bytes"
@@ -8,11 +8,13 @@ import (
 	"net/http"
 	"os"
 	"strings"
+
+	"github.com/ekalinin/github-markdown-toc.go/internal/version"
 )
 
 // doHTTPReq executes a particular http request
 func doHTTPReq(req *http.Request) ([]byte, string, error) {
-	req.Header.Set("User-Agent", userAgent)
+	req.Header.Set("User-Agent", version.UserAgent)
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
@@ -117,5 +119,5 @@ func ShowHeader(w io.Writer) {
 
 // ShowFooter shows footer after TOC.
 func ShowFooter(w io.Writer) {
-	fmt.Fprintln(w, "Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc.go)")
+	fmt.Fprintln(w, "Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc.go) v"+version.Version)
 }

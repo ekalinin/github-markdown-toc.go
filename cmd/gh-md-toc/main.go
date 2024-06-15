@@ -1,13 +1,13 @@
 package main
 
 import (
-	"io"
+	"log"
 	"os"
 
 	"gopkg.in/alecthomas/kingpin.v2"
 
-	ghtoc "github.com/ekalinin/github-markdown-toc.go"
-	"github.com/ekalinin/github-markdown-toc.go/internal"
+	"github.com/ekalinin/github-markdown-toc.go/internal/app"
+	"github.com/ekalinin/github-markdown-toc.go/internal/version"
 )
 
 var (
@@ -22,67 +22,13 @@ var (
 	token      = kingpin.Flag("token", "GitHub personal token").String()
 	indent     = kingpin.Flag("indent", "Indent space of generated list").Default("2").Int()
 	debug      = kingpin.Flag("debug", "Show debug info").Bool()
-	ghurl      = kingpin.Flag("github-url", "GitHub URL, default=https://api.github.com").String()
-	reVersion  = kingpin.Flag("re-version", "RegExp version, default=0").Default(internal.GH_2024_03).String()
+	ghurl      = kingpin.Flag("github-url", "GitHub URL, default=https://api.github.com").Default("https://api.github.com").String()
+	reVersion  = kingpin.Flag("re-version", "RegExp version, default=0").Default(version.GH_2024_03).String()
 )
-
-// check if there was an error (and panic if it was)
-func check(e error) {
-	if e != nil {
-		panic(e)
-	}
-}
-
-func processPaths() {
-	pathsCount := len(*paths)
-
-	// read file paths | urls from args
-	absPathsInToc := pathsCount > 1
-	ch := make(chan *ghtoc.GHToc, pathsCount)
-
-	for _, p := range *paths {
-		ghdoc := ghtoc.NewGHDoc(p, absPathsInToc, *startDepth, *depth, !*noEscape, *token, *indent, *debug)
-		ghdoc.SetGHURL(*ghurl).SetReVersion(*reVersion)
-
-		if *serial {
-			ch <- ghdoc.GetToc()
-		} else {
-			go func(path string) { ch <- ghdoc.GetToc() }(p)
-		}
-	}
-
-	if !*hideHeader && pathsCount == 1 {
-		internal.ShowHeader(os.Stdout)
-	}
-
-	for i := 1; i <= pathsCount; i++ {
-		toc := <-ch
-		// #14, check if there's really TOC?
-		if toc != nil {
-			check(toc.Print(os.Stdout))
-		}
-	}
-}
-
-func processSTDIN() {
-	bytes, err := io.ReadAll(os.Stdin)
-	check(err)
-
-	file, err := os.CreateTemp(os.TempDir(), "ghtoc")
-	check(err)
-	defer os.Remove(file.Name())
-
-	check(os.WriteFile(file.Name(), bytes, 0644))
-	check(ghtoc.NewGHDoc(file.Name(), false, *startDepth, *depth, !*noEscape, *token, *indent, *debug).
-		SetGHURL(*ghurl).
-		SetReVersion(*reVersion).
-		GetToc().
-		Print(os.Stdout))
-}
 
 // Entry point
 func main() {
-	kingpin.Version(internal.Version)
+	kingpin.Version(version.Version)
 	kingpin.Parse()
 
 	if *token == "" {
@@ -93,13 +39,22 @@ func main() {
 		*ghurl = os.Getenv("GH_TOC_URL")
 	}
 
-	if len(*paths) > 0 {
-		processPaths()
-	} else {
-		processSTDIN()
+	cfg := app.Config{
+		Files:      *paths,
+		Serial:     *serial,
+		HideHeader: *hideHeader,
+		HideFooter: *hideFooter,
+		StartDepth: *startDepth,
+		Depth:      *depth,
+		NoEscape:   *noEscape,
+		Indent:     *indent,
+		Debug:      *debug,
+		GHToken:    *token,
+		GHUrl:      *ghurl,
+		GHVersion:  *reVersion,
 	}
 
-	if !*hideFooter {
-		internal.ShowFooter(os.Stdout)
+	if err := app.New(cfg).Run(); err != nil {
+		log.Fatal(err)
 	}
 }

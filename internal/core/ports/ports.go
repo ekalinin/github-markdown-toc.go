@@ -23,3 +23,7 @@ type TocGrabber interface {
 type Logger interface {
 	Info(format string, v ...any)
 }
+
+type RemoteGetter interface {
+	Get(path string) ([]byte, string, error)
+}

@@ -9,10 +9,14 @@ import (
 )
 
 func New(cfg config.Config, checker ports.FileChecker, writer ports.FileWriter,
-	converter ports.HTMLConverter, grabber ports.TocGrabber, log ports.Logger) (*localmd.LocalMd, *remotemd.RemoteMd, *remotehtml.RemoteHTML) {
-	ucLocalMD := localmd.New(cfg, checker, writer, converter, grabber, log)
+	converter ports.HTMLConverter,
+	grabberRe ports.TocGrabber,
+	grabberJson ports.TocGrabber,
+	getter ports.RemoteGetter,
+	log ports.Logger) (*localmd.LocalMd, *remotemd.RemoteMd, *remotehtml.RemoteHTML) {
+	ucLocalMD := localmd.New(cfg, checker, writer, converter, grabberRe, log)
 	ucRemoteMD := remotemd.New(cfg)
-	ucRemoteHTML := remotehtml.New(cfg)
+	ucRemoteHTML := remotehtml.New(cfg, getter, writer, grabberJson, log)
 
 	return ucLocalMD, ucRemoteMD, ucRemoteHTML
 }

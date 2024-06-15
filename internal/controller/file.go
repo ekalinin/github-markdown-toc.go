@@ -10,12 +10,16 @@ import (
 func (ctl *Controller) getUseCase(file string) useCase {
 	switch t := entity.GetType(file); t {
 	case entity.TypeLocalMD:
+		ctl.log.Info("Controller.ProcessFiles: detect use-case", "use-case", entity.TypeLocalMD)
 		return ctl.ucLocalMd
 	case entity.TypeRemoteMD:
+		ctl.log.Info("Controller.ProcessFiles: detect use-case", "use-case", entity.TypeRemoteMD)
 		return ctl.ucRemoteMD
 	case entity.TypeRemoteHTML:
+		ctl.log.Info("Controller.ProcessFiles: detect use-case", "use-case", entity.TypeRemoteHTML)
 		return ctl.ucRemoteHTML
 	}
+	ctl.log.Info("Controller.ProcessFiles: use-case is null")
 	return nil
 }
 

@@ -18,7 +18,7 @@ type App struct {
 func New(cfg Config) *App {
 	log := adapters.NewLogger(cfg.Debug)
 
-	log.Info("App.New: init configs ...")
+	log.Info("App.New: init configs ...", "app cfg", cfg)
 	ctlCfg := cfg.ToControllerConfig()
 	ucCfg := ctlCfg.ToUseCaseConfig()
 
@@ -26,13 +26,14 @@ func New(cfg Config) *App {
 	checker := adapters.NewFileCheck(log)
 	writer := adapters.NewFileWriter(log)
 	converter := adapters.NewHTMLConverter(cfg.GHToken, cfg.GHUrl, log)
-	grabber := adapters.NewReGrabber("", cfg.ToGrabberConfig(), cfg.GHVersion)
+	grabberRe := adapters.NewReGrabber("", cfg.ToGrabberConfig(), cfg.GHVersion)
+	grabberJson := adapters.NewJsonGrabber("", cfg.ToGrabberConfig())
+	getter := adapters.NewRemoteGetter(true)
 
 	log.Info("App.New: init usecases ...")
 	ucLocalMD, ucRemoteMD, ucRemoteHTML := usecase.New(
-		ucCfg, checker, writer, converter, grabber, log,
+		ucCfg, checker, writer, converter, grabberRe, grabberJson, getter, log,
 	)
-	// TODO: set JSONGrabber for remoreTHML
 
 	log.Info("App.New: init controller ...")
 	ctl := controller.New(ctlCfg, ucLocalMD, ucRemoteMD, ucRemoteHTML, log)

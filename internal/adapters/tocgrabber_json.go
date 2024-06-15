@@ -9,34 +9,13 @@ import (
 	"github.com/ekalinin/github-markdown-toc.go/internal/utils"
 )
 
-type defaultGrabber struct {
-	Path string
-
-	// toc grabber
-	AbsPaths   bool
-	StartDepth int
-	Depth      int
-	Escape     bool
-	Indent     int
-}
-
-// ------------------------------------------------------
-//
-
 type JsonGrabber struct {
-	defaultGrabber
+	cfg GrabberCfg
 }
 
-func NewJsonGrabber(path string) *JsonGrabber {
+func NewJsonGrabber(path string, cfg GrabberCfg) *JsonGrabber {
 	return &JsonGrabber{
-		defaultGrabber: defaultGrabber{
-			Path:       path,
-			AbsPaths:   false,
-			StartDepth: 0,
-			Depth:      0,
-			Escape:     true,
-			Indent:     2,
-		},
+		cfg: cfg,
 	}
 }
 
@@ -67,7 +46,7 @@ func (g JsonGrabber) Grab(jsonBody string) (*entity.Toc, error) {
 
 	toc := entity.Toc{}
 	tmpSection := ""
-	listIndentation := utils.GenerateListIndentation(g.Indent)
+	listIndentation := utils.GenerateListIndentation(g.cfg.Indent)
 	minHeaderNum := 6
 	for _, item := range wrapper.Payload.Blob.HeaderInfo.Toc {
 		if item.Level < minHeaderNum {
@@ -75,10 +54,10 @@ func (g JsonGrabber) Grab(jsonBody string) (*entity.Toc, error) {
 		}
 	}
 	for _, item := range wrapper.Payload.Blob.HeaderInfo.Toc {
-		if item.Level <= g.StartDepth {
+		if item.Level <= g.cfg.StartDepth {
 			continue
 		}
-		if g.Depth > 0 && item.Level > g.Depth {
+		if g.cfg.Depth > 0 && item.Level > g.cfg.Depth {
 			continue
 		}
 
@@ -87,15 +66,15 @@ func (g JsonGrabber) Grab(jsonBody string) (*entity.Toc, error) {
 		// if err != nil {
 		// 	g.Log("got error from query unescape: ", err.Error())
 		// }
-		if g.AbsPaths {
-			link = g.Path + link
+		if g.cfg.AbsPaths {
+			link = g.cfg.Path + link
 		}
 		tmpSection = utils.RemoveStuff(item.Text)
-		if g.Escape {
+		if g.cfg.Escape {
 			tmpSection = utils.EscapeSpecChars(tmpSection)
 		}
 
-		prefix := strings.Repeat(listIndentation(), item.Level-minHeaderNum-g.StartDepth)
+		prefix := strings.Repeat(listIndentation(), item.Level-minHeaderNum-g.cfg.StartDepth)
 		tocItem := prefix + "* " +
 			"[" + tmpSection + "]" +
 			"(" + link + ")"

@@ -12,12 +12,12 @@ import (
 )
 
 type ReGrabber struct {
-	defaultGrabber
+	cfg GrabberCfg
 
 	re *regexp.Regexp
 }
 
-func NewReGrabber(path string, reVersion string) *ReGrabber {
+func NewReGrabber(path string, cfg GrabberCfg, reVersion string) *ReGrabber {
 	// si:
 	// 	- s - let . match \n (single-line mode)
 	//  - i - case-insensitive
@@ -45,21 +45,14 @@ func NewReGrabber(path string, reVersion string) *ReGrabber {
 	}
 
 	return &ReGrabber{
-		defaultGrabber: defaultGrabber{
-			Path:       path,
-			AbsPaths:   false,
-			StartDepth: 0,
-			Depth:      0,
-			Escape:     true,
-			Indent:     2,
-		},
-		re: regexp.MustCompile(re),
+		cfg: cfg,
+		re:  regexp.MustCompile(re),
 	}
 }
 
 func (g *ReGrabber) Grab(html string) (*entity.Toc, error) {
 
-	listIndentation := utils.GenerateListIndentation(g.Indent)
+	listIndentation := utils.GenerateListIndentation(g.cfg.Indent)
 
 	toc := entity.Toc{}
 	minHeaderNum := 6
@@ -90,23 +83,23 @@ func (g *ReGrabber) Grab(html string) (*entity.Toc, error) {
 	for _, group := range groups {
 		// format result
 		n, _ := strconv.Atoi(group["num"])
-		if n <= g.StartDepth {
+		if n <= g.cfg.StartDepth {
 			continue
 		}
-		if g.Depth > 0 && n > g.Depth {
+		if g.cfg.Depth > 0 && n > g.cfg.Depth {
 			continue
 		}
 
 		link, _ := url.QueryUnescape(group["href"])
-		if g.AbsPaths {
-			link = g.Path + link
+		if g.cfg.AbsPaths {
+			link = g.cfg.Path + link
 		}
 
 		tmpSection = utils.RemoveStuff(group["name"])
-		if g.Escape {
+		if g.cfg.Escape {
 			tmpSection = utils.EscapeSpecChars(tmpSection)
 		}
-		tocItem := strings.Repeat(listIndentation(), n-minHeaderNum-g.StartDepth) + "* " +
+		tocItem := strings.Repeat(listIndentation(), n-minHeaderNum-g.cfg.StartDepth) + "* " +
 			"[" + tmpSection + "]" +
 			"(" + link + ")"
 		//fmt.Println(tocItem)

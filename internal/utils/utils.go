@@ -119,5 +119,5 @@ func ShowHeader(w io.Writer) {
 
 // ShowFooter shows footer after TOC.
 func ShowFooter(w io.Writer) {
-	fmt.Fprintln(w, "Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc.go) v"+version.Version)
+	fmt.Fprintln(w, "Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc.go)")
 }

@@ -26,7 +26,7 @@ func New(cfg Config) *App {
 	checker := adapters.NewFileCheck(log)
 	writer := adapters.NewFileWriter(log)
 	converter := adapters.NewHTMLConverter(cfg.GHToken, cfg.GHUrl, log)
-	grabber := adapters.NewReGrabber("", cfg.GHVersion)
+	grabber := adapters.NewReGrabber("", cfg.ToGrabberConfig(), cfg.GHVersion)
 
 	log.Info("App.New: init usecases ...")
 	ucLocalMD, ucRemoteMD, ucRemoteHTML := usecase.New(

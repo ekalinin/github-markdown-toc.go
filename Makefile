@@ -16,8 +16,8 @@ clean:
 	@go clean
 
 lint:
-	@go vet
-	@golangci-lint run
+	@go vet ./...
+	@golangci-lint run ./...
 
 # make run ARGS="--help"
 run:
@@ -27,7 +27,7 @@ build: clean lint
 	go build -race -o ${EXEC} ${CMD_SRC}
 
 test: clean lint
-	@go test -cover -o ${EXEC}
+	@go test -cover ./...
 
 e2e:
 	@echo "${bold}>> 1. Local MD, with options ...${clear}"

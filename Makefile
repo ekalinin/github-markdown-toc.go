@@ -26,8 +26,11 @@ build: clean lint
 
 test: clean lint
 	@go test -cover ./...
-	@go test -covermode=count -coverpkg=./... -coverprofile .cover.out -v ./...
+
+test-cover:
+	@go test -covermode=count -coverpkg=./... -coverprofile .cover.out ./...
 	@go tool cover -html .cover.out -o .coverage.html
+	@go tool cover -func .cover.out
 
 e2e:
 	@echo "${bold}>> 1. Local MD, with options ...${clear}"

@@ -6,6 +6,7 @@ BUILD_ARCH="amd64"
 E2E_DIR=e2e-tests
 E2E_RUN=go run cmd/gh-md-toc/main.go ./README.md
 E2E_RUN_RHTML=go run cmd/gh-md-toc/main.go https://github.com/ekalinin/github-markdown-toc.go/blob/master/README.md
+E2E_RUN_RMD=go run cmd/gh-md-toc/main.go https://raw.githubusercontent.com/ekalinin/github-markdown-toc.go/master/README.md
 bold := $(shell tput bold)
 clear := $(shell tput sgr0)
 
@@ -38,12 +39,20 @@ e2e:
 	@diff ${E2E_DIR}/want3.md ${E2E_DIR}/got3.md
 
 	@echo "${bold}>> 2. Remote MD, with options ...${clear}"
-	${E2E_RUN_RHTML} > ${E2E_DIR}/got4.md
-	@diff ${E2E_DIR}/want4.md ${E2E_DIR}/got4.md
-	${E2E_RUN_RHTML} --hide-header --hide-footer --depth=1 --no-escape > ${E2E_DIR}/got5.md
-	@diff ${E2E_DIR}/want5.md ${E2E_DIR}/got5.md
-	${E2E_RUN_RHTML} --hide-header --hide-footer --indent=4 > ${E2E_DIR}/got6.md
-	@diff ${E2E_DIR}/want6.md ${E2E_DIR}/got6.md
+	${E2E_RUN_RMD} > ${E2E_DIR}/got4.md
+	@diff ${E2E_DIR}/want.md ${E2E_DIR}/got4.md
+	${E2E_RUN_RMD} --hide-header --hide-footer --depth=1 --no-escape > ${E2E_DIR}/got5.md
+	@diff ${E2E_DIR}/want2.md ${E2E_DIR}/got5.md
+	${E2E_RUN_RMD} --hide-header --hide-footer --indent=4 > ${E2E_DIR}/got6.md
+	@diff ${E2E_DIR}/want3.md ${E2E_DIR}/got6.md
+
+	@echo "${bold}>> 3. Remote HTML, with options ...${clear}"
+	${E2E_RUN_RHTML} > ${E2E_DIR}/got7.md
+	@diff ${E2E_DIR}/want.md ${E2E_DIR}/got7.md
+	${E2E_RUN_RHTML} --hide-header --hide-footer --depth=1 --no-escape > ${E2E_DIR}/got8.md
+	@diff ${E2E_DIR}/want2.md ${E2E_DIR}/got8.md
+	${E2E_RUN_RHTML} --hide-header --hide-footer --indent=4 > ${E2E_DIR}/got9.md
+	@diff ${E2E_DIR}/want3.md ${E2E_DIR}/got9.md
 
 release: test
 	@git tag v`grep "\tVersion" internal/version.go | grep -o -E '[0-9]\.[0-9]\.[0-9]{1,2}'`

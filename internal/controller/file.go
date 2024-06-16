@@ -30,15 +30,17 @@ func (ctl *Controller) ProcessFiles(files ...string) error {
 	ch := make(chan *entity.Toc, cnt)
 	for _, file := range files {
 		ctl.log.Info("Controller.ProcessFiles: processing", "file", file)
-		useCase := ctl.getUseCase(file)
-		if useCase == nil {
+		uc := ctl.getUseCase(file)
+		if uc == nil {
 			return errors.New("useCase is null")
 		}
 
 		if ctl.cfg.Serial {
-			ch <- useCase.Do(file)
+			ch <- uc.Do(file)
 		} else {
-			go func(path string) { ch <- useCase.Do(path) }(file)
+			go func(ucc useCase, path string) {
+				ch <- ucc.Do(path)
+			}(uc, file)
 		}
 	}
 
@@ -46,7 +48,7 @@ func (ctl *Controller) ProcessFiles(files ...string) error {
 		toc := <-ch
 		// #14, check if there's really TOC?
 		if toc != nil {
-			return toc.Print(os.Stdout)
+			toc.Print(os.Stdout)
 		}
 	}
 	return nil

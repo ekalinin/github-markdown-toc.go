@@ -54,8 +54,8 @@ func HttpGetJson(urlPath string) ([]byte, string, error) {
 }
 
 // HttpPost executes HTTP POST with file content.
-func HttpPost(urlPath, filePath, token string) (string, error) {
-	file, err := os.Open(filePath)
+func HttpPost(url, path, token string) (string, error) {
+	file, err := os.Open(path)
 	if err != nil {
 		return "", err
 	}
@@ -67,7 +67,7 @@ func HttpPost(urlPath, filePath, token string) (string, error) {
 		return "", err
 	}
 
-	req, err := http.NewRequest("POST", urlPath, body)
+	req, err := http.NewRequest("POST", url, body)
 	if err != nil {
 		return "", err
 	}

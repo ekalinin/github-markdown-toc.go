@@ -33,3 +33,7 @@ type RemoteGetter interface {
 type FileTemper interface {
 	CreateTemp(dir, pattern string) (*os.File, error)
 }
+
+type RemotePoster interface {
+	Post(url, token, path string) (string, error)
+}

@@ -1,8 +1,6 @@
 EXEC=gh-md-toc
 CMD_SRC=cmd/${EXEC}/main.go
 BUILD_DIR=build
-BUILD_OS="windows darwin linux"
-BUILD_ARCH="amd64"
 E2E_DIR=e2e-tests
 E2E_RUN=go run cmd/gh-md-toc/main.go ./README.md
 E2E_RUN_RHTML=go run cmd/gh-md-toc/main.go https://github.com/ekalinin/github-markdown-toc.go/blob/master/README.md
@@ -28,6 +26,8 @@ build: clean lint
 
 test: clean lint
 	@go test -cover ./...
+	@go test -covermode=count -coverpkg=./... -coverprofile .cover.out -v ./...
+	@go tool cover -html .cover.out -o .coverage.html
 
 e2e:
 	@echo "${bold}>> 1. Local MD, with options ...${clear}"

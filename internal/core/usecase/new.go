@@ -8,15 +8,19 @@ import (
 	"github.com/ekalinin/github-markdown-toc.go/internal/core/usecase/remotemd"
 )
 
-func New(cfg config.Config, checker ports.FileChecker, writer ports.FileWriter,
+func New(cfg config.Config,
+	checker ports.FileChecker,
+	writer ports.FileWriter,
 	converter ports.HTMLConverter,
 	grabberRe ports.TocGrabber,
 	grabberJson ports.TocGrabber,
 	getter ports.RemoteGetter,
+	temper ports.FileTemper,
 	log ports.Logger) (*localmd.LocalMd, *remotemd.RemoteMd, *remotehtml.RemoteHTML) {
+
 	ucLocalMD := localmd.New(cfg, checker, writer, converter, grabberRe, log)
-	ucRemoteMD := remotemd.New(cfg)
-	ucRemoteHTML := remotehtml.New(cfg, getter, writer, grabberJson, log)
+	ucRemoteMD := remotemd.New(cfg, getter, ucLocalMD, temper, writer, log)
+	ucRemoteHTML := remotehtml.New(cfg, getter, writer, temper, grabberJson, log)
 
 	return ucLocalMD, ucRemoteMD, ucRemoteHTML
 }

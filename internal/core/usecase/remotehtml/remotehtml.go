@@ -1,8 +1,6 @@
 package remotehtml
 
 import (
-	"os"
-
 	"github.com/ekalinin/github-markdown-toc.go/internal/core/entity"
 	"github.com/ekalinin/github-markdown-toc.go/internal/core/ports"
 	"github.com/ekalinin/github-markdown-toc.go/internal/core/usecase/config"
@@ -15,12 +13,13 @@ type RemoteHTML struct {
 	getter  ports.RemoteGetter
 	grabber ports.TocGrabber
 	writer  ports.FileWriter
+	tempter ports.FileTemper
 	log     ports.Logger
 }
 
 func New(cfg config.Config, getter ports.RemoteGetter, writer ports.FileWriter,
-	grabber ports.TocGrabber, log ports.Logger) *RemoteHTML {
-	return &RemoteHTML{cfg, getter, grabber, writer, log}
+	temper ports.FileTemper, grabber ports.TocGrabber, log ports.Logger) *RemoteHTML {
+	return &RemoteHTML{cfg, getter, grabber, writer, temper, log}
 }
 
 func (r *RemoteHTML) Do(url string) *entity.Toc {
@@ -33,8 +32,7 @@ func (r *RemoteHTML) Do(url string) *entity.Toc {
 	r.log.Info("RemoteHTML: got file", "content-type=", ContentType)
 
 	if r.cfg.Debug {
-		// TODO: move to ports/adapters
-		tmpfile, err := os.CreateTemp("", "ghtoc-remote-json-*")
+		tmpfile, err := r.tempter.CreateTemp("", "ghtoc-remote-json-*")
 		if err != nil {
 			r.log.Info("RemoteHTML: creating file failed", "err", err)
 			return nil

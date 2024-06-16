@@ -1,6 +1,8 @@
 package ports
 
 import (
+	"os"
+
 	"github.com/ekalinin/github-markdown-toc.go/internal/core/entity"
 )
 
@@ -26,4 +28,8 @@ type Logger interface {
 
 type RemoteGetter interface {
 	Get(path string) ([]byte, string, error)
+}
+
+type FileTemper interface {
+	CreateTemp(dir, pattern string) (*os.File, error)
 }

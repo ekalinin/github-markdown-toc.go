@@ -29,10 +29,12 @@ func New(cfg Config) *App {
 	grabberRe := adapters.NewReGrabber("", cfg.ToGrabberConfig(), cfg.GHVersion)
 	grabberJson := adapters.NewJsonGrabber("", cfg.ToGrabberConfig())
 	getter := adapters.NewRemoteGetter(true)
+	temper := adapters.NewFileTemper()
 
 	log.Info("App.New: init usecases ...")
 	ucLocalMD, ucRemoteMD, ucRemoteHTML := usecase.New(
-		ucCfg, checker, writer, converter, grabberRe, grabberJson, getter, log,
+		ucCfg, checker, writer, converter, grabberRe, grabberJson,
+		getter, temper, log,
 	)
 
 	log.Info("App.New: init controller ...")

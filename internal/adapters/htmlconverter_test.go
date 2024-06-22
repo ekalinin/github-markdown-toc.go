@@ -65,3 +65,11 @@ func Test_HTMLConverter(t *testing.T) {
 		})
 	}
 }
+
+func Test_HTMLConverterX(t *testing.T) {
+	converter := NewHTMLConverter("gh-token", "gh-url", NewLogger(false))
+	_, ok := converter.poster.(*RemotePoster)
+	if !ok {
+		t.Errorf("converter is not of type RemotePoster")
+	}
+}

@@ -7,17 +7,30 @@ import (
 	"testing"
 )
 
-func Tpest_RemoteGetterPlain(t *testing.T) {
-	expected := "dummy data"
-	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+func getFakeServer(wantJSON bool, response string, t *testing.T) *httptest.Server {
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != "GET" {
 			t.Error("Should be GET")
 		}
-		_, err := fmt.Fprint(w, expected)
+
+		if wantJSON {
+			ctGot := r.Header.Get("Content-Type")
+			ctWant := "application/json"
+			if ctGot != ctWant {
+				t.Error("Content type fail. Want=", ctWant, ", but got=", ctWant)
+			}
+		}
+
+		_, err := fmt.Fprint(w, response)
 		if err != nil {
 			println(err)
 		}
 	}))
+}
+
+func Test_RemoteGetterPlain(t *testing.T) {
+	expected := "dummy data"
+	srv := getFakeServer(false, expected, t)
 	defer srv.Close()
 
 	getter := NewRemoteGetter(false)
@@ -34,21 +47,7 @@ func Tpest_RemoteGetterPlain(t *testing.T) {
 
 func Test_RemoteGetterJson(t *testing.T) {
 	expected := "dummy data"
-	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != "GET" {
-			t.Error("Should be GET")
-		}
-		ctGot := r.Header.Get("Content-Type")
-		ctWant := "application/json"
-		if ctGot != ctWant {
-			t.Error("Content type fail. Want=", ctWant, ", but got=", ctWant)
-		}
-
-		_, err := fmt.Fprint(w, expected)
-		if err != nil {
-			println(err)
-		}
-	}))
+	srv := getFakeServer(true, expected, t)
 	defer srv.Close()
 
 	getter := NewRemoteGetter(true)

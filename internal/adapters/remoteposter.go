@@ -17,7 +17,7 @@ type RemotePoster struct {
 }
 
 func NewRemotePoster() *RemotePoster {
-	return &RemotePoster{poster: &realPoster{}}
+	return NewRemotePosterX(&realPoster{})
 }
 
 func NewRemotePosterX(poster ports.RemotePoster) *RemotePoster {

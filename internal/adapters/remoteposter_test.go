@@ -1,6 +1,11 @@
 package adapters
 
-import "testing"
+import (
+	"net/http"
+	"net/http/httptest"
+	"os"
+	"testing"
+)
 
 func Test_RemotePoster(t *testing.T) {
 	want := "post ok"
@@ -23,9 +28,33 @@ func Test_RemotePoster(t *testing.T) {
 					t.Errorf("got=%v, want=%v", got, want)
 				}
 			} else {
-				p, ok := tt.remotePoster.poster.(*realPoster)
-				if !ok {
-					t.Errorf("should be used realPoster, got=%v", p)
+				testToken := "token-for-test"
+				fileName, err := NewFileTemper().CreateTemp("", "example.*.txt")
+				if err != nil {
+					t.Error("Tmp file creation err=", err)
+				}
+				defer os.Remove(fileName.Name())
+
+				srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					if r.Method != "POST" {
+						t.Error("Should be POST")
+					}
+					tokenGot := r.Header.Get("Authorization")
+					tokenWant := "token " + testToken
+					if tokenGot != tokenWant {
+						t.Error("Auth fail. Want token=", tokenWant, ", got=", tokenGot)
+					}
+
+					ctGot := r.Header.Get("Content-Type")
+					ctWant := "text/plain;charset=utf-8"
+					if ctGot != ctWant {
+						t.Error("Content type fail. Want=", ctWant, ", but got=", ctWant)
+					}
+				}))
+				defer srv.Close()
+
+				if _, err := tt.remotePoster.Post(srv.URL, testToken, fileName.Name()); err != nil {
+					t.Error("Should not be err, but got=", err)
 				}
 			}
 		})

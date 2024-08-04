@@ -25,3 +25,11 @@ func Test_TocPrint(t *testing.T) {
 		})
 	}
 }
+
+func Test_TocAt(t *testing.T) {
+	toc := Toc{"hello", "there"}
+	got := toc.At(1)
+	if got != "there" {
+		t.Errorf("got: %s, want: %s\n", got, "there")
+	}
+}

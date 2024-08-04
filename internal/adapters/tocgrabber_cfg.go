@@ -10,3 +10,14 @@ type GrabberCfg struct {
 	Escape     bool
 	Indent     int
 }
+
+func DefaultCfg() GrabberCfg {
+	return GrabberCfg{
+		Path:       "",
+		AbsPaths:   false,
+		StartDepth: 0,
+		Depth:      0,
+		Escape:     true,
+		Indent:     2,
+	}
+}

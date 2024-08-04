@@ -2,6 +2,7 @@ package adapters
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/url"
 	"strings"
 
@@ -13,7 +14,7 @@ type JsonGrabber struct {
 	cfg GrabberCfg
 }
 
-func NewJsonGrabber(path string, cfg GrabberCfg) *JsonGrabber {
+func NewJsonGrabber(cfg GrabberCfg) *JsonGrabber {
 	return &JsonGrabber{
 		cfg: cfg,
 	}
@@ -39,7 +40,7 @@ func (g JsonGrabber) Grab(jsonBody string) (*entity.Toc, error) {
 	var wrapper tocWrapper
 	err := json.Unmarshal([]byte(jsonBody), &wrapper)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("got error from unmarshal: %w", err)
 	}
 
 	// g.Log("processing groups ...")
@@ -61,11 +62,12 @@ func (g JsonGrabber) Grab(jsonBody string) (*entity.Toc, error) {
 			continue
 		}
 
-		link, _ := url.QueryUnescape(item.Anchor)
+		link, err := url.QueryUnescape(item.Anchor)
+		if err != nil {
+			// g.Log("got error from query unescape: ", err.Error())
+			return nil, fmt.Errorf("got error from unescape: %w", err)
+		}
 		link = "#" + link
-		// if err != nil {
-		// 	g.Log("got error from query unescape: ", err.Error())
-		// }
 		if g.cfg.AbsPaths {
 			link = g.cfg.Path + link
 		}

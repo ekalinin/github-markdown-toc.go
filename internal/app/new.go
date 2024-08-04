@@ -27,7 +27,7 @@ func New(cfg Config) *App {
 	writer := adapters.NewFileWriter(log)
 	converter := adapters.NewHTMLConverter(cfg.GHToken, cfg.GHUrl, log)
 	grabberRe := adapters.NewReGrabber("", cfg.ToGrabberConfig(), cfg.GHVersion)
-	grabberJson := adapters.NewJsonGrabber("", cfg.ToGrabberConfig())
+	grabberJson := adapters.NewJsonGrabber(cfg.ToGrabberConfig())
 	getter := adapters.NewRemoteGetter(true)
 	temper := adapters.NewFileTemper()
 

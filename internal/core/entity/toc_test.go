@@ -2,6 +2,8 @@ package entity
 
 import (
 	"bytes"
+	"errors"
+	"io"
 	"testing"
 )
 
@@ -31,5 +33,36 @@ func Test_TocAt(t *testing.T) {
 	got := toc.At(1)
 	if got != "there" {
 		t.Errorf("got: %s, want: %s\n", got, "there")
+	}
+}
+
+type TestPrinter struct {
+	n   int
+	err string
+}
+
+func (p TestPrinter) Fprintln(w io.Writer, a ...any) (n int, err error) {
+	if p.err != "" {
+		return 0, errors.New(p.err)
+	}
+	return p.n, nil
+}
+
+func Test_TocCustomPrintFail(t *testing.T) {
+	toc := Toc{"hello", "there"}
+	printer := TestPrinter{0, "failed"}
+
+	var b bytes.Buffer
+	got := toc.CustomPrint(&b, printer)
+
+	if got == nil {
+		t.Errorf("should fail first print")
+	}
+
+	toc = Toc{}
+	got = toc.CustomPrint(&b, printer)
+
+	if got == nil {
+		t.Errorf("should fail last print")
 	}
 }

@@ -2,7 +2,7 @@ package controller
 
 import (
 	"errors"
-	"os"
+	"io"
 
 	"github.com/ekalinin/github-markdown-toc.go/internal/core/entity"
 )
@@ -23,7 +23,7 @@ func (ctl *Controller) getUseCase(file string) useCase {
 	return nil
 }
 
-func (ctl *Controller) ProcessFiles(files ...string) error {
+func (ctl *Controller) ProcessFiles(stdout io.Writer, files ...string) error {
 	ctl.log.Info("Controller.ProcessFiles: start", "files", files)
 	cnt := len(files)
 
@@ -48,7 +48,7 @@ func (ctl *Controller) ProcessFiles(files ...string) error {
 		toc := <-ch
 		// #14, check if there's really TOC?
 		if toc != nil {
-			toc.Print(os.Stdout)
+			toc.Print(stdout)
 		}
 	}
 	return nil

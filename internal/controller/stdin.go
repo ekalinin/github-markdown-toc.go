@@ -5,7 +5,7 @@ import (
 	"os"
 )
 
-func (ctl *Controller) ProcessSTDIN(stding *os.File) error {
+func (ctl *Controller) ProcessSTDIN(stdout io.Writer, stding *os.File) error {
 	bytes, err := io.ReadAll(stding)
 	if err != nil {
 		return err
@@ -22,5 +22,5 @@ func (ctl *Controller) ProcessSTDIN(stding *os.File) error {
 		return err
 	}
 
-	return ctl.ProcessFiles(file.Name())
+	return ctl.ProcessFiles(stdout, file.Name())
 }

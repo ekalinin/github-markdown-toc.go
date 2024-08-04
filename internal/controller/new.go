@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"io"
 	"os"
 
 	"github.com/ekalinin/github-markdown-toc.go/internal/core/entity"
@@ -29,9 +30,9 @@ func New(cfg Config, ucLocalMD useCase, ucRemoteMD useCase, ucRemoteHTML useCase
 	}
 }
 
-func (ctl *Controller) Process() error {
+func (ctl *Controller) Process(stdout io.Writer) error {
 	if len(ctl.cfg.Files) > 0 {
-		return ctl.ProcessFiles(ctl.cfg.Files...)
+		return ctl.ProcessFiles(stdout, ctl.cfg.Files...)
 	}
-	return ctl.ProcessSTDIN(os.Stdin)
+	return ctl.ProcessSTDIN(stdout, os.Stdin)
 }

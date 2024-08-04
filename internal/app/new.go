@@ -1,13 +1,15 @@
 package app
 
 import (
+	"io"
+
 	"github.com/ekalinin/github-markdown-toc.go/internal/adapters"
 	"github.com/ekalinin/github-markdown-toc.go/internal/controller"
 	"github.com/ekalinin/github-markdown-toc.go/internal/core/usecase"
 )
 
 type Controller interface {
-	Process() error
+	Process(stdout io.Writer) error
 }
 
 type App struct {

@@ -54,7 +54,7 @@ func main() {
 		GHVersion:  *reVersion,
 	}
 
-	if err := app.New(cfg).Run(); err != nil {
+	if err := app.New(cfg).Run(os.Stdout); err != nil {
 		log.Fatal(err)
 	}
 }

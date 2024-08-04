@@ -18,3 +18,8 @@ func (toc *Toc) Print(w io.Writer) error {
 	}
 	return nil
 }
+
+func (toc Toc) At(idx int) string {
+	ss := []string(toc)
+	return ss[idx]
+}

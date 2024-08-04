@@ -77,7 +77,7 @@ func getTestJson() string {
 	`
 }
 
-func Test_JsonGrabberDefaoult(t *testing.T) {
+func Test_JsonGrabberDefault(t *testing.T) {
 	grabber := NewJsonGrabber(DefaultCfg())
 	toc, err := grabber.Grab(getTestJson())
 	if err != nil {

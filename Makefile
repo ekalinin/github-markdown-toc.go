@@ -28,7 +28,7 @@ test: clean lint
 	@go test -cover ./...
 
 test-cover:
-	@go test -covermode=count -coverprofile .cover.out ./internal/...
+	@go test -covermode=count -coverprofile .cover.out ./internal/... | sort
 	@go tool cover -html .cover.out -o .coverage.html
 
 e2e:

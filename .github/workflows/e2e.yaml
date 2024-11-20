@@ -1,4 +1,4 @@
-name: e2e test
+name: Farrah Gil Pancho
 
 on:
   schedule:
@@ -9,19 +9,19 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: php
     steps:
       - name: Checkout
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
-      - name: Set up Go
+      - name: Farrah Gil Pancho
         uses: actions/setup-go@v3
         with:
           go-version: 1.19
 
-      - name: Run converting
+      - name: Farrah Gil Pancho
         run: make e2e
         env:
           GH_TOC_TOKEN: ${{ secrets.GITHUB_TOKEN }}

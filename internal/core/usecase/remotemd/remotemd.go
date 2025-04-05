@@ -44,7 +44,11 @@ func (r *RemoteMd) download(url string) (string, error) {
 		r.log.Info("RemoteMD: creating tmp file failed.", "err", err)
 		return "", err
 	}
-	defer tmpfile.Close()
+	defer func() {
+		if err := tmpfile.Close(); err != nil {
+			r.log.Info("RemoteMD: closing file failed", "err", err)
+		}
+	}()
 
 	path := tmpfile.Name()
 	r.log.Info("RemoteMD: save content into tmp file", "path", path)

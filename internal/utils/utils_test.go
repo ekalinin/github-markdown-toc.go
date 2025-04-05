@@ -127,7 +127,9 @@ func TestHttpPost(t *testing.T) {
 	if err != nil {
 		t.Error("Should not be err", err)
 	}
-	defer os.Remove(fileName)
+	defer func() {
+		_ = os.Remove(fileName)
+	}()
 
 	_, err = HttpPost(srv.URL, fileName, token)
 	if err != nil {
@@ -138,7 +140,7 @@ func TestHttpPost(t *testing.T) {
 // Cover the changes of ioutil.ReadAll to io.ReadAll in doHTTPReq.
 func Test_doHTTPReq_issue35(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintln(w, "Hello, client")
+		_, _ = fmt.Fprintln(w, "Hello, client")
 	}))
 	defer srv.Close()
 

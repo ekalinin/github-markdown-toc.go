@@ -37,7 +37,11 @@ func (r *RemoteHTML) Do(url string) *entity.Toc {
 			r.log.Info("RemoteHTML: creating file failed", "err", err)
 			return nil
 		}
-		defer tmpfile.Close()
+		defer func() {
+			if err := tmpfile.Close(); err != nil {
+				r.log.Info("RemoteHTML: closing file failed", "err", err)
+			}
+		}()
 		path := tmpfile.Name()
 
 		jsonFile := path + ".debug.json"

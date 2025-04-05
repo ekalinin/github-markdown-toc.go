@@ -33,7 +33,11 @@ func Test_RemotePoster(t *testing.T) {
 				if err != nil {
 					t.Error("Tmp file creation err=", err)
 				}
-				defer os.Remove(fileName.Name())
+				defer func() {
+					if err := os.Remove(fileName.Name()); err != nil {
+						t.Error("Tmp file deletion err=", err)
+					}
+				}()
 
 				srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					if r.Method != "POST" {

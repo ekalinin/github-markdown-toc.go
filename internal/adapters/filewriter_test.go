@@ -31,7 +31,10 @@ func Test_FileWriter(t *testing.T) {
 			if got := string(data); got != test_data {
 				t.Errorf("Got=%v, want=%v", got, test_data)
 			}
-			os.Remove(file)
+			err = os.Remove(file)
+			if err != nil {
+				t.Errorf("Error on delete file=%v err=%v", file, err)
+			}
 		})
 	}
 }

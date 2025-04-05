@@ -21,7 +21,9 @@ func doHTTPReq(req *http.Request) ([]byte, string, error) {
 		return []byte{}, "", err
 	}
 
-	defer resp.Body.Close()
+	defer func() {
+		_ = resp.Body.Close()
+	}()
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return []byte{}, "", err
@@ -59,7 +61,9 @@ func HttpPost(url, path, token string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	defer file.Close()
+	defer func() {
+		_ = file.Close()
+	}()
 
 	body := &bytes.Buffer{}
 	_, err = io.Copy(body, file)
@@ -83,9 +87,9 @@ func HttpPost(url, path, token string) (string, error) {
 
 // RemoveStuff trims spaces, removes new lines and code tag from a string.
 func RemoveStuff(s string) string {
-	res := strings.Replace(s, "\n", "", -1)
-	res = strings.Replace(res, "<code>", "", -1)
-	res = strings.Replace(res, "</code>", "", -1)
+	res := strings.ReplaceAll(s, "\n", "")
+	res = strings.ReplaceAll(res, "<code>", "")
+	res = strings.ReplaceAll(res, "</code>", "")
 	res = strings.TrimSpace(res)
 
 	return res
@@ -104,20 +108,20 @@ func EscapeSpecChars(s string) string {
 	res := s
 
 	for _, c := range specChar {
-		res = strings.Replace(res, c, "\\"+c, -1)
+		res = strings.ReplaceAll(res, c, "\\"+c)
 	}
 	return res
 }
 
 // ShowHeader shows header befor TOC.
 func ShowHeader(w io.Writer) {
-	fmt.Fprintln(w)
-	fmt.Fprintln(w, "Table of Contents")
-	fmt.Fprintln(w, "=================")
-	fmt.Fprintln(w)
+	_, _ = fmt.Fprintln(w)
+	_, _ = fmt.Fprintln(w, "Table of Contents")
+	_, _ = fmt.Fprintln(w, "=================")
+	_, _ = fmt.Fprintln(w)
 }
 
 // ShowFooter shows footer after TOC.
 func ShowFooter(w io.Writer) {
-	fmt.Fprintln(w, "Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc.go)")
+	_, _ = fmt.Fprintln(w, "Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc.go)")
 }

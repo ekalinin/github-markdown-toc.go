@@ -48,7 +48,9 @@ func (ctl *Controller) ProcessFiles(stdout io.Writer, files ...string) error {
 		toc := <-ch
 		// #14, check if there's really TOC?
 		if toc != nil {
-			toc.Print(stdout)
+			if err := toc.Print(stdout); err != nil {
+				return err
+			}
 		}
 	}
 	return nil

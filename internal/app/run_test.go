@@ -18,7 +18,10 @@ func (c TestController) Process(stdout io.Writer) error {
 		return c.err
 	}
 	if len(c.body) > 0 {
-		fmt.Fprint(stdout, c.body)
+		if _, err := fmt.Fprint(stdout, c.body); err != nil {
+			return err
+		}
+
 	}
 	return nil
 }

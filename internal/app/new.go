@@ -42,7 +42,7 @@ func New(cfg Config) *App {
 	log.Info("App.New: init controller ...")
 	ctl := controller.New(ctlCfg, ucLocalMD, ucRemoteMD, ucRemoteHTML, log)
 
-	log.Info("done.")
+	log.Info("App.New: done.")
 	return &App{
 		ctl: ctl,
 		cfg: cfg,

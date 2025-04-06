@@ -25,8 +25,8 @@ func NewHTMLConverterX(token, url string, poster ports.RemotePoster, log ports.L
 }
 
 func (c *HTMLConverter) Convert(file string) (string, error) {
-	c.log.Info("adapters.HTMLConveter.Convert: start", "file", file)
+	c.log.Info("adapters.HTMLConverter.Convert: start", "file", file)
 	ghURL := c.ghURL + "/markdown/raw"
-	c.log.Info("adapters.HTMLConveter.Convert: sending", "url", ghURL)
+	c.log.Info("adapters.HTMLConverter.Convert: sending", "url", ghURL)
 	return c.poster.Post(ghURL, c.ghToken, file)
 }

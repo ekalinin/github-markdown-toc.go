@@ -9,7 +9,7 @@ func Test_FileWriter(t *testing.T) {
 	tests := []struct {
 		name string
 	}{
-		{"Writed"},
+		{"Written"},
 	}
 	writer := NewFileWriter(NewLogger(false))
 	checker := NewFileCheck(NewLogger(false))

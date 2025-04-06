@@ -17,7 +17,7 @@ func getFakeServer(wantJSON bool, response string, t *testing.T) *httptest.Serve
 			ctGot := r.Header.Get("Content-Type")
 			ctWant := "application/json"
 			if ctGot != ctWant {
-				t.Error("Content type fail. Want=", ctWant, ", but got=", ctWant)
+				t.Error("Content type fail. Want=", ctWant, ", but got=", ctGot)
 			}
 		}
 

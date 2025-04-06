@@ -52,7 +52,7 @@ func Test_RemotePoster(t *testing.T) {
 					ctGot := r.Header.Get("Content-Type")
 					ctWant := "text/plain;charset=utf-8"
 					if ctGot != ctWant {
-						t.Error("Content type fail. Want=", ctWant, ", but got=", ctWant)
+						t.Error("Content type fail. Want=", ctWant, ", but got=", ctGot)
 					}
 				}))
 				defer srv.Close()

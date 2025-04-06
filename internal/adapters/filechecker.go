@@ -15,9 +15,9 @@ func NewFileCheck(log ports.Logger) *FileChecker {
 }
 
 func (ch *FileChecker) Exists(file string) bool {
-	ch.log.Info("FileCheker.Exists: start", "file", file)
+	ch.log.Info("FileChecker.Exists: start", "file", file)
 	_, err := os.Stat(file)
 	res := !os.IsNotExist(err)
-	ch.log.Info("FileCheker.Exists: done", "res", res)
+	ch.log.Info("FileChecker.Exists: done", "res", res)
 	return res
 }

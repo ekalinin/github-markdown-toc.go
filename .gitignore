@@ -5,3 +5,4 @@ TODO.md
 build
 e2e-tests/got*.md
 dist/
+.cover*

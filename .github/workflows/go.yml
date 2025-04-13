@@ -6,12 +6,16 @@ on:
       - master
     paths-ignore:
       - "**/*.md"
+      - "**/*.yml"
+      - "**/*.yaml"
       - "Makefile"
   pull_request:
     branches:
       - master
     paths-ignore:
       - "**/*.md"
+      - "**/*.yml"
+      - "**/*.yaml"
       - "Makefile"
 
 jobs:

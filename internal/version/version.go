@@ -2,7 +2,7 @@ package version
 
 const (
 	// Version is a current app version
-	Version   = "1.4.0"
+	Version   = "2.0.0"
 	UserAgent = "github-markdown-toc.go v" + Version
 )
 

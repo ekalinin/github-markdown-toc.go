@@ -57,7 +57,7 @@ e2e:
 	@diff ${E2E_DIR}/want3.md ${E2E_DIR}/got9.md
 
 release: test
-	@git tag v`grep "\tVersion" internal/version.go | grep -o -E '[0-9]\.[0-9]\.[0-9]{1,2}'`
+	@git tag v`grep "\tVersion" internal/version/version.go | grep -o -E '[0-9]\.[0-9]\.[0-9]{1,2}'`
 	@git push --tags origin master
 
 release-local:

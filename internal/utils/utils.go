@@ -9,7 +9,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/ekalinin/github-markdown-toc.go/internal/version"
+	"github.com/ekalinin/github-markdown-toc.go/v2/internal/version"
 )
 
 // doHTTPReq executes a particular http request

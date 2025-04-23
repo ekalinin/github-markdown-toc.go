@@ -1,7 +1,7 @@
 package controller
 
 import (
-	"github.com/ekalinin/github-markdown-toc.go/internal/core/usecase/config"
+	"github.com/ekalinin/github-markdown-toc.go/v2/internal/core/usecase/config"
 )
 
 type Config struct {

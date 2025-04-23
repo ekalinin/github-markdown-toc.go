@@ -1,8 +1,8 @@
 package adapters
 
 import (
-	"github.com/ekalinin/github-markdown-toc.go/internal/core/ports"
-	"github.com/ekalinin/github-markdown-toc.go/internal/utils"
+	"github.com/ekalinin/github-markdown-toc.go/v2/internal/core/ports"
+	"github.com/ekalinin/github-markdown-toc.go/v2/internal/utils"
 )
 
 type realPoster struct {

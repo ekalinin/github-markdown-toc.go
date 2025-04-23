@@ -1,6 +1,6 @@
 package adapters
 
-import "github.com/ekalinin/github-markdown-toc.go/internal/utils"
+import "github.com/ekalinin/github-markdown-toc.go/v2/internal/utils"
 
 type RemoteGetter struct {
 	asJSON bool

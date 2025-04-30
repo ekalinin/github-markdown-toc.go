@@ -3,7 +3,7 @@ package adapters
 import (
 	"log/slog"
 
-	"github.com/ekalinin/github-markdown-toc.go/internal/core/ports"
+	"github.com/ekalinin/github-markdown-toc.go/v2/internal/core/ports"
 )
 
 type Logger struct {

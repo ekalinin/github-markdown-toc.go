@@ -1,4 +1,4 @@
-module github.com/ekalinin/github-markdown-toc.go
+module github.com/ekalinin/github-markdown-toc.go/v2
 
 go 1.19
 

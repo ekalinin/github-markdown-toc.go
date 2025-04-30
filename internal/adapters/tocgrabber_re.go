@@ -6,9 +6,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/ekalinin/github-markdown-toc.go/internal/core/entity"
-	"github.com/ekalinin/github-markdown-toc.go/internal/utils"
-	"github.com/ekalinin/github-markdown-toc.go/internal/version"
+	"github.com/ekalinin/github-markdown-toc.go/v2/internal/core/entity"
+	"github.com/ekalinin/github-markdown-toc.go/v2/internal/utils"
+	"github.com/ekalinin/github-markdown-toc.go/v2/internal/version"
 )
 
 type ReGrabber struct {

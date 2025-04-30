@@ -3,7 +3,7 @@ package app
 import (
 	"io"
 
-	"github.com/ekalinin/github-markdown-toc.go/internal/utils"
+	"github.com/ekalinin/github-markdown-toc.go/v2/internal/utils"
 )
 
 func (a *App) Run(stdout io.Writer) error {

@@ -6,8 +6,8 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/ekalinin/github-markdown-toc.go/internal/core/entity"
-	"github.com/ekalinin/github-markdown-toc.go/internal/utils"
+	"github.com/ekalinin/github-markdown-toc.go/v2/internal/core/entity"
+	"github.com/ekalinin/github-markdown-toc.go/v2/internal/utils"
 )
 
 type JsonGrabber struct {

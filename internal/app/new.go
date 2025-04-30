@@ -3,9 +3,9 @@ package app
 import (
 	"io"
 
-	"github.com/ekalinin/github-markdown-toc.go/internal/adapters"
-	"github.com/ekalinin/github-markdown-toc.go/internal/controller"
-	"github.com/ekalinin/github-markdown-toc.go/internal/core/usecase"
+	"github.com/ekalinin/github-markdown-toc.go/v2/internal/adapters"
+	"github.com/ekalinin/github-markdown-toc.go/v2/internal/controller"
+	"github.com/ekalinin/github-markdown-toc.go/v2/internal/core/usecase"
 )
 
 type Controller interface {

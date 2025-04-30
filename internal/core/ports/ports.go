@@ -3,7 +3,7 @@ package ports
 import (
 	"os"
 
-	"github.com/ekalinin/github-markdown-toc.go/internal/core/entity"
+	"github.com/ekalinin/github-markdown-toc.go/v2/internal/core/entity"
 )
 
 type FileChecker interface {

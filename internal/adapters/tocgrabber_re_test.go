@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/ekalinin/github-markdown-toc.go/internal/version"
+	"github.com/ekalinin/github-markdown-toc.go/v2/internal/version"
 )
 
 const (

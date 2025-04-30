@@ -1,9 +1,9 @@
 package localmd
 
 import (
-	"github.com/ekalinin/github-markdown-toc.go/internal/core/entity"
-	"github.com/ekalinin/github-markdown-toc.go/internal/core/ports"
-	"github.com/ekalinin/github-markdown-toc.go/internal/core/usecase/config"
+	"github.com/ekalinin/github-markdown-toc.go/v2/internal/core/entity"
+	"github.com/ekalinin/github-markdown-toc.go/v2/internal/core/ports"
+	"github.com/ekalinin/github-markdown-toc.go/v2/internal/core/usecase/config"
 )
 
 // - read file

@@ -4,8 +4,8 @@ import (
 	"io"
 	"os"
 
-	"github.com/ekalinin/github-markdown-toc.go/internal/core/entity"
-	"github.com/ekalinin/github-markdown-toc.go/internal/core/ports"
+	"github.com/ekalinin/github-markdown-toc.go/v2/internal/core/entity"
+	"github.com/ekalinin/github-markdown-toc.go/v2/internal/core/ports"
 )
 
 type useCase interface {

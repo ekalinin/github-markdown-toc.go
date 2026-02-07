@@ -19,6 +19,8 @@ type Config struct {
 	GHToken    string
 	GHUrl      string
 	GHVersion  string
+	Insert     bool
+	NoBackup   bool
 }
 
 func (c Config) ToControllerConfig() controller.Config {
@@ -35,6 +37,8 @@ func (c Config) ToControllerConfig() controller.Config {
 		GHToken:    c.GHToken,
 		GHUrl:      c.GHUrl,
 		GHVersion:  c.GHVersion,
+		Insert:     c.Insert,
+		NoBackup:   c.NoBackup,
 	}
 }
 

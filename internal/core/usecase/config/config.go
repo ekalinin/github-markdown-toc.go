@@ -13,4 +13,6 @@ type Config struct {
 	GHUrl        string
 	GHVersion    string
 	AbsPathInToc bool
+	Insert       bool
+	NoBackup     bool
 }

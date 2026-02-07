@@ -39,6 +39,7 @@ Table of Contents
     * [Remote files](#remote-files)
     * [Multiple files](#multiple-files)
     * [Combo](#combo)
+    * [Auto insert and update TOC](#auto-insert-and-update-toc)
     * [Starting Depth](#starting-depth)
     * [Depth](#depth)
     * [No Escape](#no-escape)
@@ -91,6 +92,8 @@ Flags:
   --token=TOKEN    GitHub personal token
   --indent=2       Indent space of generated list
   --debug          Show debug info
+  --insert         Insert TOC into file (auto-insert at top or between <!--ts--> and <!--te--> markers)
+  --no-backup      Skip creating backup file when using --insert
   --version        Show application version.
 
 Args:
@@ -296,6 +299,45 @@ You can easily combine both ways:
     * [License](https://github.com/ekalinin/sitemap.js/blob/master/README.md#license)
 
 Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc)
+```
+
+Auto insert and update TOC
+----------
+
+You can easily insert a TOC into an existing Markdown file. Just add the following placeholder in your document:
+
+```markdown
+<!--ts-->
+<!--te-->
+```
+
+Now run the tool:
+
+```bash
+$ ./gh-md-toc --insert README.md
+
+Table of Contents
+=================
+
+  * [gh-md-toc](#gh-md-toc)
+  * [Installation](#installation)
+  * [Usage](#usage)
+
+Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc.go)
+```
+
+The TOC will be automatically inserted between the `<!--ts-->` and `<!--te-->` markers.
+
+If your file doesn't have these markers, the TOC will be auto-inserted at the top (before the first heading).
+
+Next time when your file will be changed just repeat the command (`./gh-md-toc --insert ...`) and TOC will be refreshed again.
+
+A backup of your original file will be created with the `.YYYY-MM-DD_HHMMSS` suffix.
+
+If you don't want to create a backup, use `--no-backup` option:
+
+```bash
+$ ./gh-md-toc --insert --no-backup README.md
 ```
 
 Starting Depth

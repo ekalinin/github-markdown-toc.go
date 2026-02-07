@@ -3,6 +3,7 @@ package entity
 import (
 	"fmt"
 	"io"
+	"strings"
 )
 
 type TocPrinter interface {
@@ -38,4 +39,13 @@ func (toc *Toc) CustomPrint(w io.Writer, p TocPrinter) error {
 func (toc Toc) At(idx int) string {
 	ss := []string(toc)
 	return ss[idx]
+}
+
+func (toc *Toc) String() string {
+	var buf strings.Builder
+	for _, tocItem := range *toc {
+		buf.WriteString(tocItem)
+		buf.WriteByte('\n')
+	}
+	return buf.String()
 }

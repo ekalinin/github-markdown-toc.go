@@ -27,7 +27,12 @@ func (ctl *Controller) ProcessFiles(stdout io.Writer, files ...string) error {
 	ctl.log.Info("Controller.ProcessFiles: start", "files", files)
 	cnt := len(files)
 
-	ch := make(chan *entity.Toc, cnt)
+	type result struct {
+		file string
+		toc  *entity.Toc
+	}
+	ch := make(chan result, cnt)
+
 	for _, file := range files {
 		ctl.log.Info("Controller.ProcessFiles: processing", "file", file)
 		uc := ctl.getUseCase(file)
@@ -36,22 +41,59 @@ func (ctl *Controller) ProcessFiles(stdout io.Writer, files ...string) error {
 		}
 
 		if ctl.cfg.Serial {
-			ch <- uc.Do(file)
+			ch <- result{file: file, toc: uc.Do(file)}
 		} else {
 			go func(ucc useCase, path string) {
-				ch <- ucc.Do(path)
+				ch <- result{file: path, toc: ucc.Do(path)}
 			}(uc, file)
 		}
 	}
 
 	for i := 0; i < cnt; i++ {
-		toc := <-ch
+		res := <-ch
 		// #14, check if there's really TOC?
-		if toc != nil {
-			if err := toc.Print(stdout); err != nil {
-				return err
+		if res.toc != nil {
+			if ctl.cfg.Insert {
+				if entity.GetType(res.file) != entity.TypeLocalMD {
+					ctl.log.Info("Skipping insert for non-local file, printing to stdout instead", "file", res.file)
+					if err := res.toc.Print(stdout); err != nil {
+						return err
+					}
+					continue
+				}
+
+				if err := ctl.insertTocToFile(res.file, res.toc); err != nil {
+					return err
+				}
+				if err := res.toc.Print(stdout); err != nil {
+					return err
+				}
+			} else {
+				if err := res.toc.Print(stdout); err != nil {
+					return err
+				}
 			}
 		}
 	}
+	return nil
+}
+
+func (ctl *Controller) insertTocToFile(filepath string, toc *entity.Toc) error {
+	if !ctl.cfg.NoBackup {
+		backupPath, err := ctl.fileBackupper.CreateBackup(filepath)
+		if err != nil {
+			ctl.log.Info("Failed to create backup", "error", err)
+			return err
+		}
+		ctl.log.Info("Created backup", "path", backupPath)
+	}
+
+	tocStr := toc.String()
+	if err := ctl.tocInserter.InsertToc(filepath, tocStr); err != nil {
+		ctl.log.Info("Failed to insert TOC", "error", err)
+		return err
+	}
+
+	ctl.log.Info("TOC inserted", "file", filepath)
 	return nil
 }

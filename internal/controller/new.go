@@ -13,20 +13,24 @@ type useCase interface {
 }
 
 type Controller struct {
-	cfg          Config
-	ucLocalMd    useCase
-	ucRemoteMD   useCase
-	ucRemoteHTML useCase
-	log          ports.Logger
+	cfg           Config
+	ucLocalMd     useCase
+	ucRemoteMD    useCase
+	ucRemoteHTML  useCase
+	log           ports.Logger
+	fileBackupper ports.FileBackupper
+	tocInserter   ports.TocInserter
 }
 
-func New(cfg Config, ucLocalMD useCase, ucRemoteMD useCase, ucRemoteHTML useCase, log ports.Logger) *Controller {
+func New(cfg Config, ucLocalMD useCase, ucRemoteMD useCase, ucRemoteHTML useCase, log ports.Logger, fileBackupper ports.FileBackupper, tocInserter ports.TocInserter) *Controller {
 	return &Controller{
-		cfg:          cfg,
-		ucLocalMd:    ucLocalMD,
-		ucRemoteMD:   ucRemoteMD,
-		ucRemoteHTML: ucRemoteHTML,
-		log:          log,
+		cfg:           cfg,
+		ucLocalMd:     ucLocalMD,
+		ucRemoteMD:    ucRemoteMD,
+		ucRemoteHTML:  ucRemoteHTML,
+		log:           log,
+		fileBackupper: fileBackupper,
+		tocInserter:   tocInserter,
 	}
 }
 

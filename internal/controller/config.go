@@ -17,6 +17,8 @@ type Config struct {
 	GHToken    string
 	GHUrl      string
 	GHVersion  string
+	Insert     bool
+	NoBackup   bool
 }
 
 func (c Config) ToUseCaseConfig() config.Config {
@@ -33,5 +35,7 @@ func (c Config) ToUseCaseConfig() config.Config {
 		GHUrl:        c.GHUrl,
 		GHVersion:    c.GHVersion,
 		AbsPathInToc: len(c.Files) > 1,
+		Insert:       c.Insert,
+		NoBackup:     c.NoBackup,
 	}
 }

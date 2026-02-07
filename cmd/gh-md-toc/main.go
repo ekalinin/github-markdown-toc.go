@@ -24,6 +24,8 @@ var (
 	debug      = kingpin.Flag("debug", "Show debug info").Bool()
 	ghurl      = kingpin.Flag("github-url", "GitHub URL, default=https://api.github.com").Default("https://api.github.com").String()
 	reVersion  = kingpin.Flag("re-version", "RegExp version, default=0").Default(version.GH_2024_03).String()
+	insert     = kingpin.Flag("insert", "Insert TOC into file (auto-insert at top or between <!--ts--> and <!--te--> markers)").Bool()
+	noBackup   = kingpin.Flag("no-backup", "Skip creating backup file when using --insert").Bool()
 )
 
 // Entry point
@@ -52,6 +54,8 @@ func main() {
 		GHToken:    *token,
 		GHUrl:      *ghurl,
 		GHVersion:  *reVersion,
+		Insert:     *insert,
+		NoBackup:   *noBackup,
 	}
 
 	if err := app.New(cfg).Run(os.Stdout); err != nil {

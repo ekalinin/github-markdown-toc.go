@@ -37,3 +37,11 @@ type FileTemper interface {
 type RemotePoster interface {
 	Post(url, token, path string) (string, error)
 }
+
+type FileBackupper interface {
+	CreateBackup(filepath string) (string, error)
+}
+
+type TocInserter interface {
+	InsertToc(filepath string, toc string) error
+}

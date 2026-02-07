@@ -7,6 +7,8 @@ import (
 	"os/user"
 	"strings"
 	"time"
+
+	"github.com/ekalinin/github-markdown-toc.go/v2/internal/utils"
 )
 
 const (
@@ -15,11 +17,15 @@ const (
 )
 
 type TocInserter struct {
+	hideHeader bool
 	hideFooter bool
 }
 
-func NewTocInserter(hideFooter bool) *TocInserter {
-	return &TocInserter{hideFooter: hideFooter}
+func NewTocInserter(hideHeader, hideFooter bool) *TocInserter {
+	return &TocInserter{
+		hideHeader: hideHeader,
+		hideFooter: hideFooter,
+	}
 }
 
 func (ti *TocInserter) InsertToc(filepath string, toc string) error {
@@ -110,12 +116,18 @@ func (ti *TocInserter) replaceContent(content, toc string) (string, error) {
 func (ti *TocInserter) formatToc(toc string) string {
 	var buf bytes.Buffer
 
+	if !ti.hideHeader {
+		buf.WriteString(utils.GetHeaderText())
+	}
+
 	buf.WriteString("\n")
 	buf.WriteString(toc)
 
 	if !ti.hideFooter {
 		buf.WriteString("\n")
 		buf.WriteString(ti.generateTimestamp())
+		buf.WriteString("\n")
+		buf.WriteString(utils.GetFooterText())
 		buf.WriteString("\n")
 	}
 

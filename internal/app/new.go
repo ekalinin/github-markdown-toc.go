@@ -33,7 +33,7 @@ func New(cfg Config) *App {
 	getter := adapters.NewRemoteGetter(true)
 	temper := adapters.NewFileTemper()
 	fileBackupper := adapters.NewFileBackupper()
-	tocInserter := adapters.NewTocInserter(cfg.HideFooter)
+	tocInserter := adapters.NewTocInserter(cfg.HideHeader, cfg.HideFooter)
 
 	log.Info("App.New: init usecases ...")
 	ucLocalMD, ucRemoteMD, ucRemoteHTML := usecase.New(

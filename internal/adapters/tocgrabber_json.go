@@ -26,14 +26,25 @@ type tocItem struct {
 	Anchor string
 }
 
+type blobWithToc struct {
+	HeaderInfo struct {
+		Toc []tocItem
+	}
+}
+
 type tocWrapper struct {
 	Payload struct {
-		Blob struct {
-			HeaderInfo struct {
-				Toc []tocItem
-			}
-		}
+		Blob              blobWithToc
+		CodeViewBlobRoute blobWithToc `json:"codeViewBlobRoute"`
 	}
+}
+
+func (w tocWrapper) tocSource() []tocItem {
+	items := w.Payload.Blob.HeaderInfo.Toc
+	if len(items) > 0 {
+		return items
+	}
+	return w.Payload.CodeViewBlobRoute.HeaderInfo.Toc
 }
 
 func (g JsonGrabber) Grab(jsonBody string) (*entity.Toc, error) {
@@ -45,16 +56,17 @@ func (g JsonGrabber) Grab(jsonBody string) (*entity.Toc, error) {
 
 	// g.Log("processing groups ...")
 
+	items := wrapper.tocSource()
 	toc := entity.Toc{}
 	tmpSection := ""
 	listIndentation := utils.GenerateListIndentation(g.cfg.Indent)
 	minHeaderNum := 6
-	for _, item := range wrapper.Payload.Blob.HeaderInfo.Toc {
+	for _, item := range items {
 		if item.Level < minHeaderNum {
 			minHeaderNum = item.Level
 		}
 	}
-	for _, item := range wrapper.Payload.Blob.HeaderInfo.Toc {
+	for _, item := range items {
 		if item.Level <= g.cfg.StartDepth {
 			continue
 		}

@@ -6,7 +6,7 @@ func getTestJson() string {
 	// how to get example:
 	// ❯ curl -s -H 'Content-Type: application/json' -H 'Accept: application/json' \
 	// 		https://github.com/ekalinin/sitemap.js/blob/6bc3eb12c898c1037a35a11b2eb24ababdeb3580/README.md | \
-	// 		jq .payload.blob.headerInfo.toc
+	// 		jq '.payload.blob.headerInfo.toc // .payload.codeViewBlobRoute.headerInfo.toc'
 	// [
 	// 	{
 	// 	  "level": 1,
@@ -77,6 +77,33 @@ func getTestJson() string {
 	`
 }
 
+func getTestJsonCodeViewRoute() string {
+	return `
+	{
+		"payload": {
+			"codeViewBlobRoute": {
+				"headerInfo": {
+					"toc": [
+						{
+							"level": 1,
+							"text": "sitemap.js",
+							"anchor": "sitemapjs",
+							"htmlText": "sitemap.js"
+						},
+						{
+							"level": 2,
+							"text": "Installation",
+							"anchor": "installation",
+							"htmlText": "Installation"
+						}
+					]
+				}
+			}
+		}
+	}
+	`
+}
+
 func Test_JsonGrabberDefault(t *testing.T) {
 	grabber := NewJsonGrabber(DefaultCfg())
 	toc, err := grabber.Grab(getTestJson())
@@ -102,6 +129,17 @@ func Test_JsonGrabberDefault(t *testing.T) {
 			t.Errorf("toc is not correct at i=%d. want=%s, got=%s",
 				i, tocWanted[i], s)
 		}
+	}
+}
+
+func Test_JsonGrabberCodeViewBlobRoute(t *testing.T) {
+	grabber := NewJsonGrabber(DefaultCfg())
+	toc, err := grabber.Grab(getTestJsonCodeViewRoute())
+	if err != nil {
+		t.Errorf("got error from grabber: %v", err)
+	}
+	if len(*toc) != 2 {
+		t.Errorf("want 2 lines, got %d: %v", len(*toc), *toc)
 	}
 }
 

@@ -91,6 +91,10 @@ Flags:
   --token=TOKEN    GitHub personal token
   --indent=2       Indent space of generated list
   --debug          Show debug info
+  --github-url="https://api.github.com"
+                   GitHub URL. Default: https://api.github.com
+  --re-version=2024-03
+                   RegExp version. Default: 2024-03
   --version        Show application version.
 
 Args:

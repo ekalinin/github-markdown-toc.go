@@ -27,8 +27,14 @@ type reTest struct {
 func checkTest(t *testing.T, tests []reTest, cfg GrabberCfg, expected []string) {
 	for _, d := range tests {
 		t.Run(fmt.Sprintf("v.%s", d.version), func(t *testing.T) {
-			grabber := NewReGrabber("", cfg, d.version)
-			toc, _ := grabber.Grab(d.html)
+			grabber, err := NewReGrabber("", cfg, d.version)
+			if err != nil {
+				t.Fatal(err)
+			}
+			toc, err := grabber.Grab(d.html)
+			if err != nil {
+				t.Fatal(err)
+			}
 			if len(*toc) != len(expected) {
 				t.Errorf("Rows differs. Got: %d, want: %d (got toc=%v)\n",
 					len(*toc), len(expected), *toc)
@@ -40,6 +46,18 @@ func checkTest(t *testing.T, tests []reTest, cfg GrabberCfg, expected []string) 
 				}
 			}
 		})
+	}
+}
+
+func Test_NewReGrabberRejectsUnknownVersion(t *testing.T) {
+	_, err := NewReGrabber("", DefaultCfg(), "unknown")
+	if err == nil {
+		t.Fatal("expected an error for an unsupported regexp version")
+	}
+
+	want := "unsupported GitHub regexp version \"unknown\"; supported versions: 0, 2023-10, 2024-03"
+	if err.Error() != want {
+		t.Errorf("got error %q, want %q", err, want)
 	}
 }
 

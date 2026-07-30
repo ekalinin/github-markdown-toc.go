@@ -14,7 +14,7 @@ func (p *realPoster) Post(ctx context.Context, url, token, path string) (string,
 	if err := ctx.Err(); err != nil {
 		return "", err
 	}
-	return utils.HttpPost(url, path, token)
+	return utils.HttpPost(ctx, url, path, token)
 }
 
 type RemotePoster struct {

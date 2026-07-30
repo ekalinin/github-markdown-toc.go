@@ -2,12 +2,15 @@ package utils
 
 import (
 	"bytes"
+	"context"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/ekalinin/github-markdown-toc.go/v2/internal/version"
 )
@@ -27,7 +30,7 @@ func TestHttpGet(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	body, _, err := HttpGet(srv.URL)
+	body, _, err := HttpGet(context.Background(), srv.URL)
 	got := string(body)
 
 	if err != nil {
@@ -62,7 +65,7 @@ func TestHttpGetJson(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	body, _, err := HttpGetJson(srv.URL)
+	body, _, err := HttpGetJson(context.Background(), srv.URL)
 	got := string(body)
 
 	if err != nil {
@@ -84,7 +87,7 @@ func TestHttpGetForbidden(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	_, _, err := HttpGet(srv.URL)
+	_, _, err := HttpGet(context.Background(), srv.URL)
 	if err == nil {
 		t.Error("Should not not be nil")
 	}
@@ -131,9 +134,53 @@ func TestHttpPost(t *testing.T) {
 		_ = os.Remove(fileName)
 	}()
 
-	_, err = HttpPost(srv.URL, fileName, token)
+	_, err = HttpPost(context.Background(), srv.URL, fileName, token)
 	if err != nil {
 		t.Error("Should not be err", err)
+	}
+}
+
+func TestHttpPostCancelsInFlightRequest(t *testing.T) {
+	started := make(chan struct{})
+	release := make(chan struct{})
+	srv := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
+		close(started)
+		<-release
+	}))
+	defer func() {
+		close(release)
+		srv.Close()
+	}()
+
+	fileName, err := createTmp("# some title")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() {
+		_ = os.Remove(fileName)
+	}()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan error, 1)
+	go func() {
+		_, err := HttpPost(ctx, srv.URL, fileName, "")
+		done <- err
+	}()
+
+	select {
+	case <-started:
+	case <-time.After(time.Second):
+		t.Fatal("HTTP request did not start")
+	}
+	cancel()
+
+	select {
+	case err := <-done:
+		if !errors.Is(err, context.Canceled) {
+			t.Fatalf("got error %v, want context cancellation", err)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("HTTP request was not canceled")
 	}
 }
 

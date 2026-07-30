@@ -19,7 +19,7 @@ func (r *RemoteGetter) Get(ctx context.Context, path string) ([]byte, string, er
 		return nil, "", err
 	}
 	if r.asJSON {
-		return utils.HttpGetJson(path)
+		return utils.HttpGetJson(ctx, path)
 	}
-	return utils.HttpGet(path)
+	return utils.HttpGet(ctx, path)
 }

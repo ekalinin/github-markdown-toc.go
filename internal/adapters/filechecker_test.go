@@ -1,6 +1,9 @@
 package adapters
 
-import "testing"
+import (
+	"context"
+	"testing"
+)
 
 func Test_FileChecker(t *testing.T) {
 	tests := []struct {
@@ -16,7 +19,11 @@ func Test_FileChecker(t *testing.T) {
 	for _, tt := range tests {
 
 		t.Run(tt.name, func(t *testing.T) {
-			if got := checker.Exists(tt.path); got != tt.want {
+			got, err := checker.Exists(context.Background(), tt.path)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if got != tt.want {
 				t.Errorf("Got=%v, want=%v", got, tt.want)
 			}
 		})

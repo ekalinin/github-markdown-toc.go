@@ -1,25 +1,26 @@
 package ports
 
 import (
+	"context"
 	"os"
 
 	"github.com/ekalinin/github-markdown-toc.go/v2/internal/core/entity"
 )
 
 type FileChecker interface {
-	Exists(file string) bool
+	Exists(ctx context.Context, file string) (bool, error)
 }
 
 type FileWriter interface {
-	Write(file string, data []byte) error
+	Write(ctx context.Context, file string, data []byte) error
 }
 
 type HTMLConverter interface {
-	Convert(file string) (string, error)
+	Convert(ctx context.Context, file string) (string, error)
 }
 
 type TocGrabber interface {
-	Grab(html string) (*entity.Toc, error)
+	Grab(ctx context.Context, html string) (*entity.Toc, error)
 }
 
 type Logger interface {
@@ -27,13 +28,13 @@ type Logger interface {
 }
 
 type RemoteGetter interface {
-	Get(path string) ([]byte, string, error)
+	Get(ctx context.Context, path string) ([]byte, string, error)
 }
 
 type FileTemper interface {
-	CreateTemp(dir, pattern string) (*os.File, error)
+	CreateTemp(ctx context.Context, dir, pattern string) (*os.File, error)
 }
 
 type RemotePoster interface {
-	Post(url, token, path string) (string, error)
+	Post(ctx context.Context, url, token, path string) (string, error)
 }

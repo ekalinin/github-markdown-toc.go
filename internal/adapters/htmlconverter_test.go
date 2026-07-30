@@ -1,6 +1,7 @@
 package adapters
 
 import (
+	"context"
 	"errors"
 	"testing"
 )
@@ -13,7 +14,7 @@ type fakePoster struct {
 	retErr   error
 }
 
-func (p *fakePoster) Post(url, token, path string) (string, error) {
+func (p *fakePoster) Post(_ context.Context, url, token, path string) (string, error) {
 	p.gotPath = path
 	p.gotToken = token
 	p.gotURL = url
@@ -38,7 +39,7 @@ func Test_HTMLConverter(t *testing.T) {
 			converter := NewHTMLConverterX(token, url,
 				tt.poster, NewLogger(false))
 
-			got, err := converter.Convert(path)
+			got, err := converter.Convert(context.Background(), path)
 			if tt.failed {
 				if err == nil {
 					t.Errorf("Should be failed, but no errors.")

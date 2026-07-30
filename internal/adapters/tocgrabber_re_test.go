@@ -1,6 +1,7 @@
 package adapters
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -31,7 +32,7 @@ func checkTest(t *testing.T, tests []reTest, cfg GrabberCfg, expected []string) 
 			if err != nil {
 				t.Fatal(err)
 			}
-			toc, err := grabber.Grab(d.html)
+			toc, err := grabber.Grab(context.Background(), d.html)
 			if err != nil {
 				t.Fatal(err)
 			}

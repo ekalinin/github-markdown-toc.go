@@ -2,6 +2,7 @@ package utils
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -37,26 +38,26 @@ func doHTTPReq(req *http.Request) ([]byte, string, error) {
 }
 
 // HttpGet executes HTTP GET request.
-func HttpGet(urlPath string) ([]byte, string, error) {
-	req, err := http.NewRequest("GET", urlPath, nil)
+func HttpGet(ctx context.Context, urlPath string) ([]byte, string, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, urlPath, nil)
 	if err != nil {
 		return []byte{}, "", err
 	}
 	return doHTTPReq(req)
 }
 
-func HttpGetJson(urlPath string) ([]byte, string, error) {
-	req, err := http.NewRequest("GET", urlPath, nil)
-	req.Header.Set("Content-type", "application/json")
-	req.Header.Set("Accept", "application/json")
+func HttpGetJson(ctx context.Context, urlPath string) ([]byte, string, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, urlPath, nil)
 	if err != nil {
 		return []byte{}, "", err
 	}
+	req.Header.Set("Content-type", "application/json")
+	req.Header.Set("Accept", "application/json")
 	return doHTTPReq(req)
 }
 
 // HttpPost executes HTTP POST with file content.
-func HttpPost(url, path, token string) (string, error) {
+func HttpPost(ctx context.Context, url, path, token string) (string, error) {
 	file, err := os.Open(path)
 	if err != nil {
 		return "", err
@@ -71,7 +72,7 @@ func HttpPost(url, path, token string) (string, error) {
 		return "", err
 	}
 
-	req, err := http.NewRequest("POST", url, body)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, body)
 	if err != nil {
 		return "", err
 	}

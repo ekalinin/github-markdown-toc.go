@@ -1,6 +1,10 @@
 package adapters
 
-import "github.com/ekalinin/github-markdown-toc.go/v2/internal/utils"
+import (
+	"context"
+
+	"github.com/ekalinin/github-markdown-toc.go/v2/internal/utils"
+)
 
 type RemoteGetter struct {
 	asJSON bool
@@ -10,9 +14,12 @@ func NewRemoteGetter(asJSON bool) *RemoteGetter {
 	return &RemoteGetter{asJSON: asJSON}
 }
 
-func (r *RemoteGetter) Get(path string) ([]byte, string, error) {
-	if r.asJSON {
-		return utils.HttpGetJson(path)
+func (r *RemoteGetter) Get(ctx context.Context, path string) ([]byte, string, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, "", err
 	}
-	return utils.HttpGet(path)
+	if r.asJSON {
+		return utils.HttpGetJson(ctx, path)
+	}
+	return utils.HttpGet(ctx, path)
 }

@@ -1,6 +1,7 @@
 package adapters
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -34,7 +35,7 @@ func Test_RemoteGetterPlain(t *testing.T) {
 	defer srv.Close()
 
 	getter := NewRemoteGetter(false)
-	body, _, err := getter.Get(srv.URL)
+	body, _, err := getter.Get(context.Background(), srv.URL)
 	got := string(body)
 
 	if err != nil {
@@ -51,7 +52,7 @@ func Test_RemoteGetterJson(t *testing.T) {
 	defer srv.Close()
 
 	getter := NewRemoteGetter(true)
-	body, _, err := getter.Get(srv.URL)
+	body, _, err := getter.Get(context.Background(), srv.URL)
 	got := string(body)
 
 	if err != nil {

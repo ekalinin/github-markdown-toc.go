@@ -1,6 +1,7 @@
 package adapters
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -19,8 +20,9 @@ func Test_RemotePoster(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
 			if tt.fake {
-				got, err := tt.remotePoster.Post("url", "token", "path")
+				got, err := tt.remotePoster.Post(ctx, "url", "token", "path")
 				if err != nil {
 					t.Errorf("got err=%v", err)
 				}
@@ -29,7 +31,7 @@ func Test_RemotePoster(t *testing.T) {
 				}
 			} else {
 				testToken := "token-for-test"
-				fileName, err := NewFileTemper().CreateTemp("", "example.*.txt")
+				fileName, err := NewFileTemper().CreateTemp(ctx, "", "example.*.txt")
 				if err != nil {
 					t.Error("Tmp file creation err=", err)
 				}
@@ -57,7 +59,7 @@ func Test_RemotePoster(t *testing.T) {
 				}))
 				defer srv.Close()
 
-				if _, err := tt.remotePoster.Post(srv.URL, testToken, fileName.Name()); err != nil {
+				if _, err := tt.remotePoster.Post(ctx, srv.URL, testToken, fileName.Name()); err != nil {
 					t.Error("Should not be err, but got=", err)
 				}
 			}

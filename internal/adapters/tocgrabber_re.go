@@ -1,6 +1,7 @@
 package adapters
 
 import (
+	"context"
 	"fmt"
 	"net/url"
 	"regexp"
@@ -61,7 +62,10 @@ func NewReGrabber(path string, cfg GrabberCfg, reVersion string) (*ReGrabber, er
 	}, nil
 }
 
-func (g *ReGrabber) Grab(html string) (*entity.Toc, error) {
+func (g *ReGrabber) Grab(ctx context.Context, html string) (*entity.Toc, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
 
 	listIndentation := utils.GenerateListIndentation(g.cfg.Indent)
 
@@ -70,6 +74,9 @@ func (g *ReGrabber) Grab(html string) (*entity.Toc, error) {
 	var groups []map[string]string
 	// doc.d("GrabToc: matching ...")
 	for _, match := range g.re.FindAllStringSubmatch(html, -1) {
+		if err := ctx.Err(); err != nil {
+			return nil, err
+		}
 		// doc.d("GrabToc: match #" + strconv.Itoa(idx) + " ...")
 		group := make(map[string]string)
 		// fill map for groups
@@ -92,6 +99,9 @@ func (g *ReGrabber) Grab(html string) (*entity.Toc, error) {
 	// doc.d("GrabToc: processing groups ...")
 	// doc.d("Including starting from level " + strconv.Itoa(doc.StartDepth))
 	for _, group := range groups {
+		if err := ctx.Err(); err != nil {
+			return nil, err
+		}
 		// format result
 		n, _ := strconv.Atoi(group["num"])
 		if n <= g.cfg.StartDepth {

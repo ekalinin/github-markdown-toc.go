@@ -4,23 +4,38 @@ on:
   push:
     branches:
       - master
-    paths-ignore:
-      - "**/*.md"
-      - "**/*.yml"
-      - "**/*.yaml"
-      - "Makefile"
   pull_request:
     branches:
       - master
-    paths-ignore:
-      - "**/*.md"
-      - "**/*.yml"
-      - "**/*.yaml"
-      - "Makefile"
 
 jobs:
-  build:
-    name: Build, Test, Coverage
+  test:
+    name: Test with Go ${{ matrix.go-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        go-version:
+          - "1.21.x"
+          - "1.26.5"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go-version }}
+
+      - name: Build
+        run: go build -v ./...
+
+      - name: Test
+        run: go test -v ./...
+
+  quality:
+    name: Quality
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -30,18 +45,35 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: 1.24
+          go-version: "1.26.5"
+
+      - name: Verify modules
+        run: go mod verify
+
+      - name: Check module files
+        run: go mod tidy -diff
 
       - name: Lint
-        uses: golangci/golangci-lint-action@v6
+        uses: golangci/golangci-lint-action@v9
+        with:
+          version: v2.12.2
 
-      - name: Build
-        run: go build -v ./...
-
-      - name: Test & Coverage
-        run: go test -v -coverprofile=coverage.out -covermode=atomic ./...
+      - name: Test with race detector and coverage
+        run: go test -race -v -coverprofile=coverage.out -covermode=atomic ./...
+        env:
+          CGO_ENABLED: "1"
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4.2.0
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+  vulnerability:
+    name: Vulnerability scan
+    runs-on: ubuntu-latest
+    steps:
+      - id: govulncheck
+        uses: golang/govulncheck-action@v1
+        with:
+          go-version-input: "1.26.5"
+          go-package: ./...

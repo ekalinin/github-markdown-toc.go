@@ -1,6 +1,6 @@
 module github.com/ekalinin/github-markdown-toc.go/v2
 
-go 1.19
+go 1.21
 
 require gopkg.in/alecthomas/kingpin.v2 v2.2.4
 

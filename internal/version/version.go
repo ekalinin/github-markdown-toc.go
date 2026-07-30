@@ -12,3 +12,12 @@ const (
 	GH_2023_10 = "2023-10"
 	GH_2024_03 = "2024-03"
 )
+
+// SupportedGHVersions returns the supported GitHub layout versions.
+func SupportedGHVersions() []string {
+	return []string{
+		GH_V0,
+		GH_2023_10,
+		GH_2024_03,
+	}
+}

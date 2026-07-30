@@ -32,6 +32,8 @@ func New(cfg Config) *App {
 	grabberJson := adapters.NewJsonGrabber(cfg.ToGrabberConfig())
 	getter := adapters.NewRemoteGetter(true)
 	temper := adapters.NewFileTemper()
+	fileBackupper := adapters.NewFileBackupper()
+	tocInserter := adapters.NewTocInserter(cfg.HideHeader, cfg.HideFooter)
 
 	log.Info("App.New: init usecases ...")
 	ucLocalMD, ucRemoteMD, ucRemoteHTML := usecase.New(
@@ -40,7 +42,7 @@ func New(cfg Config) *App {
 	)
 
 	log.Info("App.New: init controller ...")
-	ctl := controller.New(ctlCfg, ucLocalMD, ucRemoteMD, ucRemoteHTML, log)
+	ctl := controller.New(ctlCfg, ucLocalMD, ucRemoteMD, ucRemoteHTML, log, fileBackupper, tocInserter)
 
 	log.Info("App.New: done.")
 	return &App{

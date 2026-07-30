@@ -113,15 +113,19 @@ func EscapeSpecChars(s string) string {
 	return res
 }
 
-// ShowHeader shows header befor TOC.
+func GetHeaderText() string {
+	return "\nTable of Contents\n=================\n"
+}
+
+func GetFooterText() string {
+	return "Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc.go)"
+}
+
 func ShowHeader(w io.Writer) {
-	_, _ = fmt.Fprintln(w)
-	_, _ = fmt.Fprintln(w, "Table of Contents")
-	_, _ = fmt.Fprintln(w, "=================")
+	_, _ = fmt.Fprint(w, GetHeaderText())
 	_, _ = fmt.Fprintln(w)
 }
 
-// ShowFooter shows footer after TOC.
 func ShowFooter(w io.Writer) {
-	_, _ = fmt.Fprintln(w, "Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc.go)")
+	_, _ = fmt.Fprintln(w, GetFooterText())
 }

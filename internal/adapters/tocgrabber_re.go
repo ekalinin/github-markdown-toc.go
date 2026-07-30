@@ -1,6 +1,7 @@
 package adapters
 
 import (
+	"fmt"
 	"net/url"
 	"regexp"
 	"strconv"
@@ -17,37 +18,47 @@ type ReGrabber struct {
 	re *regexp.Regexp
 }
 
-func NewReGrabber(path string, cfg GrabberCfg, reVersion string) *ReGrabber {
+func NewReGrabber(path string, cfg GrabberCfg, reVersion string) (*ReGrabber, error) {
 	// si:
 	// 	- s - let . match \n (single-line mode)
 	//  - i - case-insensitive
-	re := ""
-	if reVersion == version.GH_V0 {
-		re = `(?si)<h(?P<num>[1-6])>\s*` +
+	var pattern string
+	switch reVersion {
+	case version.GH_V0:
+		pattern = `(?si)<h(?P<num>[1-6])>\s*` +
 			`<a\s*id="user-content-[^"]*"\s*class="anchor"\s*` +
 			`(aria-hidden="[^"]*"\s*)?` +
 			`(tabindex="[^"]*"\s*)?` +
 			`href="(?P<href>[^"]*)"[^>]*>\s*` +
 			`.*?</a>(?P<name>.*?)</h`
-	}
-	if reVersion == version.GH_2023_10 {
-		re = `(?si)<h(?P<num>[1-6]) id="[^"]+">\s*` +
+	case version.GH_2023_10:
+		pattern = `(?si)<h(?P<num>[1-6]) id="[^"]+">\s*` +
 			`<a class="heading-link"\s*` +
 			`href="(?P<href>[^"]+)">\s*` +
 			`(?P<name>.*?)<span`
-	}
-	if reVersion == version.GH_2024_03 {
-		re = `(?si)<h(?P<num>[1-6]) class="heading-element">(?P<name>.*?)</h\d>` +
+	case version.GH_2024_03:
+		pattern = `(?si)<h(?P<num>[1-6]) class="heading-element">(?P<name>.*?)</h\d>` +
 			`<a\s*id="user-content-[^"]*"\s*` +
 			`class="[^"]*"\s*` +
 			`aria-label="[^"]*"\s*` +
 			`href="(?P<href>[^"]+)">`
+	default:
+		return nil, fmt.Errorf(
+			"unsupported GitHub regexp version %q; supported versions: %s",
+			reVersion,
+			strings.Join(version.SupportedGHVersions(), ", "),
+		)
+	}
+
+	re, err := regexp.Compile(pattern)
+	if err != nil {
+		return nil, fmt.Errorf("compile GitHub regexp version %q: %w", reVersion, err)
 	}
 
 	return &ReGrabber{
 		cfg: cfg,
-		re:  regexp.MustCompile(re),
-	}
+		re:  re,
+	}, nil
 }
 
 func (g *ReGrabber) Grab(html string) (*entity.Toc, error) {

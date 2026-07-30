@@ -1,6 +1,7 @@
 package app
 
 import (
+	"fmt"
 	"io"
 
 	"github.com/ekalinin/github-markdown-toc.go/v2/internal/adapters"
@@ -17,10 +18,22 @@ type App struct {
 	ctl Controller
 }
 
-func New(cfg Config) *App {
+func New(cfg Config) (*App, error) {
 	log := adapters.NewLogger(cfg.Debug)
 
-	log.Info("App.New: init configs ...", "app cfg", cfg)
+	log.Info(
+		"App.New: init configs ...",
+		"file-count", len(cfg.Files),
+		"serial", cfg.Serial,
+		"hide-header", cfg.HideHeader,
+		"hide-footer", cfg.HideFooter,
+		"start-depth", cfg.StartDepth,
+		"depth", cfg.Depth,
+		"no-escape", cfg.NoEscape,
+		"indent", cfg.Indent,
+		"github-version", cfg.GHVersion,
+		"token-configured", cfg.GHToken != "",
+	)
 	ctlCfg := cfg.ToControllerConfig()
 	ucCfg := ctlCfg.ToUseCaseConfig()
 
@@ -28,7 +41,10 @@ func New(cfg Config) *App {
 	checker := adapters.NewFileCheck(log)
 	writer := adapters.NewFileWriter(log)
 	converter := adapters.NewHTMLConverter(cfg.GHToken, cfg.GHUrl, log)
-	grabberRe := adapters.NewReGrabber("", cfg.ToGrabberConfig(), cfg.GHVersion)
+	grabberRe, err := adapters.NewReGrabber("", cfg.ToGrabberConfig(), cfg.GHVersion)
+	if err != nil {
+		return nil, fmt.Errorf("initialize regexp grabber: %w", err)
+	}
 	grabberJson := adapters.NewJsonGrabber(cfg.ToGrabberConfig())
 	getter := adapters.NewRemoteGetter(true)
 	temper := adapters.NewFileTemper()
@@ -46,5 +62,5 @@ func New(cfg Config) *App {
 	return &App{
 		ctl: ctl,
 		cfg: cfg,
-	}
+	}, nil
 }

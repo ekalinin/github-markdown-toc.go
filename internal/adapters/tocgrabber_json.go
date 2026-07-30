@@ -1,6 +1,7 @@
 package adapters
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/url"
@@ -47,7 +48,11 @@ func (w tocWrapper) tocSource() []tocItem {
 	return w.Payload.CodeViewBlobRoute.HeaderInfo.Toc
 }
 
-func (g JsonGrabber) Grab(jsonBody string) (*entity.Toc, error) {
+func (g JsonGrabber) Grab(ctx context.Context, jsonBody string) (*entity.Toc, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+
 	var wrapper tocWrapper
 	err := json.Unmarshal([]byte(jsonBody), &wrapper)
 	if err != nil {
@@ -62,11 +67,17 @@ func (g JsonGrabber) Grab(jsonBody string) (*entity.Toc, error) {
 	listIndentation := utils.GenerateListIndentation(g.cfg.Indent)
 	minHeaderNum := 6
 	for _, item := range items {
+		if err := ctx.Err(); err != nil {
+			return nil, err
+		}
 		if item.Level < minHeaderNum {
 			minHeaderNum = item.Level
 		}
 	}
 	for _, item := range items {
+		if err := ctx.Err(); err != nil {
+			return nil, err
+		}
 		if item.Level <= g.cfg.StartDepth {
 			continue
 		}

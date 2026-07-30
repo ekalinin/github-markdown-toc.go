@@ -1,19 +1,20 @@
 package app
 
 import (
+	"context"
 	"io"
 
 	"github.com/ekalinin/github-markdown-toc.go/v2/internal/utils"
 )
 
-func (a *App) Run(stdout io.Writer) error {
+func (a *App) Run(ctx context.Context, stdout io.Writer) error {
 
 	// do not show for stdin case (Files is empty)
 	if !a.cfg.HideHeader && len(a.cfg.Files) == 1 {
 		utils.ShowHeader(stdout)
 	}
 
-	if err := a.ctl.Process(stdout); err != nil {
+	if err := a.ctl.Process(ctx, stdout); err != nil {
 		return err
 	}
 

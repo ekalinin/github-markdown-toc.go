@@ -1,7 +1,9 @@
 package controller
 
 import (
+	"context"
 	"errors"
+	"fmt"
 	"io"
 
 	"github.com/ekalinin/github-markdown-toc.go/v2/internal/core/entity"
@@ -23,35 +25,62 @@ func (ctl *Controller) getUseCase(file string) useCase {
 	return nil
 }
 
-func (ctl *Controller) ProcessFiles(stdout io.Writer, files ...string) error {
+type processResult struct {
+	path string
+	toc  entity.Toc
+	err  error
+}
+
+func (ctl *Controller) ProcessFiles(ctx context.Context, stdout io.Writer, files ...string) error {
 	ctl.log.Info("Controller.ProcessFiles: start", "files", files)
 	cnt := len(files)
 
-	ch := make(chan *entity.Toc, cnt)
+	ch := make(chan processResult, cnt)
 	for _, file := range files {
 		ctl.log.Info("Controller.ProcessFiles: processing", "file", file)
 		uc := ctl.getUseCase(file)
 		if uc == nil {
-			return errors.New("useCase is null")
+			ch <- processResult{
+				path: file,
+				err:  fmt.Errorf("process %q: select use case: use case is nil", file),
+			}
+			continue
+		}
+
+		process := func(ctx context.Context, uc useCase, path string) processResult {
+			if err := ctx.Err(); err != nil {
+				return processResult{
+					path: path,
+					err:  fmt.Errorf("process %q: %w", path, err),
+				}
+			}
+
+			toc, err := uc.Do(ctx, path)
+			if err != nil {
+				err = fmt.Errorf("process %q: %w", path, err)
+			}
+			return processResult{path: path, toc: toc, err: err}
 		}
 
 		if ctl.cfg.Serial {
-			ch <- uc.Do(file)
+			ch <- process(ctx, uc, file)
 		} else {
-			go func(ucc useCase, path string) {
-				ch <- ucc.Do(path)
-			}(uc, file)
+			go func(ctx context.Context, uc useCase, path string) {
+				ch <- process(ctx, uc, path)
+			}(ctx, uc, file)
 		}
 	}
 
+	var errs []error
 	for i := 0; i < cnt; i++ {
-		toc := <-ch
-		// #14, check if there's really TOC?
-		if toc != nil {
-			if err := toc.Print(stdout); err != nil {
-				return err
-			}
+		result := <-ch
+		if result.err != nil {
+			errs = append(errs, result.err)
+			continue
+		}
+		if err := result.toc.Print(stdout); err != nil {
+			errs = append(errs, fmt.Errorf("print TOC for %q: %w", result.path, err))
 		}
 	}
-	return nil
+	return errors.Join(errs...)
 }

@@ -1,6 +1,9 @@
 package adapters
 
-import "testing"
+import (
+	"context"
+	"testing"
+)
 
 func getTestJson() string {
 	// how to get example:
@@ -106,7 +109,7 @@ func getTestJsonCodeViewRoute() string {
 
 func Test_JsonGrabberDefault(t *testing.T) {
 	grabber := NewJsonGrabber(DefaultCfg())
-	toc, err := grabber.Grab(getTestJson())
+	toc, err := grabber.Grab(context.Background(), getTestJson())
 	if err != nil {
 		t.Errorf("got error from grabber: %v", err)
 	}
@@ -134,7 +137,7 @@ func Test_JsonGrabberDefault(t *testing.T) {
 
 func Test_JsonGrabberCodeViewBlobRoute(t *testing.T) {
 	grabber := NewJsonGrabber(DefaultCfg())
-	toc, err := grabber.Grab(getTestJsonCodeViewRoute())
+	toc, err := grabber.Grab(context.Background(), getTestJsonCodeViewRoute())
 	if err != nil {
 		t.Errorf("got error from grabber: %v", err)
 	}
@@ -150,7 +153,7 @@ func Test_JSONGrabberWithOptions(t *testing.T) {
 	cfg.AbsPaths = true
 	cfg.Path = "github-markdown-toc.go"
 	grabber := NewJsonGrabber(cfg)
-	toc, err := grabber.Grab(getTestJson())
+	toc, err := grabber.Grab(context.Background(), getTestJson())
 	if err != nil {
 		t.Errorf("got error from grabber: %v", err)
 	}
@@ -175,7 +178,7 @@ func Test_JSONGrabberWithOptions(t *testing.T) {
 func Test_JSONGrabberFail(t *testing.T) {
 	jsonBody := `{`
 	grabber := NewJsonGrabber(DefaultCfg())
-	_, err := grabber.Grab(jsonBody)
+	_, err := grabber.Grab(context.Background(), jsonBody)
 	if err == nil {
 		t.Errorf("should fail")
 	}

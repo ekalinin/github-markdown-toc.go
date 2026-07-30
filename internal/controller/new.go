@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"context"
 	"io"
 	"os"
 
@@ -9,7 +10,7 @@ import (
 )
 
 type useCase interface {
-	Do(string) *entity.Toc
+	Do(context.Context, string) (entity.Toc, error)
 }
 
 type Controller struct {
@@ -30,9 +31,9 @@ func New(cfg Config, ucLocalMD useCase, ucRemoteMD useCase, ucRemoteHTML useCase
 	}
 }
 
-func (ctl *Controller) Process(stdout io.Writer) error {
+func (ctl *Controller) Process(ctx context.Context, stdout io.Writer) error {
 	if len(ctl.cfg.Files) > 0 {
-		return ctl.ProcessFiles(stdout, ctl.cfg.Files...)
+		return ctl.ProcessFiles(ctx, stdout, ctl.cfg.Files...)
 	}
-	return ctl.ProcessSTDIN(stdout, os.Stdin)
+	return ctl.ProcessSTDIN(ctx, stdout, os.Stdin)
 }

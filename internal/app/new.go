@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"fmt"
 	"io"
 
@@ -10,7 +11,7 @@ import (
 )
 
 type Controller interface {
-	Process(stdout io.Writer) error
+	Process(ctx context.Context, stdout io.Writer) error
 }
 
 type App struct {

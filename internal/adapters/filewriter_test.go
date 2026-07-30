@@ -1,6 +1,7 @@
 package adapters
 
 import (
+	"context"
 	"os"
 	"testing"
 )
@@ -17,11 +18,16 @@ func Test_FileWriter(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			file := "./tmp-for-test"
 			test_data := "some-test"
-			err := writer.Write(file, []byte(test_data))
+			ctx := context.Background()
+			err := writer.Write(ctx, file, []byte(test_data))
 			if err != nil {
 				t.Errorf("Got err=%v", err)
 			}
-			if !checker.Exists(file) {
+			exists, err := checker.Exists(ctx, file)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !exists {
 				t.Errorf("File not exists, f=%v", file)
 			}
 			data, err := os.ReadFile(file)

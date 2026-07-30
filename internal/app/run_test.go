@@ -2,9 +2,11 @@ package app
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"io"
+	"strings"
 	"testing"
 )
 
@@ -13,17 +15,14 @@ type TestController struct {
 	body string
 }
 
-func (c TestController) Process(stdout io.Writer) error {
-	if c.err != nil {
-		return c.err
-	}
+func (c TestController) Process(_ context.Context, stdout io.Writer) error {
 	if len(c.body) > 0 {
 		if _, err := fmt.Fprint(stdout, c.body); err != nil {
 			return err
 		}
 
 	}
-	return nil
+	return c.err
 }
 
 func Test_AppRun(t *testing.T) {
@@ -38,7 +37,7 @@ func Test_AppRun(t *testing.T) {
 	}
 
 	var b bytes.Buffer
-	if err := app.Run(&b); err != nil {
+	if err := app.Run(context.Background(), &b); err != nil {
 		t.Error(err)
 	}
 
@@ -50,16 +49,22 @@ func Test_AppRun(t *testing.T) {
 }
 
 func Test_AppRunFail(t *testing.T) {
-	errWant := errors.New("Proccess failed!")
-	ctl := TestController{err: errWant}
+	errWant := errors.New("process failed")
+	ctl := TestController{err: errWant, body: "partial result\n"}
 	app := App{
 		cfg: Config{},
 		ctl: ctl,
 	}
 
 	var b bytes.Buffer
-	err := app.Run(&b)
-	if err.Error() != errWant.Error() {
-		t.Errorf("\nWant=%s\n Got=%s", errWant.Error(), err.Error())
+	err := app.Run(context.Background(), &b)
+	if !errors.Is(err, errWant) {
+		t.Errorf("\nWant=%s\n Got=%v", errWant, err)
+	}
+	if strings.Contains(b.String(), "Created by") {
+		t.Errorf("footer was printed after an error: %q", b.String())
+	}
+	if !strings.Contains(b.String(), "partial result") {
+		t.Errorf("successful partial output was lost: %q", b.String())
 	}
 }

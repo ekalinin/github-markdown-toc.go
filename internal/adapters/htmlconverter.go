@@ -1,6 +1,8 @@
 package adapters
 
 import (
+	"context"
+
 	"github.com/ekalinin/github-markdown-toc.go/v2/internal/core/ports"
 )
 
@@ -24,9 +26,9 @@ func NewHTMLConverterX(token, url string, poster ports.RemotePoster, log ports.L
 	}
 }
 
-func (c *HTMLConverter) Convert(file string) (string, error) {
+func (c *HTMLConverter) Convert(ctx context.Context, file string) (string, error) {
 	c.log.Info("adapters.HTMLConverter.Convert: start", "file", file)
 	ghURL := c.ghURL + "/markdown/raw"
 	c.log.Info("adapters.HTMLConverter.Convert: sending", "url", ghURL)
-	return c.poster.Post(ghURL, c.ghToken, file)
+	return c.poster.Post(ctx, ghURL, c.ghToken, file)
 }

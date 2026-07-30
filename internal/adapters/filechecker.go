@@ -1,6 +1,7 @@
 package adapters
 
 import (
+	"context"
 	"os"
 
 	"github.com/ekalinin/github-markdown-toc.go/v2/internal/core/ports"
@@ -14,10 +15,22 @@ func NewFileCheck(log ports.Logger) *FileChecker {
 	return &FileChecker{log: log}
 }
 
-func (ch *FileChecker) Exists(file string) bool {
+func (ch *FileChecker) Exists(ctx context.Context, file string) (bool, error) {
+	if err := ctx.Err(); err != nil {
+		return false, err
+	}
+
 	ch.log.Info("FileChecker.Exists: start", "file", file)
 	_, err := os.Stat(file)
-	res := !os.IsNotExist(err)
+	if err == nil {
+		ch.log.Info("FileChecker.Exists: done", "res", true)
+		return true, nil
+	}
+	if !os.IsNotExist(err) {
+		return false, err
+	}
+
+	res := false
 	ch.log.Info("FileChecker.Exists: done", "res", res)
-	return res
+	return res, nil
 }

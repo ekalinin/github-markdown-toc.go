@@ -18,3 +18,7 @@ func (f *FileTemper) CreateTemp(ctx context.Context, dir, pattern string) (*os.F
 	}
 	return os.CreateTemp(dir, pattern)
 }
+
+func (f *FileTemper) Remove(path string) error {
+	return os.Remove(path)
+}

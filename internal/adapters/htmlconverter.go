@@ -2,6 +2,7 @@ package adapters
 
 import (
 	"context"
+	"net/http"
 
 	"github.com/ekalinin/github-markdown-toc.go/v2/internal/core/ports"
 )
@@ -14,7 +15,11 @@ type HTMLConverter struct {
 }
 
 func NewHTMLConverter(token, url string, log ports.Logger) *HTMLConverter {
-	return NewHTMLConverterX(token, url, NewRemotePoster(), log)
+	return NewHTMLConverterWithClient(token, url, NewHTTPClient(), log)
+}
+
+func NewHTMLConverterWithClient(token, url string, client *http.Client, log ports.Logger) *HTMLConverter {
+	return NewHTMLConverterX(token, url, NewRemotePosterWithClient(client), log)
 }
 
 func NewHTMLConverterX(token, url string, poster ports.RemotePoster, log ports.Logger) *HTMLConverter {

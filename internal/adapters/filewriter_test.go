@@ -3,6 +3,7 @@ package adapters
 import (
 	"context"
 	"os"
+	"path/filepath"
 	"testing"
 )
 
@@ -16,7 +17,7 @@ func Test_FileWriter(t *testing.T) {
 	checker := NewFileCheck(NewLogger(false))
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			file := "./tmp-for-test"
+			file := filepath.Join(t.TempDir(), "tmp-for-test")
 			test_data := "some-test"
 			ctx := context.Background()
 			err := writer.Write(ctx, file, []byte(test_data))

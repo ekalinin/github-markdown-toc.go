@@ -39,15 +39,16 @@ func New(cfg Config) (*App, error) {
 	ucCfg := ctlCfg.ToUseCaseConfig()
 
 	log.Info("App.New: init adapters ...")
+	httpClient := adapters.NewHTTPClient()
 	checker := adapters.NewFileCheck(log)
 	writer := adapters.NewFileWriter(log)
-	converter := adapters.NewHTMLConverter(cfg.GHToken, cfg.GHUrl, log)
+	converter := adapters.NewHTMLConverterWithClient(cfg.GHToken, cfg.GHUrl, httpClient, log)
 	grabberRe, err := adapters.NewReGrabber("", cfg.ToGrabberConfig(), cfg.GHVersion)
 	if err != nil {
 		return nil, fmt.Errorf("initialize regexp grabber: %w", err)
 	}
 	grabberJson := adapters.NewJsonGrabber(cfg.ToGrabberConfig())
-	getter := adapters.NewRemoteGetter(true)
+	getter := adapters.NewRemoteGetterWithClient(true, httpClient)
 	temper := adapters.NewFileTemper()
 
 	log.Info("App.New: init usecases ...")

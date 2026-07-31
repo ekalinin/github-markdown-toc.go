@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -13,10 +12,48 @@ import (
 	"github.com/ekalinin/github-markdown-toc.go/v2/internal/version"
 )
 
+const (
+	maxResponseBodyBytes int64 = 10 << 20
+	maxErrorBodyBytes    int64 = 4 << 10
+)
+
+type HTTPStatusError struct {
+	StatusCode int
+	Body       string
+}
+
+func (e *HTTPStatusError) Error() string {
+	if e.Body == "" {
+		return fmt.Sprintf("unexpected HTTP status %d", e.StatusCode)
+	}
+	return fmt.Sprintf("unexpected HTTP status %d: %s", e.StatusCode, e.Body)
+}
+
+type ResponseBodyTooLargeError struct {
+	Limit int64
+}
+
+func (e *ResponseBodyTooLargeError) Error() string {
+	return fmt.Sprintf("HTTP response body exceeds %d bytes", e.Limit)
+}
+
+func readLimitedBody(body io.Reader, limit int64) ([]byte, bool, error) {
+	data, err := io.ReadAll(io.LimitReader(body, limit+1))
+	if err != nil {
+		return nil, false, err
+	}
+	if int64(len(data)) > limit {
+		return data[:limit], true, nil
+	}
+	return data, false, nil
+}
+
 // doHTTPReq executes a particular http request
-func doHTTPReq(req *http.Request) ([]byte, string, error) {
+func doHTTPReq(client *http.Client, req *http.Request) ([]byte, string, error) {
+	if client == nil {
+		return []byte{}, "", errors.New("HTTP client is nil")
+	}
 	req.Header.Set("User-Agent", version.UserAgent)
-	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
 		return []byte{}, "", err
@@ -25,39 +62,55 @@ func doHTTPReq(req *http.Request) ([]byte, string, error) {
 	defer func() {
 		_ = resp.Body.Close()
 	}()
-	body, err := io.ReadAll(resp.Body)
+
+	contentType := resp.Header.Get("Content-Type")
+	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
+		body, _, err := readLimitedBody(resp.Body, maxErrorBodyBytes)
+		if err != nil {
+			return []byte{}, contentType, fmt.Errorf("read HTTP error response: %w", err)
+		}
+		return []byte{}, contentType, &HTTPStatusError{
+			StatusCode: resp.StatusCode,
+			Body:       strings.TrimSpace(strings.ToValidUTF8(string(body), "\uFFFD")),
+		}
+	}
+
+	if resp.ContentLength > maxResponseBodyBytes {
+		return []byte{}, contentType, &ResponseBodyTooLargeError{Limit: maxResponseBodyBytes}
+	}
+
+	body, tooLarge, err := readLimitedBody(resp.Body, maxResponseBodyBytes)
 	if err != nil {
-		return []byte{}, "", err
+		return []byte{}, contentType, err
+	}
+	if tooLarge {
+		return []byte{}, contentType, &ResponseBodyTooLargeError{Limit: maxResponseBodyBytes}
 	}
 
-	if resp.StatusCode == http.StatusForbidden {
-		return []byte{}, resp.Header.Get("Content-type"), errors.New(string(body))
-	}
-
-	return body, resp.Header.Get("Content-type"), nil
+	return body, contentType, nil
 }
 
 // HttpGet executes HTTP GET request.
-func HttpGet(ctx context.Context, urlPath string) ([]byte, string, error) {
+func HttpGet(ctx context.Context, client *http.Client, urlPath string) ([]byte, string, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, urlPath, nil)
 	if err != nil {
 		return []byte{}, "", err
 	}
-	return doHTTPReq(req)
+	return doHTTPReq(client, req)
 }
 
-func HttpGetJson(ctx context.Context, urlPath string) ([]byte, string, error) {
+func HttpGetJson(ctx context.Context, client *http.Client, urlPath string) ([]byte, string, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, urlPath, nil)
 	if err != nil {
 		return []byte{}, "", err
 	}
 	req.Header.Set("Content-type", "application/json")
 	req.Header.Set("Accept", "application/json")
-	return doHTTPReq(req)
+	return doHTTPReq(client, req)
 }
 
 // HttpPost executes HTTP POST with file content.
-func HttpPost(ctx context.Context, url, path, token string) (string, error) {
+func HttpPost(ctx context.Context, client *http.Client, url, path, token string) (string, error) {
 	file, err := os.Open(path)
 	if err != nil {
 		return "", err
@@ -66,23 +119,22 @@ func HttpPost(ctx context.Context, url, path, token string) (string, error) {
 		_ = file.Close()
 	}()
 
-	body := &bytes.Buffer{}
-	_, err = io.Copy(body, file)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, file)
 	if err != nil {
 		return "", err
 	}
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, body)
+	fileInfo, err := file.Stat()
 	if err != nil {
 		return "", err
 	}
+	req.ContentLength = fileInfo.Size()
 
 	if token != "" {
 		req.Header.Add("Authorization", "token "+token)
 	}
 	req.Header.Set("Content-Type", "text/plain;charset=utf-8")
 
-	resp, _, err := doHTTPReq(req)
+	resp, _, err := doHTTPReq(client, req)
 	return string(resp), err
 }
 

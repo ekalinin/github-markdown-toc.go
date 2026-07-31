@@ -33,6 +33,7 @@ type RemoteGetter interface {
 
 type FileTemper interface {
 	CreateTemp(ctx context.Context, dir, pattern string) (*os.File, error)
+	Remove(path string) error
 }
 
 type RemotePoster interface {

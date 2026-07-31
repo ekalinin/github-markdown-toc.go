@@ -2,19 +2,21 @@ package adapters
 
 import (
 	"context"
+	"net/http"
 
 	"github.com/ekalinin/github-markdown-toc.go/v2/internal/core/ports"
 	"github.com/ekalinin/github-markdown-toc.go/v2/internal/utils"
 )
 
 type realPoster struct {
+	client *http.Client
 }
 
 func (p *realPoster) Post(ctx context.Context, url, token, path string) (string, error) {
 	if err := ctx.Err(); err != nil {
 		return "", err
 	}
-	return utils.HttpPost(ctx, url, path, token)
+	return utils.HttpPost(ctx, p.client, url, path, token)
 }
 
 type RemotePoster struct {
@@ -22,7 +24,11 @@ type RemotePoster struct {
 }
 
 func NewRemotePoster() *RemotePoster {
-	return NewRemotePosterX(&realPoster{})
+	return NewRemotePosterWithClient(NewHTTPClient())
+}
+
+func NewRemotePosterWithClient(client *http.Client) *RemotePoster {
+	return NewRemotePosterX(&realPoster{client: client})
 }
 
 func NewRemotePosterX(poster ports.RemotePoster) *RemotePoster {

@@ -2,12 +2,13 @@ package controller
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
 )
 
-func (ctl *Controller) ProcessSTDIN(ctx context.Context, stdout io.Writer, stdin io.Reader) error {
+func (ctl *Controller) ProcessSTDIN(ctx context.Context, stdout io.Writer, stdin io.Reader) (err error) {
 	if err := ctx.Err(); err != nil {
 		return fmt.Errorf("read standard input: %w", err)
 	}
@@ -24,18 +25,33 @@ func (ctl *Controller) ProcessSTDIN(ctx context.Context, stdout io.Writer, stdin
 	if err != nil {
 		return fmt.Errorf("create standard input temporary file: %w", err)
 	}
+	path := file.Name()
+	fileOpen := true
 	defer func() {
-		if err := os.Remove(file.Name()); err != nil {
-			_, _ = fmt.Fprintln(stdout, "Error during file delete:", err)
+		if fileOpen {
+			if closeErr := file.Close(); closeErr != nil {
+				err = errors.Join(err, fmt.Errorf("close standard input temporary file %q: %w", path, closeErr))
+			}
+		}
+		if removeErr := os.Remove(path); removeErr != nil {
+			err = errors.Join(err, fmt.Errorf("remove standard input temporary file %q: %w", path, removeErr))
 		}
 	}()
 
-	err = os.WriteFile(file.Name(), bytes, 0644)
+	written, err := file.Write(bytes)
 	if err != nil {
-		return fmt.Errorf("write standard input temporary file %q: %w", file.Name(), err)
+		return fmt.Errorf("write standard input temporary file %q: %w", path, err)
+	}
+	if written != len(bytes) {
+		return fmt.Errorf("write standard input temporary file %q: %w", path, io.ErrShortWrite)
+	}
+	closeErr := file.Close()
+	fileOpen = false
+	if closeErr != nil {
+		return fmt.Errorf("close standard input temporary file %q: %w", path, closeErr)
 	}
 
-	if err := ctl.ProcessFiles(ctx, stdout, file.Name()); err != nil {
+	if err := ctl.ProcessFiles(ctx, stdout, path); err != nil {
 		return fmt.Errorf("process standard input: %w", err)
 	}
 	return nil

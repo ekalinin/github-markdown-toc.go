@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"os"
+	"path/filepath"
 	"slices"
 	"strings"
 	"testing"
@@ -25,10 +26,18 @@ func (s getterStub) Get(context.Context, string) ([]byte, string, error) {
 
 type temperStub struct {
 	create func(context.Context, string, string) (*os.File, error)
+	remove func(string) error
 }
 
 func (s temperStub) CreateTemp(ctx context.Context, dir, pattern string) (*os.File, error) {
 	return s.create(ctx, dir, pattern)
+}
+
+func (s temperStub) Remove(path string) error {
+	if s.remove != nil {
+		return s.remove(path)
+	}
+	return os.Remove(path)
 }
 
 type writerStub struct {
@@ -74,7 +83,24 @@ func createTemper(t *testing.T) temperStub {
 		create: func(_ context.Context, _, pattern string) (*os.File, error) {
 			return os.CreateTemp(t.TempDir(), pattern)
 		},
+		remove: os.Remove,
 	}
+}
+
+func createTrackingTemper(t *testing.T) (temperStub, *string) {
+	t.Helper()
+	var path string
+	tempDir := t.TempDir()
+	return temperStub{
+		create: func(_ context.Context, _, pattern string) (*os.File, error) {
+			file, err := os.CreateTemp(tempDir, pattern)
+			if err == nil {
+				path = file.Name()
+			}
+			return file, err
+		},
+		remove: os.Remove,
+	}, &path
 }
 
 func newUseCase(
@@ -94,15 +120,16 @@ func newUseCase(
 		grabber,
 		loggerStub{},
 	)
-	return New(config.Config{}, getter, local, temper, writer, loggerStub{})
+	return New(config.Config{}, getter, local, temper, loggerStub{})
 }
 
 func TestDoReturnsTOC(t *testing.T) {
 	want := entity.Toc{"* [Title](#title)"}
+	temper, tempPath := createTrackingTemper(t)
 	uc := newUseCase(
 		t,
-		getterStub{body: []byte("# Title"), contentType: "text/plain"},
-		createTemper(t),
+		getterStub{body: []byte("# Title"), contentType: "text/plain; charset=utf-8"},
+		temper,
 		writerStub{},
 		converterStub{},
 		grabberStub{toc: &want},
@@ -114,6 +141,9 @@ func TestDoReturnsTOC(t *testing.T) {
 	}
 	if !slices.Equal(got, want) {
 		t.Errorf("got TOC %v, want %v", got, want)
+	}
+	if _, err := os.Stat(*tempPath); !errors.Is(err, os.ErrNotExist) {
+		t.Errorf("temporary file still exists after success: %v", err)
 	}
 }
 
@@ -159,29 +189,42 @@ func TestDoPropagatesTemporaryFileError(t *testing.T) {
 	}
 }
 
-func TestDoPropagatesWriterError(t *testing.T) {
-	dependencyErr := errors.New("write failed")
+func TestDoCleansUpAfterTemporaryFileWriteError(t *testing.T) {
+	tempPath := filepath.Join(t.TempDir(), "remote.md")
+	if err := os.WriteFile(tempPath, nil, 0600); err != nil {
+		t.Fatal(err)
+	}
+	temper := temperStub{
+		create: func(context.Context, string, string) (*os.File, error) {
+			return os.Open(tempPath)
+		},
+		remove: os.Remove,
+	}
 	uc := newUseCase(
 		t,
 		getterStub{body: []byte("# Title"), contentType: "text/plain"},
-		createTemper(t),
-		writerStub{err: dependencyErr},
+		temper,
+		writerStub{},
 		converterStub{},
 		grabberStub{},
 	)
 
 	_, err := uc.Do(context.Background(), "https://example.com/README.md")
-	if !errors.Is(err, dependencyErr) {
-		t.Fatalf("got error %v, want writer error", err)
+	if err == nil {
+		t.Fatal("expected a temporary file write error")
+	}
+	if _, statErr := os.Stat(tempPath); !errors.Is(statErr, os.ErrNotExist) {
+		t.Errorf("temporary file still exists after write error: %v", statErr)
 	}
 }
 
 func TestDoKeepsRemotePathForLocalProcessingError(t *testing.T) {
 	dependencyErr := errors.New("convert failed")
+	temper, tempPath := createTrackingTemper(t)
 	uc := newUseCase(
 		t,
 		getterStub{body: []byte("# Title"), contentType: "text/plain"},
-		createTemper(t),
+		temper,
 		writerStub{},
 		converterStub{err: dependencyErr},
 		grabberStub{},
@@ -194,6 +237,9 @@ func TestDoKeepsRemotePathForLocalProcessingError(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), documentURL) {
 		t.Errorf("error %q does not contain the original document URL", err)
+	}
+	if _, statErr := os.Stat(*tempPath); !errors.Is(statErr, os.ErrNotExist) {
+		t.Errorf("temporary file still exists after processing error: %v", statErr)
 	}
 }
 
@@ -210,5 +256,43 @@ func TestDoRejectsUnexpectedContentType(t *testing.T) {
 	_, err := uc.Do(context.Background(), "https://example.com/README.md")
 	if err == nil {
 		t.Fatal("expected an error for an unexpected content type")
+	}
+}
+
+func TestDoRejectsMalformedContentType(t *testing.T) {
+	uc := newUseCase(
+		t,
+		getterStub{body: []byte("# Title"), contentType: `text/plain; charset="`},
+		createTemper(t),
+		writerStub{},
+		converterStub{},
+		grabberStub{},
+	)
+
+	_, err := uc.Do(context.Background(), "https://example.com/README.md")
+	if err == nil {
+		t.Fatal("expected an error for a malformed content type")
+	}
+}
+
+func TestDoReturnsTemporaryFileRemovalError(t *testing.T) {
+	removeErr := errors.New("remove failed")
+	temper := createTemper(t)
+	temper.remove = func(string) error {
+		return removeErr
+	}
+	want := entity.Toc{"* [Title](#title)"}
+	uc := newUseCase(
+		t,
+		getterStub{body: []byte("# Title"), contentType: "text/plain"},
+		temper,
+		writerStub{},
+		converterStub{},
+		grabberStub{toc: &want},
+	)
+
+	_, err := uc.Do(context.Background(), "https://example.com/README.md")
+	if !errors.Is(err, removeErr) {
+		t.Fatalf("got error %v, want removal error", err)
 	}
 }

@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"io"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -103,5 +105,52 @@ func TestProcessFilesStopsWaitingAfterContextCancellation(t *testing.T) {
 		}
 	case <-time.After(time.Second):
 		t.Fatal("controller did not return after context cancellation")
+	}
+}
+
+func TestProcessSTDINCleansUpTemporaryFile(t *testing.T) {
+	processingErr := errors.New("processing failed")
+	tests := []struct {
+		name    string
+		ucError error
+	}{
+		{name: "success"},
+		{name: "processing error", ucError: processingErr},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var tempPath string
+			uc := useCaseFunc(func(_ context.Context, path string) (entity.Toc, error) {
+				tempPath = path
+				body, err := os.ReadFile(path)
+				if err != nil {
+					return nil, err
+				}
+				if got, want := string(body), "# Title"; got != want {
+					return nil, fmt.Errorf("got stdin body %q, want %q", got, want)
+				}
+				return entity.Toc{}, tt.ucError
+			})
+			ctl := newTestController(Config{Serial: true}, uc)
+
+			err := ctl.ProcessSTDIN(
+				context.Background(),
+				io.Discard,
+				strings.NewReader("# Title"),
+			)
+			if tt.ucError == nil && err != nil {
+				t.Fatal(err)
+			}
+			if tt.ucError != nil && !errors.Is(err, tt.ucError) {
+				t.Fatalf("got error %v, want processing error", err)
+			}
+			if tempPath == "" {
+				t.Fatal("use case did not receive a temporary file")
+			}
+			if _, statErr := os.Stat(tempPath); !errors.Is(statErr, os.ErrNotExist) {
+				t.Errorf("stdin temporary file still exists: %v", statErr)
+			}
+		})
 	}
 }

@@ -31,9 +31,12 @@ func Test_RemotePoster(t *testing.T) {
 				}
 			} else {
 				testToken := "token-for-test"
-				fileName, err := NewFileTemper().CreateTemp(ctx, "", "example.*.txt")
+				fileName, err := NewFileTemper().CreateTemp(ctx, t.TempDir(), "example.*.txt")
 				if err != nil {
 					t.Error("Tmp file creation err=", err)
+				}
+				if err := fileName.Close(); err != nil {
+					t.Fatal(err)
 				}
 				defer func() {
 					if err := os.Remove(fileName.Name()); err != nil {

@@ -1,0 +1,39 @@
+package toc
+
+import (
+	"context"
+	"fmt"
+
+	"github.com/ekalinin/github-markdown-toc.go/v2/internal/core/entity"
+)
+
+// HeadingExtractor parses headings from an external document representation.
+type HeadingExtractor interface {
+	Extract(context.Context, string) ([]entity.Heading, error)
+}
+
+// Generator extracts headings and renders them as a Markdown TOC.
+type Generator struct {
+	extractor HeadingExtractor
+	renderer  *Renderer
+}
+
+func NewGenerator(extractor HeadingExtractor, renderer *Renderer) *Generator {
+	return &Generator{
+		extractor: extractor,
+		renderer:  renderer,
+	}
+}
+
+func (g *Generator) Grab(ctx context.Context, input string) (*entity.Toc, error) {
+	headings, err := g.extractor.Extract(ctx, input)
+	if err != nil {
+		return nil, fmt.Errorf("extract headings: %w", err)
+	}
+
+	result, err := g.renderer.Render(ctx, headings)
+	if err != nil {
+		return nil, fmt.Errorf("render TOC: %w", err)
+	}
+	return &result, nil
+}

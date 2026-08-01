@@ -295,22 +295,6 @@ func Test_RemoveStuff(t *testing.T) {
 	}
 }
 
-func Test_GenerateListIndentations(t *testing.T) {
-	f := GenerateListIndentation(2)
-	if got := f(); got != "  " {
-		t.Errorf("Got='%s', want='  '", got)
-	}
-}
-
-func Test_EscapeSpecChars(t *testing.T) {
-	in := `abc\*_{}`
-	want := "abc\\\\\\*\\_\\{\\}"
-	got := EscapeSpecChars(in)
-	if got != want {
-		t.Errorf("Got=%s, want=%s", got, want)
-	}
-}
-
 func Test_ShowHeaderFooter(t *testing.T) {
 	var b bytes.Buffer
 

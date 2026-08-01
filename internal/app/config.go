@@ -1,8 +1,8 @@
 package app
 
 import (
-	"github.com/ekalinin/github-markdown-toc.go/v2/internal/adapters"
 	"github.com/ekalinin/github-markdown-toc.go/v2/internal/controller"
+	coretoc "github.com/ekalinin/github-markdown-toc.go/v2/internal/core/toc"
 )
 
 // copy of controller.Config
@@ -38,12 +38,12 @@ func (c Config) ToControllerConfig() controller.Config {
 	}
 }
 
-func (c Config) ToGrabberConfig() adapters.GrabberCfg {
-	return adapters.GrabberCfg{
-		AbsPaths:   len(c.Files) > 0,
-		StartDepth: c.StartDepth,
-		Depth:      c.Depth,
-		Escape:     !c.NoEscape,
-		Indent:     c.Indent,
+func (c Config) ToRendererConfig() coretoc.Config {
+	return coretoc.Config{
+		AbsolutePaths: len(c.Files) > 0,
+		StartDepth:    c.StartDepth,
+		Depth:         c.Depth,
+		Escape:        !c.NoEscape,
+		Indent:        c.Indent,
 	}
 }

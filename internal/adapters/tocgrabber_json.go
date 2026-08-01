@@ -11,100 +11,65 @@ import (
 	"github.com/ekalinin/github-markdown-toc.go/v2/internal/utils"
 )
 
-type JsonGrabber struct {
-	cfg GrabberCfg
+// JSONExtractor extracts headings from a GitHub JSON document response.
+type JSONExtractor struct{}
+
+func NewJSONExtractor() *JSONExtractor {
+	return &JSONExtractor{}
 }
 
-func NewJsonGrabber(cfg GrabberCfg) *JsonGrabber {
-	return &JsonGrabber{
-		cfg: cfg,
-	}
-}
-
-type tocItem struct {
+type jsonHeading struct {
 	Level  int
 	Text   string
 	Anchor string
 }
 
-type blobWithToc struct {
+type blobWithTOC struct {
 	HeaderInfo struct {
-		Toc []tocItem
-	}
+		TOC []jsonHeading `json:"toc"`
+	} `json:"headerInfo"`
 }
 
 type tocWrapper struct {
 	Payload struct {
-		Blob              blobWithToc
-		CodeViewBlobRoute blobWithToc `json:"codeViewBlobRoute"`
+		Blob              blobWithTOC
+		CodeViewBlobRoute blobWithTOC `json:"codeViewBlobRoute"`
 	}
 }
 
-func (w tocWrapper) tocSource() []tocItem {
-	items := w.Payload.Blob.HeaderInfo.Toc
+func (w tocWrapper) tocSource() []jsonHeading {
+	items := w.Payload.Blob.HeaderInfo.TOC
 	if len(items) > 0 {
 		return items
 	}
-	return w.Payload.CodeViewBlobRoute.HeaderInfo.Toc
+	return w.Payload.CodeViewBlobRoute.HeaderInfo.TOC
 }
 
-func (g JsonGrabber) Grab(ctx context.Context, jsonBody string) (*entity.Toc, error) {
+func (*JSONExtractor) Extract(ctx context.Context, jsonBody string) ([]entity.Heading, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
 
 	var wrapper tocWrapper
-	err := json.Unmarshal([]byte(jsonBody), &wrapper)
-	if err != nil {
-		return nil, fmt.Errorf("got error from unmarshal: %w", err)
+	if err := json.Unmarshal([]byte(jsonBody), &wrapper); err != nil {
+		return nil, fmt.Errorf("unmarshal GitHub TOC JSON: %w", err)
 	}
-
-	// g.Log("processing groups ...")
 
 	items := wrapper.tocSource()
-	toc := entity.Toc{}
-	tmpSection := ""
-	listIndentation := utils.GenerateListIndentation(g.cfg.Indent)
-	minHeaderNum := 6
+	headings := make([]entity.Heading, 0, len(items))
 	for _, item := range items {
 		if err := ctx.Err(); err != nil {
 			return nil, err
 		}
-		if item.Level < minHeaderNum {
-			minHeaderNum = item.Level
-		}
-	}
-	for _, item := range items {
-		if err := ctx.Err(); err != nil {
-			return nil, err
-		}
-		if item.Level <= g.cfg.StartDepth {
-			continue
-		}
-		if g.cfg.Depth > 0 && item.Level > g.cfg.Depth {
-			continue
-		}
-
-		link, err := url.QueryUnescape(item.Anchor)
+		anchor, err := url.QueryUnescape(item.Anchor)
 		if err != nil {
-			// g.Log("got error from query unescape: ", err.Error())
-			return nil, fmt.Errorf("got error from unescape: %w", err)
+			return nil, fmt.Errorf("unescape GitHub heading anchor %q: %w", item.Anchor, err)
 		}
-		link = "#" + link
-		if g.cfg.AbsPaths {
-			link = g.cfg.Path + link
-		}
-		tmpSection = utils.RemoveStuff(item.Text)
-		if g.cfg.Escape {
-			tmpSection = utils.EscapeSpecChars(tmpSection)
-		}
-
-		prefix := strings.Repeat(listIndentation(), item.Level-minHeaderNum-g.cfg.StartDepth)
-		tocItem := prefix + "* " +
-			"[" + tmpSection + "]" +
-			"(" + link + ")"
-		toc = append(toc, tocItem)
+		headings = append(headings, entity.Heading{
+			Level:  item.Level,
+			Text:   utils.RemoveStuff(item.Text),
+			Anchor: strings.TrimPrefix(anchor, "#"),
+		})
 	}
-
-	return &toc, nil
+	return headings, nil
 }

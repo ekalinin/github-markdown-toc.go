@@ -13,15 +13,14 @@ import (
 	"github.com/ekalinin/github-markdown-toc.go/v2/internal/version"
 )
 
-type ReGrabber struct {
-	cfg GrabberCfg
-
+// RegexpExtractor extracts headings from GitHub-rendered HTML.
+type RegexpExtractor struct {
 	re *regexp.Regexp
 }
 
-func NewReGrabber(path string, cfg GrabberCfg, reVersion string) (*ReGrabber, error) {
+func NewRegexpExtractor(reVersion string) (*RegexpExtractor, error) {
 	// si:
-	// 	- s - let . match \n (single-line mode)
+	//  - s - let . match \n (single-line mode)
 	//  - i - case-insensitive
 	var pattern string
 	switch reVersion {
@@ -55,77 +54,40 @@ func NewReGrabber(path string, cfg GrabberCfg, reVersion string) (*ReGrabber, er
 	if err != nil {
 		return nil, fmt.Errorf("compile GitHub regexp version %q: %w", reVersion, err)
 	}
-
-	return &ReGrabber{
-		cfg: cfg,
-		re:  re,
-	}, nil
+	return &RegexpExtractor{re: re}, nil
 }
 
-func (g *ReGrabber) Grab(ctx context.Context, html string) (*entity.Toc, error) {
+func (e *RegexpExtractor) Extract(ctx context.Context, html string) ([]entity.Heading, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
 
-	listIndentation := utils.GenerateListIndentation(g.cfg.Indent)
-
-	toc := entity.Toc{}
-	minHeaderNum := 6
-	var groups []map[string]string
-	// doc.d("GrabToc: matching ...")
-	for _, match := range g.re.FindAllStringSubmatch(html, -1) {
+	matches := e.re.FindAllStringSubmatch(html, -1)
+	headings := make([]entity.Heading, 0, len(matches))
+	for _, match := range matches {
 		if err := ctx.Err(); err != nil {
 			return nil, err
 		}
-		// doc.d("GrabToc: match #" + strconv.Itoa(idx) + " ...")
+
 		group := make(map[string]string)
-		// fill map for groups
-		for i, name := range g.re.SubexpNames() {
-			if i == 0 || name == "" {
-				continue
+		for i, name := range e.re.SubexpNames() {
+			if i != 0 && name != "" {
+				group[name] = match[i]
 			}
-			// doc.d("GrabToc: process group: " + name + ": " + match[i] + " ...")
-			group[name] = utils.RemoveStuff(match[i])
 		}
-		// update minimum header number
-		n, _ := strconv.Atoi(group["num"])
-		if n < minHeaderNum {
-			minHeaderNum = n
+		level, err := strconv.Atoi(group["num"])
+		if err != nil {
+			return nil, fmt.Errorf("parse GitHub heading level %q: %w", group["num"], err)
 		}
-		groups = append(groups, group)
+		anchor, err := url.QueryUnescape(utils.RemoveStuff(group["href"]))
+		if err != nil {
+			return nil, fmt.Errorf("unescape GitHub heading anchor %q: %w", group["href"], err)
+		}
+		headings = append(headings, entity.Heading{
+			Level:  level,
+			Text:   utils.RemoveStuff(group["name"]),
+			Anchor: strings.TrimPrefix(anchor, "#"),
+		})
 	}
-
-	var tmpSection string
-	// doc.d("GrabToc: processing groups ...")
-	// doc.d("Including starting from level " + strconv.Itoa(doc.StartDepth))
-	for _, group := range groups {
-		if err := ctx.Err(); err != nil {
-			return nil, err
-		}
-		// format result
-		n, _ := strconv.Atoi(group["num"])
-		if n <= g.cfg.StartDepth {
-			continue
-		}
-		if g.cfg.Depth > 0 && n > g.cfg.Depth {
-			continue
-		}
-
-		link, _ := url.QueryUnescape(group["href"])
-		if g.cfg.AbsPaths {
-			link = g.cfg.Path + link
-		}
-
-		tmpSection = utils.RemoveStuff(group["name"])
-		if g.cfg.Escape {
-			tmpSection = utils.EscapeSpecChars(tmpSection)
-		}
-		tocItem := strings.Repeat(listIndentation(), n-minHeaderNum-g.cfg.StartDepth) + "* " +
-			"[" + tmpSection + "]" +
-			"(" + link + ")"
-		//fmt.Println(tocItem)
-		toc = append(toc, tocItem)
-	}
-
-	return &toc, nil
+	return headings, nil
 }

@@ -17,11 +17,7 @@ func TestRemoteAdaptersUseInjectedHTTPClient(t *testing.T) {
 	}
 
 	poster := NewRemotePosterWithClient(client)
-	real, ok := poster.poster.(*realPoster)
-	if !ok {
-		t.Fatalf("got poster type %T, want *realPoster", poster.poster)
-	}
-	if real.client != client {
+	if poster.client != client {
 		t.Fatal("remote poster does not use the injected HTTP client")
 	}
 }

@@ -3,16 +3,12 @@ package adapters
 import (
 	"context"
 	"os"
-
-	"github.com/ekalinin/github-markdown-toc.go/v2/internal/core/ports"
 )
 
-type FileWriter struct {
-	log ports.Logger
-}
+type FileWriter struct{}
 
-func NewFileWriter(log ports.Logger) *FileWriter {
-	return &FileWriter{log: log}
+func NewFileWriter() *FileWriter {
+	return &FileWriter{}
 }
 
 func (f *FileWriter) Write(ctx context.Context, file string, data []byte) error {

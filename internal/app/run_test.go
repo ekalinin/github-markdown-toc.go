@@ -29,9 +29,7 @@ func Test_AppRun(t *testing.T) {
 	ctl := TestController{}
 	app := App{
 		cfg: Config{
-			HideHeader: false,
-			HideFooter: false,
-			Files:      []string{"aaa"},
+			Files: []string{"aaa"},
 		},
 		ctl: ctl,
 	}

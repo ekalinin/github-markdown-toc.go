@@ -3,15 +3,13 @@ package adapters
 import (
 	"context"
 	"os"
-
-	"github.com/ekalinin/github-markdown-toc.go/v2/internal/core/ports"
 )
 
 type FileChecker struct {
-	log ports.Logger
+	log logger
 }
 
-func NewFileCheck(log ports.Logger) *FileChecker {
+func NewFileCheck(log logger) *FileChecker {
 	return &FileChecker{log: log}
 }
 

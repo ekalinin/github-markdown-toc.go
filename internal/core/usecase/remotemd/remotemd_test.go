@@ -10,7 +10,6 @@ import (
 	"testing"
 
 	"github.com/ekalinin/github-markdown-toc.go/v2/internal/core/entity"
-	"github.com/ekalinin/github-markdown-toc.go/v2/internal/core/usecase/config"
 	"github.com/ekalinin/github-markdown-toc.go/v2/internal/core/usecase/localmd"
 )
 
@@ -113,14 +112,14 @@ func newUseCase(
 ) *RemoteMd {
 	t.Helper()
 	local := localmd.New(
-		config.Config{},
+		false,
 		checkerStub{exists: true},
 		writer,
 		converter,
 		grabber,
 		loggerStub{},
 	)
-	return New(config.Config{}, getter, local, temper, loggerStub{})
+	return New(getter, local, temper, loggerStub{})
 }
 
 func TestDoReturnsTOC(t *testing.T) {

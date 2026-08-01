@@ -3,26 +3,28 @@ package adapters
 import (
 	"context"
 	"net/http"
-
-	"github.com/ekalinin/github-markdown-toc.go/v2/internal/core/ports"
 )
+
+type remotePoster interface {
+	Post(context.Context, string, string, string) (string, error)
+}
 
 type HTMLConverter struct {
 	ghToken string
 	ghURL   string
-	poster  ports.RemotePoster
-	log     ports.Logger
+	poster  remotePoster
+	log     logger
 }
 
-func NewHTMLConverter(token, url string, log ports.Logger) *HTMLConverter {
+func NewHTMLConverter(token, url string, log logger) *HTMLConverter {
 	return NewHTMLConverterWithClient(token, url, NewHTTPClient(), log)
 }
 
-func NewHTMLConverterWithClient(token, url string, client *http.Client, log ports.Logger) *HTMLConverter {
+func NewHTMLConverterWithClient(token, url string, client *http.Client, log logger) *HTMLConverter {
 	return NewHTMLConverterX(token, url, NewRemotePosterWithClient(client), log)
 }
 
-func NewHTMLConverterX(token, url string, poster ports.RemotePoster, log ports.Logger) *HTMLConverter {
+func NewHTMLConverterX(token, url string, poster remotePoster, log logger) *HTMLConverter {
 	return &HTMLConverter{
 		ghToken: token,
 		ghURL:   url,

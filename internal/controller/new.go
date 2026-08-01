@@ -6,11 +6,14 @@ import (
 	"os"
 
 	"github.com/ekalinin/github-markdown-toc.go/v2/internal/core/entity"
-	"github.com/ekalinin/github-markdown-toc.go/v2/internal/core/ports"
 )
 
 type useCase interface {
 	Do(context.Context, string) (entity.Toc, error)
+}
+
+type logger interface {
+	Info(string, ...any)
 }
 
 type Controller struct {
@@ -18,10 +21,10 @@ type Controller struct {
 	ucLocalMd    useCase
 	ucRemoteMD   useCase
 	ucRemoteHTML useCase
-	log          ports.Logger
+	log          logger
 }
 
-func New(cfg Config, ucLocalMD useCase, ucRemoteMD useCase, ucRemoteHTML useCase, log ports.Logger) *Controller {
+func New(cfg Config, ucLocalMD useCase, ucRemoteMD useCase, ucRemoteHTML useCase, log logger) *Controller {
 	return &Controller{
 		cfg:          cfg,
 		ucLocalMd:    ucLocalMD,

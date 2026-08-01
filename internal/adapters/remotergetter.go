@@ -3,8 +3,6 @@ package adapters
 import (
 	"context"
 	"net/http"
-
-	"github.com/ekalinin/github-markdown-toc.go/v2/internal/utils"
 )
 
 type RemoteGetter struct {
@@ -28,7 +26,7 @@ func (r *RemoteGetter) Get(ctx context.Context, path string) ([]byte, string, er
 		return nil, "", err
 	}
 	if r.asJSON {
-		return utils.HttpGetJson(ctx, r.client, path)
+		return HttpGetJson(ctx, r.client, path)
 	}
-	return utils.HttpGet(ctx, r.client, path)
+	return HttpGet(ctx, r.client, path)
 }

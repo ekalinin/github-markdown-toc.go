@@ -1,49 +1,26 @@
 package app
 
-import (
-	"github.com/ekalinin/github-markdown-toc.go/v2/internal/controller"
-	coretoc "github.com/ekalinin/github-markdown-toc.go/v2/internal/core/toc"
-)
+import coretoc "github.com/ekalinin/github-markdown-toc.go/v2/internal/core/toc"
 
-// copy of controller.Config
+// Config contains application-level options and configuration for its dependencies.
 type Config struct {
-	Files      []string
-	Serial     bool
+	Files        []string
+	Serial       bool
+	Presentation PresentationConfig
+	GitHub       GitHubConfig
+	TOC          coretoc.Config
+	Debug        bool
+}
+
+// PresentationConfig controls the CLI output surrounding the generated TOC.
+type PresentationConfig struct {
 	HideHeader bool
 	HideFooter bool
-	StartDepth int
-	Depth      int
-	NoEscape   bool
-	Indent     int
-	Debug      bool
-	GHToken    string
-	GHUrl      string
-	GHVersion  string
 }
 
-func (c Config) ToControllerConfig() controller.Config {
-	return controller.Config{
-		Files:      c.Files,
-		Serial:     c.Serial,
-		HideHeader: c.HideHeader,
-		HideFooter: c.HideFooter,
-		StartDepth: c.StartDepth,
-		Depth:      c.Depth,
-		NoEscape:   c.NoEscape,
-		Indent:     c.Indent,
-		Debug:      c.Debug,
-		GHToken:    c.GHToken,
-		GHUrl:      c.GHUrl,
-		GHVersion:  c.GHVersion,
-	}
-}
-
-func (c Config) ToRendererConfig() coretoc.Config {
-	return coretoc.Config{
-		AbsolutePaths: len(c.Files) > 0,
-		StartDepth:    c.StartDepth,
-		Depth:         c.Depth,
-		Escape:        !c.NoEscape,
-		Indent:        c.Indent,
-	}
+// GitHubConfig contains GitHub API and HTML layout settings.
+type GitHubConfig struct {
+	GHToken   string
+	GHUrl     string
+	GHVersion string
 }

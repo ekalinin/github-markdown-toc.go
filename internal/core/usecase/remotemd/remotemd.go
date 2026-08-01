@@ -6,26 +6,39 @@ import (
 	"fmt"
 	"io"
 	"mime"
+	"os"
 
 	"github.com/ekalinin/github-markdown-toc.go/v2/internal/core/entity"
-	"github.com/ekalinin/github-markdown-toc.go/v2/internal/core/ports"
-	"github.com/ekalinin/github-markdown-toc.go/v2/internal/core/usecase/config"
-	"github.com/ekalinin/github-markdown-toc.go/v2/internal/core/usecase/localmd"
 )
+
+type remoteGetter interface {
+	Get(context.Context, string) ([]byte, string, error)
+}
+
+type markdownProcessor interface {
+	Do(context.Context, string) (entity.Toc, error)
+}
+
+type fileTemper interface {
+	CreateTemp(context.Context, string, string) (*os.File, error)
+	Remove(string) error
+}
+
+type logger interface {
+	Info(string, ...any)
+}
 
 // - download remote file
 // - call localmd use case
 type RemoteMd struct {
-	cfg       config.Config
-	ucLocalMD *localmd.LocalMd
-	getter    ports.RemoteGetter
-	temper    ports.FileTemper
-	log       ports.Logger
+	ucLocalMD markdownProcessor
+	getter    remoteGetter
+	temper    fileTemper
+	log       logger
 }
 
-func New(cfg config.Config, getter ports.RemoteGetter, localMD *localmd.LocalMd,
-	temper ports.FileTemper, log ports.Logger) *RemoteMd {
-	return &RemoteMd{cfg, localMD, getter, temper, log}
+func New(getter remoteGetter, localMD markdownProcessor, temper fileTemper, log logger) *RemoteMd {
+	return &RemoteMd{localMD, getter, temper, log}
 }
 
 func (r *RemoteMd) download(ctx context.Context, url string) (path string, err error) {

@@ -6,27 +6,45 @@ import (
 	"io/fs"
 
 	"github.com/ekalinin/github-markdown-toc.go/v2/internal/core/entity"
-	"github.com/ekalinin/github-markdown-toc.go/v2/internal/core/ports"
-	"github.com/ekalinin/github-markdown-toc.go/v2/internal/core/usecase/config"
 )
+
+type fileChecker interface {
+	Exists(context.Context, string) (bool, error)
+}
+
+type fileWriter interface {
+	Write(context.Context, string, []byte) error
+}
+
+type htmlConverter interface {
+	Convert(context.Context, string) (string, error)
+}
+
+type tocGrabber interface {
+	Grab(context.Context, string) (*entity.Toc, error)
+}
+
+type logger interface {
+	Info(string, ...any)
+}
 
 // - read file
 // - call gh api (md->html)
 // - grab toc from html
 type LocalMd struct {
-	cfg       config.Config
-	checker   ports.FileChecker
-	writer    ports.FileWriter
-	converter ports.HTMLConverter
-	grabber   ports.TocGrabber
+	debug     bool
+	checker   fileChecker
+	writer    fileWriter
+	converter htmlConverter
+	grabber   tocGrabber
 
-	log ports.Logger
+	log logger
 }
 
-func New(cfg config.Config, checker ports.FileChecker, writer ports.FileWriter,
-	converter ports.HTMLConverter, grabber ports.TocGrabber, log ports.Logger) *LocalMd {
+func New(debug bool, checker fileChecker, writer fileWriter,
+	converter htmlConverter, grabber tocGrabber, log logger) *LocalMd {
 	return &LocalMd{
-		cfg:       cfg,
+		debug:     debug,
 		checker:   checker,
 		writer:    writer,
 		converter: converter,
@@ -57,7 +75,7 @@ func (uc *LocalMd) Do(ctx context.Context, file string) (entity.Toc, error) {
 		return nil, fmt.Errorf("convert local Markdown %q: %w", file, err)
 	}
 
-	if uc.cfg.Debug {
+	if uc.debug {
 		htmlFile := file + ".debug.html"
 		uc.log.Info("LocalMD: writing html", "file", htmlFile)
 		// TODO: move to port

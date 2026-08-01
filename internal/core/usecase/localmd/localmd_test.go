@@ -9,7 +9,6 @@ import (
 	"testing"
 
 	"github.com/ekalinin/github-markdown-toc.go/v2/internal/core/entity"
-	"github.com/ekalinin/github-markdown-toc.go/v2/internal/core/usecase/config"
 )
 
 type checkerStub struct {
@@ -54,7 +53,7 @@ func (loggerStub) Info(string, ...any) {}
 func TestDoReturnsTOC(t *testing.T) {
 	want := entity.Toc{"* [Title](#title)"}
 	uc := New(
-		config.Config{},
+		false,
 		checkerStub{exists: true},
 		writerStub{},
 		converterStub{html: "<h1>Title</h1>"},
@@ -74,7 +73,7 @@ func TestDoReturnsTOC(t *testing.T) {
 func TestDoAcceptsEmptyTOC(t *testing.T) {
 	empty := entity.Toc{}
 	uc := New(
-		config.Config{},
+		false,
 		checkerStub{exists: true},
 		writerStub{},
 		converterStub{},
@@ -95,7 +94,7 @@ func TestDoPropagatesDependencyErrors(t *testing.T) {
 	dependencyErr := errors.New("dependency failed")
 	tests := []struct {
 		name      string
-		cfg       config.Config
+		debug     bool
 		checker   checkerStub
 		writer    writerStub
 		converter converterStub
@@ -115,7 +114,7 @@ func TestDoPropagatesDependencyErrors(t *testing.T) {
 		},
 		{
 			name:      "debug writer",
-			cfg:       config.Config{Debug: true},
+			debug:     true,
 			checker:   checkerStub{exists: true},
 			converter: converterStub{},
 			writer:    writerStub{err: dependencyErr},
@@ -132,7 +131,7 @@ func TestDoPropagatesDependencyErrors(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			uc := New(tt.cfg, tt.checker, tt.writer, tt.converter, tt.grabber, loggerStub{})
+			uc := New(tt.debug, tt.checker, tt.writer, tt.converter, tt.grabber, loggerStub{})
 			_, err := uc.Do(context.Background(), "broken.md")
 			if !errors.Is(err, dependencyErr) {
 				t.Fatalf("got error %v, want dependency error", err)
@@ -149,7 +148,7 @@ func TestDoPropagatesDependencyErrors(t *testing.T) {
 
 func TestDoReturnsErrorForMissingFile(t *testing.T) {
 	uc := New(
-		config.Config{},
+		false,
 		checkerStub{},
 		writerStub{},
 		converterStub{},
@@ -171,7 +170,7 @@ func TestDoReturnsContextCancellation(t *testing.T) {
 	cancel()
 
 	uc := New(
-		config.Config{},
+		false,
 		checkerStub{exists: true},
 		writerStub{},
 		converterStub{},

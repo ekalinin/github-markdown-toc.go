@@ -10,7 +10,6 @@ import (
 	"testing"
 
 	"github.com/ekalinin/github-markdown-toc.go/v2/internal/core/entity"
-	"github.com/ekalinin/github-markdown-toc.go/v2/internal/core/usecase/config"
 )
 
 type getterStub struct {
@@ -65,7 +64,7 @@ func createTemper(t *testing.T) temperStub {
 func TestDoReturnsTOC(t *testing.T) {
 	want := entity.Toc{"* [Title](#title)"}
 	uc := New(
-		config.Config{},
+		false,
 		getterStub{body: []byte(`{"payload":{}}`), contentType: "application/json; charset=utf-8"},
 		createTemper(t),
 		grabberStub{toc: &want},
@@ -84,7 +83,7 @@ func TestDoReturnsTOC(t *testing.T) {
 func TestDoPropagatesDownloadError(t *testing.T) {
 	dependencyErr := errors.New("download failed")
 	uc := New(
-		config.Config{},
+		false,
 		getterStub{err: dependencyErr},
 		createTemper(t),
 		grabberStub{},
@@ -104,7 +103,7 @@ func TestDoPropagatesDownloadError(t *testing.T) {
 func TestDoPropagatesGrabberError(t *testing.T) {
 	dependencyErr := errors.New("grab failed")
 	uc := New(
-		config.Config{},
+		false,
 		getterStub{body: []byte(`{"payload":{}}`), contentType: "application/json"},
 		createTemper(t),
 		grabberStub{err: dependencyErr},
@@ -120,7 +119,7 @@ func TestDoPropagatesGrabberError(t *testing.T) {
 func TestDoPropagatesDebugFileCreateError(t *testing.T) {
 	dependencyErr := errors.New("debug file failed")
 	uc := New(
-		config.Config{Debug: true},
+		true,
 		getterStub{body: []byte(`{"payload":{}}`), contentType: "application/json"},
 		temperStub{
 			create: func(context.Context, string, string) (*os.File, error) {
@@ -143,7 +142,7 @@ func TestDoCleansUpAfterDebugFileWriteError(t *testing.T) {
 		t.Fatal(err)
 	}
 	uc := New(
-		config.Config{Debug: true},
+		true,
 		getterStub{body: []byte(`{"payload":{}}`), contentType: "application/json"},
 		temperStub{
 			create: func(context.Context, string, string) (*os.File, error) {
@@ -169,7 +168,7 @@ func TestDoWritesSingleDebugArtifact(t *testing.T) {
 	body := []byte(`{"payload":{"blob":{}}}`)
 	empty := entity.Toc{}
 	uc := New(
-		config.Config{Debug: true},
+		true,
 		getterStub{body: body, contentType: "application/json"},
 		temperStub{
 			create: func(_ context.Context, _, pattern string) (*os.File, error) {
@@ -205,7 +204,7 @@ func TestDoWritesSingleDebugArtifact(t *testing.T) {
 
 func TestDoRejectsUnexpectedContentType(t *testing.T) {
 	uc := New(
-		config.Config{},
+		false,
 		getterStub{body: []byte(`{"payload":{}}`), contentType: "text/html"},
 		createTemper(t),
 		grabberStub{},
@@ -220,7 +219,7 @@ func TestDoRejectsUnexpectedContentType(t *testing.T) {
 
 func TestDoRejectsMalformedContentType(t *testing.T) {
 	uc := New(
-		config.Config{},
+		false,
 		getterStub{body: []byte(`{"payload":{}}`), contentType: `application/json; charset="`},
 		createTemper(t),
 		grabberStub{},
@@ -238,7 +237,7 @@ func TestDoReturnsContextCancellation(t *testing.T) {
 	cancel()
 
 	uc := New(
-		config.Config{},
+		false,
 		getterStub{},
 		createTemper(t),
 		grabberStub{},

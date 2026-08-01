@@ -6,25 +6,41 @@ import (
 	"fmt"
 	"io"
 	"mime"
+	"os"
 
 	"github.com/ekalinin/github-markdown-toc.go/v2/internal/core/entity"
-	"github.com/ekalinin/github-markdown-toc.go/v2/internal/core/ports"
-	"github.com/ekalinin/github-markdown-toc.go/v2/internal/core/usecase/config"
 )
+
+type remoteGetter interface {
+	Get(context.Context, string) ([]byte, string, error)
+}
+
+type tocGrabber interface {
+	Grab(context.Context, string) (*entity.Toc, error)
+}
+
+type fileTemper interface {
+	CreateTemp(context.Context, string, string) (*os.File, error)
+	Remove(string) error
+}
+
+type logger interface {
+	Info(string, ...any)
+}
 
 // - download json file
 // - grab toc from json ()
 type RemoteHTML struct {
-	cfg     config.Config
-	getter  ports.RemoteGetter
-	grabber ports.TocGrabber
-	tempter ports.FileTemper
-	log     ports.Logger
+	debug   bool
+	getter  remoteGetter
+	grabber tocGrabber
+	tempter fileTemper
+	log     logger
 }
 
-func New(cfg config.Config, getter ports.RemoteGetter,
-	temper ports.FileTemper, grabber ports.TocGrabber, log ports.Logger) *RemoteHTML {
-	return &RemoteHTML{cfg, getter, grabber, temper, log}
+func New(debug bool, getter remoteGetter,
+	temper fileTemper, grabber tocGrabber, log logger) *RemoteHTML {
+	return &RemoteHTML{debug, getter, grabber, temper, log}
 }
 
 func (r *RemoteHTML) writeDebugFile(ctx context.Context, url string, body []byte) (path string, err error) {
@@ -77,7 +93,7 @@ func (r *RemoteHTML) Do(ctx context.Context, url string) (entity.Toc, error) {
 		return nil, fmt.Errorf("get remote HTML %q: unexpected content type %q", url, contentType)
 	}
 
-	if r.cfg.Debug {
+	if r.debug {
 		debugFile, err := r.writeDebugFile(ctx, url, jsonBody)
 		if err != nil {
 			r.log.Info("RemoteHTML: writing json file failed", "err", err)

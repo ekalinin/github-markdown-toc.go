@@ -4,6 +4,7 @@ import (
 	"gopkg.in/alecthomas/kingpin.v2"
 
 	"github.com/ekalinin/github-markdown-toc.go/v2/internal/app"
+	coretoc "github.com/ekalinin/github-markdown-toc.go/v2/internal/core/toc"
 	"github.com/ekalinin/github-markdown-toc.go/v2/internal/version"
 )
 
@@ -63,17 +64,23 @@ func parseConfig(args []string) (app.Config, error) {
 	}
 
 	return app.Config{
-		Files:      *options.paths,
-		Serial:     *options.serial,
-		HideHeader: *options.hideHeader,
-		HideFooter: *options.hideFooter,
-		StartDepth: *options.startDepth,
-		Depth:      *options.depth,
-		NoEscape:   *options.noEscape,
-		Indent:     *options.indent,
-		Debug:      *options.debug,
-		GHToken:    *options.token,
-		GHUrl:      *options.githubURL,
-		GHVersion:  *options.reVersion,
+		Files:  *options.paths,
+		Serial: *options.serial,
+		Presentation: app.PresentationConfig{
+			HideHeader: *options.hideHeader,
+			HideFooter: *options.hideFooter,
+		},
+		GitHub: app.GitHubConfig{
+			GHToken:   *options.token,
+			GHUrl:     *options.githubURL,
+			GHVersion: *options.reVersion,
+		},
+		TOC: coretoc.Config{
+			StartDepth: *options.startDepth,
+			Depth:      *options.depth,
+			Escape:     !*options.noEscape,
+			Indent:     *options.indent,
+		},
+		Debug: *options.debug,
 	}, nil
 }

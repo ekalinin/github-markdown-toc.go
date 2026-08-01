@@ -8,7 +8,9 @@ import (
 	"github.com/ekalinin/github-markdown-toc.go/v2/internal/adapters"
 	"github.com/ekalinin/github-markdown-toc.go/v2/internal/controller"
 	coretoc "github.com/ekalinin/github-markdown-toc.go/v2/internal/core/toc"
-	"github.com/ekalinin/github-markdown-toc.go/v2/internal/core/usecase"
+	"github.com/ekalinin/github-markdown-toc.go/v2/internal/core/usecase/localmd"
+	"github.com/ekalinin/github-markdown-toc.go/v2/internal/core/usecase/remotehtml"
+	"github.com/ekalinin/github-markdown-toc.go/v2/internal/core/usecase/remotemd"
 )
 
 type Controller interface {
@@ -27,39 +29,39 @@ func New(cfg Config) (*App, error) {
 		"App.New: init configs ...",
 		"file-count", len(cfg.Files),
 		"serial", cfg.Serial,
-		"hide-header", cfg.HideHeader,
-		"hide-footer", cfg.HideFooter,
-		"start-depth", cfg.StartDepth,
-		"depth", cfg.Depth,
-		"no-escape", cfg.NoEscape,
-		"indent", cfg.Indent,
-		"github-version", cfg.GHVersion,
-		"token-configured", cfg.GHToken != "",
+		"hide-header", cfg.Presentation.HideHeader,
+		"hide-footer", cfg.Presentation.HideFooter,
+		"start-depth", cfg.TOC.StartDepth,
+		"depth", cfg.TOC.Depth,
+		"no-escape", !cfg.TOC.Escape,
+		"indent", cfg.TOC.Indent,
+		"github-version", cfg.GitHub.GHVersion,
+		"token-configured", cfg.GitHub.GHToken != "",
 	)
-	ctlCfg := cfg.ToControllerConfig()
-	ucCfg := ctlCfg.ToUseCaseConfig()
+	ctlCfg := controller.Config{Files: cfg.Files, Serial: cfg.Serial}
 
 	log.Info("App.New: init adapters ...")
 	httpClient := adapters.NewHTTPClient()
 	checker := adapters.NewFileCheck(log)
-	writer := adapters.NewFileWriter(log)
-	converter := adapters.NewHTMLConverterWithClient(cfg.GHToken, cfg.GHUrl, httpClient, log)
-	regexpExtractor, err := adapters.NewRegexpExtractor(cfg.GHVersion)
+	writer := adapters.NewFileWriter()
+	converter := adapters.NewHTMLConverterWithClient(cfg.GitHub.GHToken, cfg.GitHub.GHUrl, httpClient, log)
+	regexpExtractor, err := adapters.NewRegexpExtractor(cfg.GitHub.GHVersion)
 	if err != nil {
 		return nil, fmt.Errorf("initialize regexp grabber: %w", err)
 	}
 	jsonExtractor := adapters.NewJSONExtractor()
-	renderer := coretoc.NewRenderer(cfg.ToRendererConfig())
+	rendererCfg := cfg.TOC
+	rendererCfg.AbsolutePaths = len(cfg.Files) > 0
+	renderer := coretoc.NewRenderer(rendererCfg)
 	grabberRe := coretoc.NewGenerator(regexpExtractor, renderer)
 	grabberJSON := coretoc.NewGenerator(jsonExtractor, renderer)
 	getter := adapters.NewRemoteGetterWithClient(true, httpClient)
 	temper := adapters.NewFileTemper()
 
 	log.Info("App.New: init usecases ...")
-	ucLocalMD, ucRemoteMD, ucRemoteHTML := usecase.New(
-		ucCfg, checker, writer, converter, grabberRe, grabberJSON,
-		getter, temper, log,
-	)
+	ucLocalMD := localmd.New(cfg.Debug, checker, writer, converter, grabberRe, log)
+	ucRemoteMD := remotemd.New(getter, ucLocalMD, temper, log)
+	ucRemoteHTML := remotehtml.New(cfg.Debug, getter, temper, grabberJSON, log)
 
 	log.Info("App.New: init controller ...")
 	ctl := controller.New(ctlCfg, ucLocalMD, ucRemoteMD, ucRemoteHTML, log)

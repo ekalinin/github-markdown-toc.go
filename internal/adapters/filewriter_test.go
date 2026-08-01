@@ -13,7 +13,7 @@ func Test_FileWriter(t *testing.T) {
 	}{
 		{"Written"},
 	}
-	writer := NewFileWriter(NewLogger(false))
+	writer := NewFileWriter()
 	checker := NewFileCheck(NewLogger(false))
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

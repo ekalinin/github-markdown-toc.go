@@ -19,10 +19,12 @@ func TestNewDoesNotLogGitHubToken(t *testing.T) {
 
 	const token = "secret-token"
 	_, err := New(Config{
-		Debug:     true,
-		GHToken:   token,
-		GHUrl:     "https://api.github.com",
-		GHVersion: version.GH_2024_03,
+		Debug: true,
+		GitHub: GitHubConfig{
+			GHToken:   token,
+			GHUrl:     "https://api.github.com",
+			GHVersion: version.GH_2024_03,
+		},
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -38,7 +40,7 @@ func TestNewDoesNotLogGitHubToken(t *testing.T) {
 }
 
 func TestNewRejectsUnknownRegexpVersion(t *testing.T) {
-	_, err := New(Config{GHVersion: "unknown"})
+	_, err := New(Config{GitHub: GitHubConfig{GHVersion: "unknown"}})
 	if err == nil {
 		t.Fatal("expected an error for an unsupported regexp version")
 	}

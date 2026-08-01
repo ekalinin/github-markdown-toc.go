@@ -21,14 +21,14 @@ func TestParseConfigDefaults(t *testing.T) {
 	if len(cfg.Files) != 0 {
 		t.Errorf("got files %v, want none", cfg.Files)
 	}
-	if cfg.GHToken != "" {
-		t.Errorf("got token %q, want empty", cfg.GHToken)
+	if cfg.GitHub.GHToken != "" {
+		t.Errorf("got token %q, want empty", cfg.GitHub.GHToken)
 	}
-	if cfg.GHUrl != defaultGitHubURL {
-		t.Errorf("got GitHub URL %q, want %q", cfg.GHUrl, defaultGitHubURL)
+	if cfg.GitHub.GHUrl != defaultGitHubURL {
+		t.Errorf("got GitHub URL %q, want %q", cfg.GitHub.GHUrl, defaultGitHubURL)
 	}
-	if cfg.GHVersion != version.GH_2024_03 {
-		t.Errorf("got regexp version %q, want %q", cfg.GHVersion, version.GH_2024_03)
+	if cfg.GitHub.GHVersion != version.GH_2024_03 {
+		t.Errorf("got regexp version %q, want %q", cfg.GitHub.GHVersion, version.GH_2024_03)
 	}
 }
 
@@ -41,11 +41,11 @@ func TestParseConfigReadsEnvironment(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if cfg.GHToken != "environment-token" {
-		t.Errorf("got token %q, want environment token", cfg.GHToken)
+	if cfg.GitHub.GHToken != "environment-token" {
+		t.Errorf("got token %q, want environment token", cfg.GitHub.GHToken)
 	}
-	if cfg.GHUrl != "https://github.example/api/v3" {
-		t.Errorf("got GitHub URL %q, want environment URL", cfg.GHUrl)
+	if cfg.GitHub.GHUrl != "https://github.example/api/v3" {
+		t.Errorf("got GitHub URL %q, want environment URL", cfg.GitHub.GHUrl)
 	}
 }
 
@@ -58,6 +58,13 @@ func TestParseConfigFlagsOverrideEnvironment(t *testing.T) {
 		"--github-url=https://flag.example/api/v3",
 		"--re-version=" + version.GH_V0,
 		"--serial",
+		"--hide-header",
+		"--hide-footer",
+		"--start-depth=2",
+		"--depth=3",
+		"--no-escape",
+		"--indent=4",
+		"--debug",
 		"one.md",
 		"two.md",
 	}
@@ -66,17 +73,38 @@ func TestParseConfigFlagsOverrideEnvironment(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if cfg.GHToken != "flag-token" {
-		t.Errorf("got token %q, want flag token", cfg.GHToken)
+	if cfg.GitHub.GHToken != "flag-token" {
+		t.Errorf("got token %q, want flag token", cfg.GitHub.GHToken)
 	}
-	if cfg.GHUrl != "https://flag.example/api/v3" {
-		t.Errorf("got GitHub URL %q, want flag URL", cfg.GHUrl)
+	if cfg.GitHub.GHUrl != "https://flag.example/api/v3" {
+		t.Errorf("got GitHub URL %q, want flag URL", cfg.GitHub.GHUrl)
 	}
-	if cfg.GHVersion != version.GH_V0 {
-		t.Errorf("got regexp version %q, want %q", cfg.GHVersion, version.GH_V0)
+	if cfg.GitHub.GHVersion != version.GH_V0 {
+		t.Errorf("got regexp version %q, want %q", cfg.GitHub.GHVersion, version.GH_V0)
 	}
 	if !cfg.Serial {
 		t.Error("serial mode is disabled")
+	}
+	if !cfg.Presentation.HideHeader {
+		t.Error("TOC header is not hidden")
+	}
+	if !cfg.Presentation.HideFooter {
+		t.Error("TOC footer is not hidden")
+	}
+	if cfg.TOC.StartDepth != 2 {
+		t.Errorf("got start depth %d, want 2", cfg.TOC.StartDepth)
+	}
+	if cfg.TOC.Depth != 3 {
+		t.Errorf("got depth %d, want 3", cfg.TOC.Depth)
+	}
+	if cfg.TOC.Escape {
+		t.Error("TOC escaping is enabled")
+	}
+	if cfg.TOC.Indent != 4 {
+		t.Errorf("got indentation %d, want 4", cfg.TOC.Indent)
+	}
+	if !cfg.Debug {
+		t.Error("debug mode is disabled")
 	}
 	if want := []string{"one.md", "two.md"}; !slices.Equal(cfg.Files, want) {
 		t.Errorf("got files %v, want %v", cfg.Files, want)
@@ -92,11 +120,11 @@ func TestParseConfigEmptyFlagsOverrideEnvironment(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if cfg.GHToken != "" {
-		t.Errorf("got token %q, want empty flag value", cfg.GHToken)
+	if cfg.GitHub.GHToken != "" {
+		t.Errorf("got token %q, want empty flag value", cfg.GitHub.GHToken)
 	}
-	if cfg.GHUrl != "" {
-		t.Errorf("got GitHub URL %q, want empty flag value", cfg.GHUrl)
+	if cfg.GitHub.GHUrl != "" {
+		t.Errorf("got GitHub URL %q, want empty flag value", cfg.GitHub.GHUrl)
 	}
 }
 
@@ -110,8 +138,8 @@ func TestParseConfigAcceptsSupportedRegexpVersions(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			if cfg.GHVersion != supported {
-				t.Errorf("got regexp version %q, want %q", cfg.GHVersion, supported)
+			if cfg.GitHub.GHVersion != supported {
+				t.Errorf("got regexp version %q, want %q", cfg.GitHub.GHVersion, supported)
 			}
 		})
 	}

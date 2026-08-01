@@ -13,14 +13,14 @@ func New(cfg config.Config,
 	writer ports.FileWriter,
 	converter ports.HTMLConverter,
 	grabberRe ports.TocGrabber,
-	grabberJson ports.TocGrabber,
+	grabberJSON ports.TocGrabber,
 	getter ports.RemoteGetter,
 	temper ports.FileTemper,
 	log ports.Logger) (*localmd.LocalMd, *remotemd.RemoteMd, *remotehtml.RemoteHTML) {
 
 	ucLocalMD := localmd.New(cfg, checker, writer, converter, grabberRe, log)
 	ucRemoteMD := remotemd.New(cfg, getter, ucLocalMD, temper, log)
-	ucRemoteHTML := remotehtml.New(cfg, getter, temper, grabberJson, log)
+	ucRemoteHTML := remotehtml.New(cfg, getter, temper, grabberJSON, log)
 
 	return ucLocalMD, ucRemoteMD, ucRemoteHTML
 }

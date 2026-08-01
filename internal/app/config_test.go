@@ -71,7 +71,7 @@ func Test_ConfigToControllerConfig(t *testing.T) {
 	}
 }
 
-func Test_ConfigToGrabberConfig(t *testing.T) {
+func TestConfigToRendererConfig(t *testing.T) {
 	cfg := Config{
 		Files:      []string{"f1", "f2"},
 		Serial:     true,
@@ -86,25 +86,25 @@ func Test_ConfigToGrabberConfig(t *testing.T) {
 		GHUrl:      "some-url",
 		GHVersion:  "some-version",
 	}
-	cfgGrbr := cfg.ToGrabberConfig()
+	rendererConfig := cfg.ToRendererConfig()
 
-	if cfg.StartDepth != cfgGrbr.StartDepth {
-		t.Errorf("StartDepth is not the same. Got=%v, want=%v\n", cfgGrbr.StartDepth, cfg.StartDepth)
+	if cfg.StartDepth != rendererConfig.StartDepth {
+		t.Errorf("StartDepth is not the same. Got=%v, want=%v\n", rendererConfig.StartDepth, cfg.StartDepth)
 	}
 
-	if cfg.Depth != cfgGrbr.Depth {
-		t.Errorf("Depth is not the same. Got=%v, want=%v\n", cfgGrbr.Depth, cfg.Depth)
+	if cfg.Depth != rendererConfig.Depth {
+		t.Errorf("Depth is not the same. Got=%v, want=%v\n", rendererConfig.Depth, cfg.Depth)
 	}
 
-	if !cfgGrbr.AbsPaths {
-		t.Errorf("AbsPaths should be true. Got=%v\n", cfgGrbr.AbsPaths)
+	if !rendererConfig.AbsolutePaths {
+		t.Errorf("AbsolutePaths should be true. Got=%v\n", rendererConfig.AbsolutePaths)
 	}
 
-	if cfg.NoEscape == cfgGrbr.Escape {
-		t.Errorf("NoEscape is the same. Got=%v, want=%v\n", cfgGrbr.Escape, cfg.NoEscape)
+	if cfg.NoEscape == rendererConfig.Escape {
+		t.Errorf("NoEscape is the same. Got=%v, want=%v\n", rendererConfig.Escape, cfg.NoEscape)
 	}
 
-	if cfg.Indent != cfgGrbr.Indent {
-		t.Errorf("Indent is not the same. Got=%v, want=%v\n", cfgGrbr.Indent, cfg.Indent)
+	if cfg.Indent != rendererConfig.Indent {
+		t.Errorf("Indent is not the same. Got=%v, want=%v\n", rendererConfig.Indent, cfg.Indent)
 	}
 }

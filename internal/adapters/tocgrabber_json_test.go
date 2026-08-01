@@ -2,7 +2,11 @@ package adapters
 
 import (
 	"context"
+	"errors"
+	"slices"
 	"testing"
+
+	"github.com/ekalinin/github-markdown-toc.go/v2/internal/core/entity"
 )
 
 func getTestJson() string {
@@ -107,79 +111,64 @@ func getTestJsonCodeViewRoute() string {
 	`
 }
 
-func Test_JsonGrabberDefault(t *testing.T) {
-	grabber := NewJsonGrabber(DefaultCfg())
-	toc, err := grabber.Grab(context.Background(), getTestJson())
+func TestJSONExtractorExtractsHeadings(t *testing.T) {
+	extractor := NewJSONExtractor()
+	got, err := extractor.Extract(context.Background(), getTestJson())
 	if err != nil {
-		t.Errorf("got error from grabber: %v", err)
+		t.Fatal(err)
 	}
-
-	linesWanted := 5
-	if len(*toc) != linesWanted {
-		t.Errorf("toc is not full (want %d lines, got=%d): %v", linesWanted, len(*toc), *toc)
+	want := []entity.Heading{
+		{Level: 1, Text: "sitemap.js", Anchor: "sitemapjs"},
+		{Level: 2, Text: "Installation", Anchor: "installation"},
+		{Level: 2, Text: "Usage", Anchor: "usage"},
+		{Level: 3, Text: "Example", Anchor: "example"},
+		{Level: 2, Text: "License", Anchor: "license"},
 	}
-
-	tocWanted := []string{
-		"* [sitemap\\.js](#sitemapjs)",
-		"  * [Installation](#installation)",
-		"  * [Usage](#usage)",
-		"    * [Example](#example)",
-		"  * [License](#license)",
-	}
-
-	for i, s := range *toc {
-		if s != tocWanted[i] {
-			t.Errorf("toc is not correct at i=%d. want=%s, got=%s",
-				i, tocWanted[i], s)
-		}
+	if !slices.Equal(got, want) {
+		t.Errorf("got headings %v, want %v", got, want)
 	}
 }
 
-func Test_JsonGrabberCodeViewBlobRoute(t *testing.T) {
-	grabber := NewJsonGrabber(DefaultCfg())
-	toc, err := grabber.Grab(context.Background(), getTestJsonCodeViewRoute())
+func TestJSONExtractorUsesCodeViewBlobRoute(t *testing.T) {
+	extractor := NewJSONExtractor()
+	got, err := extractor.Extract(context.Background(), getTestJsonCodeViewRoute())
 	if err != nil {
-		t.Errorf("got error from grabber: %v", err)
+		t.Fatal(err)
 	}
-	if len(*toc) != 2 {
-		t.Errorf("want 2 lines, got %d: %v", len(*toc), *toc)
+	want := []entity.Heading{
+		{Level: 1, Text: "sitemap.js", Anchor: "sitemapjs"},
+		{Level: 2, Text: "Installation", Anchor: "installation"},
+	}
+	if !slices.Equal(got, want) {
+		t.Errorf("got headings %v, want %v", got, want)
 	}
 }
 
-func Test_JSONGrabberWithOptions(t *testing.T) {
-	cfg := DefaultCfg()
-	cfg.StartDepth = 1
-	cfg.Depth = 2
-	cfg.AbsPaths = true
-	cfg.Path = "github-markdown-toc.go"
-	grabber := NewJsonGrabber(cfg)
-	toc, err := grabber.Grab(context.Background(), getTestJson())
+func TestJSONExtractorNormalizesHeading(t *testing.T) {
+	extractor := NewJSONExtractor()
+	input := `{"payload":{"blob":{"headerInfo":{"toc":[{"level":2,"text":"  The command <code>foo</code>\n","anchor":"#the%20command"}]}}}}`
+	got, err := extractor.Extract(context.Background(), input)
 	if err != nil {
-		t.Errorf("got error from grabber: %v", err)
+		t.Fatal(err)
 	}
-	linesWanted := 3
-	if len(*toc) != linesWanted {
-		t.Errorf("toc is not full (want %d lines, got=%d): %v", linesWanted, len(*toc), *toc)
-	}
-	tocWanted := []string{
-		"* [Installation](" + cfg.Path + "#installation)",
-		"* [Usage](" + cfg.Path + "#usage)",
-		"* [License](" + cfg.Path + "#license)",
-	}
-
-	for i, s := range *toc {
-		if s != tocWanted[i] {
-			t.Errorf("toc is not correct at i=%d. want=%s, got=%s",
-				i, tocWanted[i], s)
-		}
+	want := []entity.Heading{{Level: 2, Text: "The command foo", Anchor: "the command"}}
+	if !slices.Equal(got, want) {
+		t.Errorf("got headings %v, want %v", got, want)
 	}
 }
 
-func Test_JSONGrabberFail(t *testing.T) {
-	jsonBody := `{`
-	grabber := NewJsonGrabber(DefaultCfg())
-	_, err := grabber.Grab(context.Background(), jsonBody)
+func TestJSONExtractorRejectsMalformedJSON(t *testing.T) {
+	_, err := NewJSONExtractor().Extract(context.Background(), `{`)
 	if err == nil {
-		t.Errorf("should fail")
+		t.Fatal("expected an error")
+	}
+}
+
+func TestJSONExtractorReturnsContextCancellation(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	_, err := NewJSONExtractor().Extract(ctx, getTestJson())
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("got error %v, want context cancellation", err)
 	}
 }

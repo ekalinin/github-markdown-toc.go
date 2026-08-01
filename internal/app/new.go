@@ -7,6 +7,7 @@ import (
 
 	"github.com/ekalinin/github-markdown-toc.go/v2/internal/adapters"
 	"github.com/ekalinin/github-markdown-toc.go/v2/internal/controller"
+	coretoc "github.com/ekalinin/github-markdown-toc.go/v2/internal/core/toc"
 	"github.com/ekalinin/github-markdown-toc.go/v2/internal/core/usecase"
 )
 
@@ -43,17 +44,20 @@ func New(cfg Config) (*App, error) {
 	checker := adapters.NewFileCheck(log)
 	writer := adapters.NewFileWriter(log)
 	converter := adapters.NewHTMLConverterWithClient(cfg.GHToken, cfg.GHUrl, httpClient, log)
-	grabberRe, err := adapters.NewReGrabber("", cfg.ToGrabberConfig(), cfg.GHVersion)
+	regexpExtractor, err := adapters.NewRegexpExtractor(cfg.GHVersion)
 	if err != nil {
 		return nil, fmt.Errorf("initialize regexp grabber: %w", err)
 	}
-	grabberJson := adapters.NewJsonGrabber(cfg.ToGrabberConfig())
+	jsonExtractor := adapters.NewJSONExtractor()
+	renderer := coretoc.NewRenderer(cfg.ToRendererConfig())
+	grabberRe := coretoc.NewGenerator(regexpExtractor, renderer)
+	grabberJSON := coretoc.NewGenerator(jsonExtractor, renderer)
 	getter := adapters.NewRemoteGetterWithClient(true, httpClient)
 	temper := adapters.NewFileTemper()
 
 	log.Info("App.New: init usecases ...")
 	ucLocalMD, ucRemoteMD, ucRemoteHTML := usecase.New(
-		ucCfg, checker, writer, converter, grabberRe, grabberJson,
+		ucCfg, checker, writer, converter, grabberRe, grabberJSON,
 		getter, temper, log,
 	)
 

@@ -148,24 +148,6 @@ func RemoveStuff(s string) string {
 	return res
 }
 
-// Generate func of custom spaces indentation.
-func GenerateListIndentation(spaces int) func() string {
-	return func() string {
-		return strings.Repeat(" ", spaces)
-	}
-}
-
-// EscapeSpecChars Escapes special characters
-func EscapeSpecChars(s string) string {
-	specChar := []string{"\\", "`", "*", "_", "{", "}", "#", "+", "-", ".", "!"}
-	res := s
-
-	for _, c := range specChar {
-		res = strings.ReplaceAll(res, c, "\\"+c)
-	}
-	return res
-}
-
 // ShowHeader shows header befor TOC.
 func ShowHeader(w io.Writer) {
 	_, _ = fmt.Fprintln(w)

@@ -2,9 +2,9 @@ EXEC=gh-md-toc
 CMD_SRC=cmd/${EXEC}/main.go
 BUILD_DIR=build
 E2E_DIR=e2e-tests
-E2E_RUN=go run cmd/gh-md-toc/main.go ./README.md
-E2E_RUN_RHTML=go run cmd/gh-md-toc/main.go https://github.com/ekalinin/github-markdown-toc.go/blob/master/README.md
-E2E_RUN_RMD=go run cmd/gh-md-toc/main.go https://raw.githubusercontent.com/ekalinin/github-markdown-toc.go/master/README.md
+E2E_RUN=go run ./cmd/${EXEC} ./README.md
+E2E_RUN_RHTML=go run ./cmd/${EXEC} https://github.com/ekalinin/github-markdown-toc.go/blob/master/README.md
+E2E_RUN_RMD=go run ./cmd/${EXEC} https://raw.githubusercontent.com/ekalinin/github-markdown-toc.go/master/README.md
 bold := $(shell tput bold)
 clear := $(shell tput sgr0)
 

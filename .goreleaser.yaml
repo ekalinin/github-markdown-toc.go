@@ -1,8 +1,9 @@
+version: 2
 project_name: gh-md-toc
 before:
   hooks:
-    # You may remove this if you don't use go modules.
-    - go mod tidy
+    # Verify the module files are tidy without mutating them mid-release.
+    - go mod tidy -diff
 builds:
   - env:
       - CGO_ENABLED=0
@@ -18,7 +19,7 @@ builds:
 checksum:
   name_template: 'checksums.txt'
 snapshot:
-  name_template: "{{ .Tag }}-next"
+  version_template: "{{ .Tag }}-next"
 changelog:
   sort: asc
   filters:

@@ -5,6 +5,8 @@ E2E_DIR=e2e-tests
 E2E_RUN=go run ./cmd/${EXEC} ./README.md
 E2E_RUN_RHTML=go run ./cmd/${EXEC} https://github.com/ekalinin/github-markdown-toc.go/blob/master/README.md
 E2E_RUN_RMD=go run ./cmd/${EXEC} https://raw.githubusercontent.com/ekalinin/github-markdown-toc.go/master/README.md
+VERSION=$(shell grep "\tVersion" internal/version/version.go | grep -o -E '[0-9]\.[0-9]\.[0-9]{1,2}')
+TAG=v${VERSION}
 bold := $(shell tput bold)
 clear := $(shell tput sgr0)
 
@@ -56,10 +58,20 @@ e2e:
 	${E2E_RUN_RHTML} --hide-header --hide-footer --indent=4 > ${E2E_DIR}/got9.md
 	@diff ${E2E_DIR}/want3.md ${E2E_DIR}/got9.md
 
-release: test
-	@git tag v`grep "\tVersion" internal/version/version.go | grep -o -E '[0-9]\.[0-9]\.[0-9]{1,2}'`
-	@git push --tags origin master
+# Step 2: create the release tag locally. Does not push anything.
+release: test release-local
+	@if git rev-parse -q --verify refs/tags/${TAG} >/dev/null; then \
+		echo "${bold}tag ${TAG} already exists${clear}"; \
+		exit 1; \
+	fi
+	@git tag ${TAG}
+	@echo "${bold}>> tag ${TAG} created, run 'make release-push' to publish${clear}"
 
+# Step 1: validate the release locally. Creates neither tag nor push.
 release-local:
 	@goreleaser check
 	@goreleaser release --snapshot --clean
+
+# Step 3: publish the tag, which triggers the goreleaser workflow.
+release-push:
+	@git push origin ${TAG}

@@ -20,6 +20,10 @@ checksum:
   name_template: 'checksums.txt'
 snapshot:
   version_template: "{{ .Tag }}-next"
+release:
+  footer: |
+    ---
+    Curated notes for this release are in [CHANGELOG.md](https://github.com/ekalinin/github-markdown-toc.go/blob/master/CHANGELOG.md).
 changelog:
   sort: asc
   filters:

@@ -4,5 +4,6 @@ TODO.md
 /gh-md-toc
 build
 e2e-tests/got*.md
+*.debug.html
 dist/
 .cover*

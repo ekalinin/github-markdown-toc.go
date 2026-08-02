@@ -31,6 +31,8 @@ Use the standard `testing` package. Name tests `TestXxx` and prefer table-driven
 
 Use Conventional Commits, for example `fix(http): reject oversized responses` or `refactor(toc): simplify rendering`. Use typed branch prefixes such as `fix/`, `refactor/`, `feat/`, `docs/`, or `chore/`, based on `master`. Keep each PR focused. Explain what changed, why it changed, compatibility impact, and exact validation commands. Link the originating issue or regression PR when applicable. Include CLI output examples when observable formatting changes.
 
+Record user-visible changes in [CHANGELOG.md](CHANGELOG.md) under `[Unreleased]` in the same PR, following [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Internal refactors that leave CLI behaviour and output unchanged do not need an entry. GoReleaser still generates the per-release commit list on the GitHub release page; `CHANGELOG.md` is the curated history and takes precedence when the two differ in emphasis.
+
 ## Security and configuration
 
 Never log or commit GitHub tokens. Use `GH_TOC_TOKEN` for authentication and `GH_TOC_URL` for an alternate API endpoint. Keep secrets out of tests, fixtures, debug output, and PR descriptions.

@@ -2,14 +2,14 @@ name: goreleaser
 
 on:
   push:
-    branches:
-      - "!*"
     tags:
       - "v*.*.*"
 
 jobs:
   goreleaser:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -21,11 +21,19 @@ jobs:
         with:
           go-version: "1.26.5"
 
+      - name: Verify tag matches the app version
+        run: |
+          version=$(grep -E '^[[:space:]]*Version' internal/version/version.go | grep -o -E '[0-9]+\.[0-9]+\.[0-9]+')
+          if [ "v$version" != "$GITHUB_REF_NAME" ]; then
+            echo "tag $GITHUB_REF_NAME does not match version $version in internal/version/version.go"
+            exit 1
+          fi
+
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v6
         with:
           distribution: goreleaser
-          version: latest
+          version: "~> v2"
           args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

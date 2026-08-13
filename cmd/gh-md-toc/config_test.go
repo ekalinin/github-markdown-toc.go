@@ -180,3 +180,23 @@ func TestCLIHelpShowsCurrentDefaultsWithoutToken(t *testing.T) {
 		t.Errorf("help contains GitHub token:\n%s", help)
 	}
 }
+
+func TestParseConfigStdinMarker(t *testing.T) {
+	cfg, err := parseConfig([]string{"-"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(cfg.Files) != 0 {
+		t.Errorf("got files %v, want none so STDIN is used", cfg.Files)
+	}
+}
+
+func TestParseConfigStdinMarkerWithPaths(t *testing.T) {
+	_, err := parseConfig([]string{"-", "README.md"})
+	if err == nil {
+		t.Fatal("got no error, want a usage error")
+	}
+	if !strings.Contains(err.Error(), "STDIN marker") {
+		t.Errorf("got error %q, want it to mention the STDIN marker", err)
+	}
+}

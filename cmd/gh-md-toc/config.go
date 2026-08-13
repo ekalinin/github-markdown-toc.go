@@ -1,6 +1,8 @@
 package main
 
 import (
+	"errors"
+
 	"gopkg.in/alecthomas/kingpin.v2"
 
 	"github.com/ekalinin/github-markdown-toc.go/v2/internal/app"
@@ -11,6 +13,7 @@ import (
 const (
 	cliName          = "gh-md-toc"
 	defaultGitHubURL = "https://api.github.com"
+	stdinMarker      = "-"
 )
 
 type cliOptions struct {
@@ -57,14 +60,39 @@ func newCLI() (*kingpin.Application, cliOptions) {
 	return parser, options
 }
 
+// extractStdinMarker removes the "-" STDIN marker from the argument list. The flag
+// parser would otherwise try to read it as a flag.
+func extractStdinMarker(args []string) ([]string, bool) {
+	found := false
+	rest := make([]string, 0, len(args))
+	for _, arg := range args {
+		if arg == stdinMarker {
+			found = true
+			continue
+		}
+		rest = append(rest, arg)
+	}
+	return rest, found
+}
+
 func parseConfig(args []string) (app.Config, error) {
+	args, useStdin := extractStdinMarker(args)
+
 	parser, options := newCLI()
 	if _, err := parser.Parse(args); err != nil {
 		return app.Config{}, err
 	}
 
+	files := *options.paths
+	if useStdin {
+		if len(files) > 0 {
+			return app.Config{}, errors.New(`the "-" STDIN marker cannot be combined with other paths`)
+		}
+		files = nil
+	}
+
 	return app.Config{
-		Files:  *options.paths,
+		Files:  files,
 		Serial: *options.serial,
 		Presentation: app.PresentationConfig{
 			HideHeader: *options.hideHeader,

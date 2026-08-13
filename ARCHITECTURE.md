@@ -207,7 +207,6 @@ app.Config
 │   ├── GHUrl string
 │   └── GHVersion string
 └── TOC toc.Config
-    ├── Path string
     ├── AbsolutePaths bool
     ├── StartDepth int
     ├── Depth int
@@ -309,7 +308,7 @@ The extractors only understand their external formats:
 - relative or absolute links;
 - Markdown list formatting.
 
-Both extraction paths use the same `Renderer` instance, which prevents formatting behavior from diverging.
+Both extraction paths use the same `Renderer` instance, which prevents formatting behavior from diverging. Because that instance is shared by the worker pool, the document path is passed into `Renderer.Render` and `Generator.Grab` as a call parameter rather than stored as renderer state.
 
 ## Concurrency and output ordering
 

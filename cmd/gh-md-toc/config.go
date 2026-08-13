@@ -33,7 +33,7 @@ type cliOptions struct {
 
 func newCLI() (*kingpin.Application, cliOptions) {
 	parser := kingpin.New(cliName, "")
-	parser.Version(version.Version)
+	parser.Version(version.Full())
 
 	pathsDesc := "Local path or URL of the document to grab TOC. Read MD from stdin if not entered."
 	options := cliOptions{

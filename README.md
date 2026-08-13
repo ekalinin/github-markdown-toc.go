@@ -67,8 +67,14 @@ $ wget https://github.com/ekalinin/github-markdown-toc.go/releases/download/1.1.
 $ tar xzvf gh-md-toc.linux.amd64.tgz
 gh-md-toc
 $ ./gh-md-toc --version
-1.1.0
+2.0.1
+
+os:   darwin
+arch: arm64
+go:   go1.26.5
 ```
+
+The first line is the bare version number, so scripts that parse `gh-md-toc --version` will continue to work.
 
 Compiling from source
 ---------------------

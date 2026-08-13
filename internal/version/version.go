@@ -1,5 +1,10 @@
 package version
 
+import (
+	"fmt"
+	"runtime"
+)
+
 const (
 	// Version is a current app version
 	Version   = "2.0.1"
@@ -20,4 +25,11 @@ func SupportedGHVersions() []string {
 		GH_2023_10,
 		GH_2024_03,
 	}
+}
+
+// Full returns the multi-line version banner. The first line stays the bare version
+// number, so scripts that parse `gh-md-toc --version` keep working.
+func Full() string {
+	return fmt.Sprintf("%s\n\nos:   %s\narch: %s\ngo:   %s",
+		Version, runtime.GOOS, runtime.GOARCH, runtime.Version())
 }

@@ -214,7 +214,7 @@ app.Config
     └── Indent int
 ```
 
-`cmd/gh-md-toc` maps flags and environment variables into this structure. `app.New` derives `TOC.AbsolutePaths` from whether the CLI received explicit file arguments.
+`cmd/gh-md-toc` maps flags and environment variables into this structure. `app.New` derives `TOC.AbsolutePaths` from whether the CLI received multiple file arguments, matching bash `gh-md-toc`, which drops the prefix when a single document is requested.
 
 Only the settings required at runtime are passed further:
 

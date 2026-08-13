@@ -262,12 +262,12 @@ Controller
   -> RemoteGetter.Get
   -> FileTemper.CreateTemp
   -> write downloaded Markdown
-  -> LocalMd.Do
+  -> LocalMd.DoAs
   -> remove temporary file
   -> entity.Toc
 ```
 
-`RemoteMd` reuses the complete local Markdown workflow after downloading the document. It validates the response media type as `text/plain` before creating the temporary file.
+`RemoteMd` reuses the complete local Markdown workflow after downloading the document. It validates the response media type as `text/plain` before creating the temporary file. It calls `LocalMd.DoAs` with the temporary file path and the original URL as the display path, so rendered links point at the source document instead of the temporary file.
 
 ### GitHub document page
 

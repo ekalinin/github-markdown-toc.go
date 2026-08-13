@@ -16,7 +16,7 @@ type remoteGetter interface {
 }
 
 type markdownProcessor interface {
-	Do(context.Context, string) (entity.Toc, error)
+	DoAs(context.Context, string, string) (entity.Toc, error)
 }
 
 type fileTemper interface {
@@ -103,7 +103,7 @@ func (r *RemoteMd) Do(ctx context.Context, url string) (toc entity.Toc, err erro
 		}
 	}()
 
-	toc, err = r.ucLocalMD.Do(ctx, filename)
+	toc, err = r.ucLocalMD.DoAs(ctx, filename, url)
 	if err != nil {
 		return nil, fmt.Errorf("process remote Markdown %q: %w", url, err)
 	}

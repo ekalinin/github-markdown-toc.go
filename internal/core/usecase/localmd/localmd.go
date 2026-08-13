@@ -53,7 +53,14 @@ func New(debug bool, checker fileChecker, writer fileWriter,
 	}
 }
 
+// Do builds the TOC for file, linking anchors relative to that same file.
 func (uc *LocalMd) Do(ctx context.Context, file string) (entity.Toc, error) {
+	return uc.DoAs(ctx, file, file)
+}
+
+// DoAs builds the TOC for file but renders links against displayPath. They differ
+// when the content was downloaded or trimmed into a temporary file.
+func (uc *LocalMd) DoAs(ctx context.Context, file, displayPath string) (entity.Toc, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, fmt.Errorf("process local Markdown %q: %w", file, err)
 	}
@@ -86,7 +93,7 @@ func (uc *LocalMd) Do(ctx context.Context, file string) (entity.Toc, error) {
 	}
 
 	uc.log.Info("LocalMD: grabbing the TOC ...")
-	toc, err := uc.grabber.Grab(ctx, file, html)
+	toc, err := uc.grabber.Grab(ctx, displayPath, html)
 	if err != nil {
 		uc.log.Info("LocalMD: failed to grab TOC: %s", err)
 		return nil, fmt.Errorf("grab TOC from local Markdown %q: %w", file, err)

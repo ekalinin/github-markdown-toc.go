@@ -69,8 +69,8 @@ gh-md-toc
 $ ./gh-md-toc --version
 2.0.1
 
-os:   darwin
-arch: arm64
+os:   linux
+arch: amd64
 go:   go1.26.5
 ```
 

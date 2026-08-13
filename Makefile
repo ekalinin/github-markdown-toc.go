@@ -58,6 +58,11 @@ e2e:
 	${E2E_RUN_RHTML} --hide-header --hide-footer --indent=4 > ${E2E_DIR}/got9.md
 	@diff ${E2E_DIR}/want3.md ${E2E_DIR}/got9.md
 
+	@echo "${bold}>> 4. Multiple files, links carry the document path ...${clear}"
+	go run ./cmd/${EXEC} --hide-footer ./README.md ./CHANGELOG.md > ${E2E_DIR}/got-combo.md
+	@grep -qF '](./README.md#' ${E2E_DIR}/got-combo.md
+	@grep -qF '](./CHANGELOG.md#' ${E2E_DIR}/got-combo.md
+
 # Step 2: create the release tag locally. Does not push anything.
 release: test release-local
 	@if git rev-parse -q --verify refs/tags/${TAG} >/dev/null; then \

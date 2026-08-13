@@ -9,7 +9,6 @@ import (
 
 // Config controls how headings are filtered and rendered as a Markdown TOC.
 type Config struct {
-	Path          string
 	AbsolutePaths bool
 	StartDepth    int
 	Depth         int
@@ -33,7 +32,9 @@ func NewRenderer(cfg Config) *Renderer {
 	return &Renderer{cfg: cfg}
 }
 
-func (r *Renderer) Render(ctx context.Context, headings []entity.Heading) (entity.Toc, error) {
+// Render turns headings into a Markdown TOC. When AbsolutePaths is set, path is
+// prefixed to every anchor, which is what multi-document mode needs.
+func (r *Renderer) Render(ctx context.Context, path string, headings []entity.Heading) (entity.Toc, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
@@ -68,7 +69,7 @@ func (r *Renderer) Render(ctx context.Context, headings []entity.Heading) (entit
 		}
 		link := "#" + heading.Anchor
 		if r.cfg.AbsolutePaths {
-			link = r.cfg.Path + link
+			link = path + link
 		}
 		indent := strings.Repeat(" ", max(0, heading.Level-baseLevel)*max(0, r.cfg.Indent))
 		result = append(result, indent+"* ["+text+"]("+link+")")

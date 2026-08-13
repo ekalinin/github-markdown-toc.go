@@ -16,7 +16,7 @@ type remoteGetter interface {
 }
 
 type tocGrabber interface {
-	Grab(context.Context, string) (*entity.Toc, error)
+	Grab(context.Context, string, string) (*entity.Toc, error)
 }
 
 type fileTemper interface {
@@ -103,7 +103,7 @@ func (r *RemoteHTML) Do(ctx context.Context, url string) (entity.Toc, error) {
 	}
 
 	r.log.Info("RemoteHTML: grabbing the TOC ...")
-	toc, err := r.grabber.Grab(ctx, string(jsonBody))
+	toc, err := r.grabber.Grab(ctx, url, string(jsonBody))
 	if err != nil {
 		r.log.Info("RemoteHTML: failed to grab TOC", "err", err)
 		return nil, fmt.Errorf("grab TOC from remote HTML %q: %w", url, err)

@@ -21,7 +21,7 @@ type htmlConverter interface {
 }
 
 type tocGrabber interface {
-	Grab(context.Context, string) (*entity.Toc, error)
+	Grab(context.Context, string, string) (*entity.Toc, error)
 }
 
 type logger interface {
@@ -86,7 +86,7 @@ func (uc *LocalMd) Do(ctx context.Context, file string) (entity.Toc, error) {
 	}
 
 	uc.log.Info("LocalMD: grabbing the TOC ...")
-	toc, err := uc.grabber.Grab(ctx, html)
+	toc, err := uc.grabber.Grab(ctx, file, html)
 	if err != nil {
 		uc.log.Info("LocalMD: failed to grab TOC: %s", err)
 		return nil, fmt.Errorf("grab TOC from local Markdown %q: %w", file, err)

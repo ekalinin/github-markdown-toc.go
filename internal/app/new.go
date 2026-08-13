@@ -41,6 +41,13 @@ func New(cfg Config) (*App, error) {
 	ctlCfg := controller.Config{Files: cfg.Files, Serial: cfg.Serial}
 
 	log.Info("App.New: init adapters ...")
+	if cfg.GitHub.GHToken == "" {
+		token, err := adapters.NewTokenResolver().Resolve()
+		if err != nil {
+			return nil, fmt.Errorf("read token file: %w", err)
+		}
+		cfg.GitHub.GHToken = token
+	}
 	httpClient := adapters.NewHTTPClient()
 	checker := adapters.NewFileCheck(log)
 	writer := adapters.NewFileWriter()

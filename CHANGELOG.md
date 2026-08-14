@@ -63,7 +63,9 @@ Planned release: 2.1.0.
   [#84](https://github.com/ekalinin/github-markdown-toc.go/pull/84))
 - Multi-document runs now prefix links with the document path, which is what the
   "Multiple files" and "Combo" sections of the README always documented but the tool
-  never actually did.
+  never actually did. A TOC written into a file with `--insert` is the exception: it
+  always uses bare anchors, because GitHub resolves relative links against the
+  document's own directory.
 - `--version` now also reports the OS, architecture and Go version used to build the
   binary. The bare version number stays on the first line, so scripts that parse it
   keep working.

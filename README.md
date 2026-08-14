@@ -416,6 +416,7 @@ No escape
 GitHub token
 ------------
 
+Without a GitHub token, the `/markdown/raw` endpoint allows very few requests per hour; when the rate limit is exceeded, the tool will suggest passing a token.
 All your tokents are [here](https://github.com/settings/tokens).
 
 Example for cli argument:

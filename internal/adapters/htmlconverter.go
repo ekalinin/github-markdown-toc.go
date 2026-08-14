@@ -2,6 +2,8 @@ package adapters
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"net/http"
 )
 
@@ -37,5 +39,24 @@ func (c *HTMLConverter) Convert(ctx context.Context, file string) (string, error
 	c.log.Info("adapters.HTMLConverter.Convert: start", "file", file)
 	ghURL := c.ghURL + "/markdown/raw"
 	c.log.Info("adapters.HTMLConverter.Convert: sending", "url", ghURL)
-	return c.poster.Post(ctx, ghURL, c.ghToken, file)
+
+	html, err := c.poster.Post(ctx, ghURL, c.ghToken, file)
+	if err != nil {
+		return "", withRateLimitHint(err)
+	}
+	return html, nil
+}
+
+// withRateLimitHint points the user at the token options when GitHub throttles us.
+// Without a token the markdown endpoint allows very few requests per hour.
+func withRateLimitHint(err error) error {
+	var statusErr *HTTPStatusError
+	if !errors.As(err, &statusErr) {
+		return err
+	}
+	if statusErr.StatusCode != http.StatusForbidden &&
+		statusErr.StatusCode != http.StatusTooManyRequests {
+		return err
+	}
+	return fmt.Errorf("%w (GitHub API rate limit reached, pass --token or set GH_TOC_TOKEN)", err)
 }

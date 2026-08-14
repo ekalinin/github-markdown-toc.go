@@ -92,6 +92,37 @@ func TestFileWriterWriteAtomicFailsWithoutDirectory(t *testing.T) {
 	}
 }
 
+func TestFileWriterWriteAtomicFollowsSymlinks(t *testing.T) {
+	dir := t.TempDir()
+	real := filepath.Join(dir, "real.md")
+	if err := os.WriteFile(real, []byte("old\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	link := filepath.Join(dir, "link.md")
+	if err := os.Symlink(real, link); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := NewFileWriter().WriteAtomic(context.Background(), link, []byte("new\n")); err != nil {
+		t.Fatal(err)
+	}
+
+	info, err := os.Lstat(link)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if info.Mode()&os.ModeSymlink == 0 {
+		t.Errorf("got %q replaced with a regular file, want the symlink kept", link)
+	}
+	data, err := os.ReadFile(real)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(data) != "new\n" {
+		t.Errorf("got real file content %q, want %q", data, "new\n")
+	}
+}
+
 func TestFileWriterWriteAtomicRemovesTempFileOnFailure(t *testing.T) {
 	dir := t.TempDir()
 	// Renaming onto a directory fails, and by then the temp file exists.

@@ -2,6 +2,7 @@ package adapters
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"time"
@@ -48,11 +49,10 @@ func (b *FileBackupper) Backup(ctx context.Context, file string) (string, error)
 	}
 	_, writeErr := dst.Write(data)
 	closeErr := dst.Close()
-	if writeErr != nil {
-		return "", writeErr
-	}
-	if closeErr != nil {
-		return "", closeErr
+	if err := errors.Join(writeErr, closeErr); err != nil {
+		// The exclusive create already claimed the path. Leaving a partial copy there
+		// would block a retry with EEXIST and hide the error that actually happened.
+		return "", errors.Join(err, os.Remove(backup))
 	}
 	return backup, nil
 }

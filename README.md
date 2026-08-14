@@ -32,6 +32,7 @@ Table of Contents
     * [Compiling from source](#compiling-from-source)
     * [Go Install](#go-install)
     * [Homebew (Mac only)](#homebew-mac-only)
+    * [Docker](#docker)
   * [Tests](#tests)
   * [Usage](#usage)
     * [STDIN](#stdin)
@@ -128,6 +129,16 @@ Homebew (Mac only)
 ```bash
 $ brew install github-markdown-toc
 ```
+
+Docker
+------
+
+```bash
+$ docker run --rm -v "$PWD:/data" -w /data \
+    ghcr.io/ekalinin/github-markdown-toc.go:latest README.md
+```
+
+Pass a token with `-e GH_TOC_TOKEN=...` when you hit the GitHub API rate limit.
 
 Tests
 =====

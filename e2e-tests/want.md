@@ -16,6 +16,7 @@ Table of Contents
   * [Remote files](#remote-files)
   * [Multiple files](#multiple-files)
   * [Combo](#combo)
+  * [Insert into a file](#insert-into-a-file)
   * [Starting Depth](#starting-depth)
   * [Depth](#depth)
   * [No escape](#no-escape)

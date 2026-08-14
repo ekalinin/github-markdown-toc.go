@@ -4,9 +4,18 @@ import (
 	"context"
 	"fmt"
 	"io"
+
+	"github.com/ekalinin/github-markdown-toc.go/v2/internal/core/entity"
 )
 
 func (a *App) Run(ctx context.Context, stdout io.Writer) error {
+	if a.cfg.Insert.Enabled {
+		for _, file := range a.cfg.Files {
+			if entity.GetType(file) != entity.TypeLocalMD {
+				a.notify.Notify("!! %q is not a local file, can't insert the TOC into it", file)
+			}
+		}
+	}
 
 	// do not show for stdin case (Files is empty)
 	if !a.cfg.Presentation.HideHeader && len(a.cfg.Files) == 1 {

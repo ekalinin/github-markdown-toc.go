@@ -2,6 +2,7 @@ package app
 
 import (
 	"bytes"
+	"io"
 	"log/slog"
 	"strings"
 	"testing"
@@ -25,7 +26,7 @@ func TestNewDoesNotLogGitHubToken(t *testing.T) {
 			GHUrl:     "https://api.github.com",
 			GHVersion: version.GH_2024_03,
 		},
-	})
+	}, io.Discard)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -40,7 +41,7 @@ func TestNewDoesNotLogGitHubToken(t *testing.T) {
 }
 
 func TestNewRejectsUnknownRegexpVersion(t *testing.T) {
-	_, err := New(Config{GitHub: GitHubConfig{GHVersion: "unknown"}})
+	_, err := New(Config{GitHub: GitHubConfig{GHVersion: "unknown"}}, io.Discard)
 	if err == nil {
 		t.Fatal("expected an error for an unsupported regexp version")
 	}

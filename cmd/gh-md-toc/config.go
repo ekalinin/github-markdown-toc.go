@@ -29,6 +29,8 @@ type cliOptions struct {
 	debug      *bool
 	githubURL  *string
 	reVersion  *string
+	insert     *bool
+	noBackup   *bool
 }
 
 func newCLI() (*kingpin.Application, cliOptions) {
@@ -55,6 +57,14 @@ func newCLI() (*kingpin.Application, cliOptions) {
 			"re-version",
 			"RegExp version. Default: "+version.GH_2024_03,
 		).Default(version.GH_2024_03).Enum(version.SupportedGHVersions()...),
+		insert: parser.Flag(
+			"insert",
+			"Insert the TOC into the file, between <!--ts--> and <!--te-->. Local files only",
+		).Bool(),
+		noBackup: parser.Flag(
+			"no-backup",
+			"Do not keep a backup copy of the file. Requires --insert",
+		).Bool(),
 	}
 
 	return parser, options
@@ -91,6 +101,10 @@ func parseConfig(args []string) (app.Config, error) {
 		files = nil
 	}
 
+	if *options.noBackup && !*options.insert {
+		return app.Config{}, errors.New("--no-backup requires --insert")
+	}
+
 	return app.Config{
 		Files:  files,
 		Serial: *options.serial,
@@ -108,6 +122,10 @@ func parseConfig(args []string) (app.Config, error) {
 			Depth:      *options.depth,
 			Escape:     !*options.noEscape,
 			Indent:     *options.indent,
+		},
+		Insert: app.InsertConfig{
+			Enabled:  *options.insert,
+			NoBackup: *options.noBackup,
 		},
 		Debug: *options.debug,
 	}, nil

@@ -39,6 +39,7 @@ Table of Contents
     * [Remote files](#remote-files)
     * [Multiple files](#multiple-files)
     * [Combo](#combo)
+    * [Insert into a file](#insert-into-a-file)
     * [Starting Depth](#starting-depth)
     * [Depth](#depth)
     * [No Escape](#no-escape)
@@ -101,6 +102,8 @@ Flags:
                    GitHub URL. Default: https://api.github.com
   --re-version=2024-03
                    RegExp version. Default: 2024-03
+  --insert         Insert the TOC into the file, between <!--ts--> and <!--te-->. Local files only
+  --no-backup      Do not keep a backup copy of the file. Requires --insert
   --version        Show application version.
 
 Args:
@@ -307,6 +310,36 @@ You can easily combine both ways:
 
 Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc)
 ```
+
+Insert into a file
+------------------
+
+`gh-md-toc` can write the TOC directly into a document instead of only printing it.
+Add a marker line containing `<!--ts-->` where the TOC should start, and below it a
+marker line containing `<!--te-->` where it should end - each marker needs its own
+line, with nothing else on it besides surrounding whitespace. Then run:
+
+```bash
+$ ./gh-md-toc --insert README.md
+```
+
+Everything between the two markers is replaced with the generated TOC; the markers
+themselves and the rest of the document are left untouched. The `Table of Contents`
+heading is not written into the file, only the list itself.
+
+`--insert` only works on local files. A remote URL passed alongside `--insert` is
+reported as not local and left unmodified, instead of failing the whole run.
+
+Before rewriting the file, a backup copy is kept next to it, named
+`<file>.orig.<timestamp>`. Pass `--no-backup` to skip the backup; that flag requires
+`--insert` and is rejected on its own.
+
+Unless `--hide-footer` is set, an attribution comment and a signature comment (who
+ran the command, and when) are written right after the TOC, inside the markers.
+`--hide-footer` suppresses both.
+
+Status messages - the backup path, or a warning about a non-local input - are
+printed to stderr, not stdout.
 
 Starting Depth
 --------------

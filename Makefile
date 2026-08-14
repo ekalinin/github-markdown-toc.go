@@ -3,8 +3,12 @@ CMD_SRC=cmd/${EXEC}/main.go
 BUILD_DIR=build
 E2E_DIR=e2e-tests
 E2E_RUN=go run ./cmd/${EXEC} ./README.md
-E2E_RUN_RHTML=go run ./cmd/${EXEC} https://github.com/ekalinin/github-markdown-toc.go/blob/master/README.md
-E2E_RUN_RMD=go run ./cmd/${EXEC} https://raw.githubusercontent.com/ekalinin/github-markdown-toc.go/master/README.md
+# The remote e2e sections read README.md from GitHub. `master` is right once a branch
+# is merged; to run them on an unmerged branch, push it and pass its commit:
+#   make e2e E2E_REF=$(shell git rev-parse HEAD)
+E2E_REF?=master
+E2E_RUN_RHTML=go run ./cmd/${EXEC} https://github.com/ekalinin/github-markdown-toc.go/blob/${E2E_REF}/README.md
+E2E_RUN_RMD=go run ./cmd/${EXEC} https://raw.githubusercontent.com/ekalinin/github-markdown-toc.go/${E2E_REF}/README.md
 VERSION=$(shell grep "\tVersion" internal/version/version.go | grep -o -E '[0-9]\.[0-9]\.[0-9]{1,2}')
 TAG=v${VERSION}
 bold := $(shell tput bold)
@@ -62,6 +66,11 @@ e2e:
 	go run ./cmd/${EXEC} --hide-footer ./README.md ./CHANGELOG.md > ${E2E_DIR}/got-combo.md
 	@grep -qF '](./README.md#' ${E2E_DIR}/got-combo.md
 	@grep -qF '](./CHANGELOG.md#' ${E2E_DIR}/got-combo.md
+
+	@echo "${bold}>> 5. Insert into a local file ...${clear}"
+	@cp ${E2E_DIR}/insert-src.md ${E2E_DIR}/got-insert.md
+	go run ./cmd/${EXEC} --insert --no-backup --hide-footer ${E2E_DIR}/got-insert.md > /dev/null
+	@diff ${E2E_DIR}/want-insert.md ${E2E_DIR}/got-insert.md
 
 # Step 2: create the release tag locally. Does not push anything.
 release: test release-local

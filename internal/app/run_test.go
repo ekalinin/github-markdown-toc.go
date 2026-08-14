@@ -8,6 +8,8 @@ import (
 	"io"
 	"strings"
 	"testing"
+
+	"github.com/ekalinin/github-markdown-toc.go/v2/internal/version"
 )
 
 type TestController struct {
@@ -64,5 +66,26 @@ func Test_AppRunFail(t *testing.T) {
 	}
 	if !strings.Contains(b.String(), "partial result") {
 		t.Errorf("successful partial output was lost: %q", b.String())
+	}
+}
+
+func TestRunWarnsAboutRemoteInputsWithInsert(t *testing.T) {
+	var stderr bytes.Buffer
+	cfg := Config{
+		Files:  []string{"https://github.com/ekalinin/envirius/blob/master/README.md"},
+		Insert: InsertConfig{Enabled: true},
+		GitHub: GitHubConfig{GHVersion: version.GH_2024_03},
+	}
+	application, err := New(cfg, &stderr)
+	if err != nil {
+		t.Fatal(err)
+	}
+	application.ctl = TestController{}
+
+	if err := application.Run(context.Background(), &bytes.Buffer{}); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(stderr.String(), "is not a local file") {
+		t.Errorf("got stderr %q, want the not-a-local-file warning", stderr.String())
 	}
 }

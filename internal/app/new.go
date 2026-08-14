@@ -7,7 +7,9 @@ import (
 
 	"github.com/ekalinin/github-markdown-toc.go/v2/internal/adapters"
 	"github.com/ekalinin/github-markdown-toc.go/v2/internal/controller"
+	"github.com/ekalinin/github-markdown-toc.go/v2/internal/core/entity"
 	coretoc "github.com/ekalinin/github-markdown-toc.go/v2/internal/core/toc"
+	"github.com/ekalinin/github-markdown-toc.go/v2/internal/core/usecase/insertmd"
 	"github.com/ekalinin/github-markdown-toc.go/v2/internal/core/usecase/localmd"
 	"github.com/ekalinin/github-markdown-toc.go/v2/internal/core/usecase/remotehtml"
 	"github.com/ekalinin/github-markdown-toc.go/v2/internal/core/usecase/remotemd"
@@ -17,13 +19,23 @@ type Controller interface {
 	Process(ctx context.Context, stdout io.Writer) error
 }
 
-type App struct {
-	cfg Config
-	ctl Controller
+type useCase interface {
+	Do(ctx context.Context, file string) (entity.Toc, error)
 }
 
-func New(cfg Config) (*App, error) {
+type notifier interface {
+	Notify(format string, args ...any)
+}
+
+type App struct {
+	cfg    Config
+	ctl    Controller
+	notify notifier
+}
+
+func New(cfg Config, stderr io.Writer) (*App, error) {
 	log := adapters.NewLogger(cfg.Debug)
+	notify := adapters.NewNotifier(stderr)
 
 	log.Info(
 		"App.New: init configs ...",
@@ -37,6 +49,8 @@ func New(cfg Config) (*App, error) {
 		"indent", cfg.TOC.Indent,
 		"github-version", cfg.GitHub.GHVersion,
 		"token-configured", cfg.GitHub.GHToken != "",
+		"insert", cfg.Insert.Enabled,
+		"no-backup", cfg.Insert.NoBackup,
 	)
 	ctlCfg := controller.Config{Files: cfg.Files, Serial: cfg.Serial}
 
@@ -65,18 +79,34 @@ func New(cfg Config) (*App, error) {
 	grabberJSON := coretoc.NewGenerator(jsonExtractor, renderer)
 	getter := adapters.NewRemoteGetterWithClient(true, httpClient)
 	temper := adapters.NewFileTemper()
+	reader := adapters.NewFileReader()
+	backupper := adapters.NewFileBackupper()
+	stamper := adapters.NewStamper()
 
 	log.Info("App.New: init usecases ...")
 	ucLocalMD := localmd.New(cfg.Debug, checker, writer, converter, grabberRe, log)
+
+	var ucLocal useCase = ucLocalMD
+	if cfg.Insert.Enabled {
+		ucLocal = insertmd.New(
+			insertmd.Config{
+				NoBackup:   cfg.Insert.NoBackup,
+				HideFooter: cfg.Presentation.HideFooter,
+			},
+			ucLocalMD, reader, writer, backupper, stamper, notify, log,
+		)
+	}
+
 	ucRemoteMD := remotemd.New(getter, ucLocalMD, temper, log)
 	ucRemoteHTML := remotehtml.New(cfg.Debug, getter, temper, grabberJSON, log)
 
 	log.Info("App.New: init controller ...")
-	ctl := controller.New(ctlCfg, ucLocalMD, ucRemoteMD, ucRemoteHTML, log)
+	ctl := controller.New(ctlCfg, ucLocal, ucRemoteMD, ucRemoteHTML, log)
 
 	log.Info("App.New: done.")
 	return &App{
-		ctl: ctl,
-		cfg: cfg,
+		ctl:    ctl,
+		cfg:    cfg,
+		notify: notify,
 	}, nil
 }

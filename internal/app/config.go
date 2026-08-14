@@ -9,6 +9,7 @@ type Config struct {
 	Presentation PresentationConfig
 	GitHub       GitHubConfig
 	TOC          coretoc.Config
+	Insert       InsertConfig
 	Debug        bool
 }
 
@@ -23,4 +24,10 @@ type GitHubConfig struct {
 	GHToken   string
 	GHUrl     string
 	GHVersion string
+}
+
+// InsertConfig controls rewriting the TOC inside the source document.
+type InsertConfig struct {
+	Enabled  bool
+	NoBackup bool
 }

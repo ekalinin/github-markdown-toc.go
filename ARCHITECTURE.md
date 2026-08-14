@@ -42,6 +42,7 @@ cmd/gh-md-toc
         │   └── input routing, concurrency, and result output
         ├── internal/core/usecase
         │   ├── localmd
+        │   ├── insertmd (wraps localmd, only when --insert is set)
         │   ├── remotemd
         │   └── remotehtml
         ├── internal/core/toc
@@ -56,7 +57,8 @@ cmd/gh-md-toc
 internal/core/entity
 ├── Heading
 ├── Toc
-└── Type
+├── Type
+└── MarkerStart / MarkerEnd
 ```
 
 ## Dependency direction
@@ -93,9 +95,13 @@ Important dependency rules:
 ```mermaid
 flowchart TD
     AppNew[app.New] --> Logger
+    AppNew --> Notifier
     AppNew --> HTTPClient[http.Client]
     AppNew --> FileChecker
     AppNew --> FileWriter
+    AppNew --> FileReader
+    AppNew --> FileBackupper
+    AppNew --> Stamper
     AppNew --> FileTemper
     AppNew --> RemotePoster
     AppNew --> RemoteGetter
@@ -119,6 +125,14 @@ flowchart TD
     RegexpGenerator --> LocalMd
     Logger --> LocalMd
 
+    LocalMd --> InsertMd
+    FileReader --> InsertMd
+    FileWriter --> InsertMd
+    FileBackupper --> InsertMd
+    Stamper --> InsertMd
+    Notifier --> InsertMd
+    Logger --> InsertMd
+
     RemoteGetter --> RemoteMd
     FileTemper --> RemoteMd
     LocalMd --> RemoteMd
@@ -129,7 +143,8 @@ flowchart TD
     JSONGenerator --> RemoteHTML
     Logger --> RemoteHTML
 
-    LocalMd --> Controller
+    LocalMd -.->|"--insert not set"| Controller
+    InsertMd -.->|"--insert set"| Controller
     RemoteMd --> Controller
     RemoteHTML --> Controller
     Logger --> Controller
@@ -138,16 +153,25 @@ flowchart TD
 
 The shared `http.Client` gives all remote operations the same timeout configuration. The shared `Renderer` gives both extraction paths the same TOC formatting behavior.
 
+`InsertMd` wraps `LocalMd`, it does not replace it: `app.New` always builds the plain
+`LocalMd` and only builds `InsertMd` around it when `cfg.Insert.Enabled` is true. The
+controller then receives whichever of the two implements the local-file use case for
+that run. `RemoteMd` always keeps a direct reference to the unwrapped `LocalMd`,
+never to `InsertMd`, because it processes a downloaded temporary file and must never
+have a TOC written back into it.
+
 ## Main types and responsibilities
 
 | Package | Type | Responsibility |
 |---|---|---|
-| `internal/app` | `App` | Runs presentation logic before and after controller processing. |
-| `internal/app` | `Config` | Holds execution, presentation, GitHub, and TOC settings. |
+| `internal/app` | `App` | Runs presentation logic before and after controller processing, and warns about remote inputs when `--insert` is set. |
+| `internal/app` | `Config` | Holds execution, presentation, GitHub, TOC, and insert settings. |
 | `internal/app` | `PresentationConfig` | Controls header and footer visibility. |
 | `internal/app` | `GitHubConfig` | Holds the GitHub token, API URL, and regexp layout version. |
+| `internal/app` | `InsertConfig` | Controls whether the TOC is written into the source document and whether a backup is kept. |
 | `internal/controller` | `Controller` | Selects a use case, runs document jobs, preserves output order, and aggregates errors. |
 | `internal/core/usecase/localmd` | `LocalMd` | Validates a local file, converts Markdown through GitHub, and generates a TOC from returned HTML. |
+| `internal/core/usecase/insertmd` | `InsertMd` | Wraps `LocalMd`, then backs up and rewrites the block between the TOC markers in the source file. |
 | `internal/core/usecase/remotemd` | `RemoteMd` | Downloads raw Markdown to a temporary file and delegates processing to `LocalMd`. |
 | `internal/core/usecase/remotehtml` | `RemoteHTML` | Downloads GitHub JSON data and generates a TOC through the JSON path. |
 | `internal/core/toc` | `Generator` | Combines a heading extractor with the shared renderer. |
@@ -155,13 +179,18 @@ The shared `http.Client` gives all remote operations the same timeout configurat
 | `internal/core/entity` | `Heading` | Represents a parsed heading before Markdown rendering. |
 | `internal/core/entity` | `Toc` | Represents the generated TOC as Markdown lines and prints it. |
 | `internal/core/entity` | `Type` | Classifies an input as local Markdown, remote raw Markdown, or remote HTML. |
+| `internal/core/entity` | `MarkerStart` / `MarkerEnd` | The `<!--ts-->` / `<!--te-->` marker strings that delimit the TOC block inside a document. |
 | `internal/adapters` | `HTMLConverter` | Sends local Markdown to the GitHub Markdown API. |
 | `internal/adapters` | `RemotePoster` | Sends a file through the configured HTTP client. |
 | `internal/adapters` | `RemoteGetter` | Downloads remote content through the configured HTTP client. |
 | `internal/adapters` | `RegexpExtractor` | Extracts headings from GitHub-rendered HTML. |
 | `internal/adapters` | `JSONExtractor` | Extracts headings from a GitHub JSON response. |
 | `internal/adapters` | `FileChecker` | Checks whether a local file exists. |
-| `internal/adapters` | `FileWriter` | Writes debug content to a file. |
+| `internal/adapters` | `FileWriter` | Writes debug content to a file; also writes the rewritten document atomically for `InsertMd`. |
+| `internal/adapters` | `FileReader` | Reads a whole file into memory, for `InsertMd` to locate the markers. |
+| `internal/adapters` | `FileBackupper` | Copies a file to `<file>.orig.<timestamp>` before `InsertMd` rewrites it. |
+| `internal/adapters` | `Stamper` | Builds the signature comment recording who ran the insert and when. |
+| `internal/adapters` | `Notifier` | Writes status messages, such as the backup path or a non-local-input warning, to stderr. |
 | `internal/adapters` | `FileTemper` | Creates and removes temporary files. |
 | `internal/adapters` | `Logger` | Enables structured logging only in debug mode. |
 
@@ -172,15 +201,24 @@ Interfaces are intentionally small and located next to the consuming code.
 | Consumer | Interface | Implemented by |
 |---|---|---|
 | `app.App` | `app.Controller` | `*controller.Controller` |
-| `controller.Controller` | `controller.useCase` | `*localmd.LocalMd`, `*remotemd.RemoteMd`, `*remotehtml.RemoteHTML` |
+| `app.App` | `app.useCase` (used by `app.New`, not stored on `App`) | `*localmd.LocalMd`, `*insertmd.InsertMd` |
+| `app.App` | `app.notifier` | `*adapters.Notifier` |
+| `controller.Controller` | `controller.useCase` | `*localmd.LocalMd`, `*insertmd.InsertMd`, `*remotemd.RemoteMd`, `*remotehtml.RemoteHTML` |
 | `controller.Controller` | `controller.logger` | `*adapters.Logger` |
 | `localmd.LocalMd` | `localmd.fileChecker` | `*adapters.FileChecker` |
 | `localmd.LocalMd` | `localmd.fileWriter` | `*adapters.FileWriter` |
 | `localmd.LocalMd` | `localmd.htmlConverter` | `*adapters.HTMLConverter` |
 | `localmd.LocalMd` | `localmd.tocGrabber` | `*toc.Generator` |
 | `localmd.LocalMd` | `localmd.logger` | `*adapters.Logger` |
+| `insertmd.InsertMd` | `insertmd.useCase` | `*localmd.LocalMd` |
+| `insertmd.InsertMd` | `insertmd.fileReader` | `*adapters.FileReader` |
+| `insertmd.InsertMd` | `insertmd.atomicWriter` | `*adapters.FileWriter` |
+| `insertmd.InsertMd` | `insertmd.fileBackupper` | `*adapters.FileBackupper` |
+| `insertmd.InsertMd` | `insertmd.stamper` | `*adapters.Stamper` |
+| `insertmd.InsertMd` | `insertmd.notifier` | `*adapters.Notifier` |
+| `insertmd.InsertMd` | `insertmd.logger` | `*adapters.Logger` |
 | `remotemd.RemoteMd` | `remotemd.remoteGetter` | `*adapters.RemoteGetter` |
-| `remotemd.RemoteMd` | `remotemd.markdownProcessor` | `*localmd.LocalMd` |
+| `remotemd.RemoteMd` | `remotemd.markdownProcessor` | `*localmd.LocalMd` (always the unwrapped use case, never `*insertmd.InsertMd`) |
 | `remotemd.RemoteMd` | `remotemd.fileTemper` | `*adapters.FileTemper` |
 | `remotemd.RemoteMd` | `remotemd.logger` | `*adapters.Logger` |
 | `remotehtml.RemoteHTML` | `remotehtml.remoteGetter` | `*adapters.RemoteGetter` |
@@ -206,12 +244,15 @@ app.Config
 │   ├── GHToken string
 │   ├── GHUrl string
 │   └── GHVersion string
-└── TOC toc.Config
-    ├── AbsolutePaths bool
-    ├── StartDepth int
-    ├── Depth int
-    ├── Escape bool
-    └── Indent int
+├── TOC toc.Config
+│   ├── AbsolutePaths bool
+│   ├── StartDepth int
+│   ├── Depth int
+│   ├── Escape bool
+│   └── Indent int
+└── Insert app.InsertConfig
+    ├── Enabled bool
+    └── NoBackup bool
 ```
 
 `cmd/gh-md-toc` maps flags and environment variables into this structure. `app.New` derives `TOC.AbsolutePaths` from whether the CLI received multiple file arguments, matching bash `gh-md-toc`, which drops the prefix when a single document is requested.
@@ -222,7 +263,9 @@ Only the settings required at runtime are passed further:
 - `LocalMd` and `RemoteHTML` receive `Debug`;
 - `RemoteMd` receives no configuration;
 - `Renderer` receives `toc.Config`;
-- GitHub settings are used when constructing `HTMLConverter` and `RegexpExtractor`.
+- GitHub settings are used when constructing `HTMLConverter` and `RegexpExtractor`;
+- `InsertMd` receives `Insert.NoBackup` and `Presentation.HideFooter`; `app.Run` reads
+  `Insert.Enabled` directly to decide whether to warn about non-local inputs.
 
 ## Input routing
 
@@ -253,6 +296,38 @@ Controller
 ```
 
 When debug mode is enabled, `LocalMd` writes the returned HTML to `<input>.debug.html` through `FileWriter`.
+
+### Insert into the source file (`--insert`)
+
+```text
+Controller
+  -> InsertMd.Do
+  -> LocalMd.Do (builds the TOC, as above)
+  -> FileReader.Read
+  -> replaceBetweenMarkers (validate and rewrite the <!--ts--> / <!--te--> block)
+  -> FileBackupper.Backup      (skipped when --no-backup is set)
+  -> FileWriter.WriteAtomic
+  -> Notifier.Notify
+  -> entity.Toc
+```
+
+`InsertMd` wraps `LocalMd` rather than replacing it: it delegates to `LocalMd.Do` to
+obtain the TOC, then reads the current file, validates that it has exactly one
+`<!--ts-->` / `<!--te-->` marker pair in order, and rewrites only the block between
+them, byte for byte outside that block. The backup step runs before the rewrite so a
+failed rewrite still leaves a pristine copy on disk; it is skipped when
+`Insert.NoBackup` is set. `FileWriter.WriteAtomic` writes through a temporary file in
+the same directory and renames it over the target, so a failed write cannot truncate
+the original. `Notifier` reports the backup path and the rewritten path on stderr,
+separate from the TOC printed to stdout.
+
+`app.New` only builds `InsertMd` when `cfg.Insert.Enabled` is true; otherwise the
+controller receives the plain `LocalMd` for local files, unchanged from before this
+use case existed. `RemoteMd` is wired with the unwrapped `LocalMd` unconditionally, so
+downloading a remote document and then applying `--insert` to it never happens - the
+temporary file `RemoteMd` creates cannot be the target of a rewrite. `app.Run` warns
+on stderr, once per input, about any file passed alongside `--insert` that is not
+`entity.TypeLocalMD`, and otherwise leaves the document unmodified.
 
 ### Remote raw Markdown
 

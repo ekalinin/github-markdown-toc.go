@@ -354,12 +354,15 @@ is scanned for headings.
 $ ./gh-md-toc --skip-header README.md
 ```
 
-This matters when combined with `--insert`: after a first `--insert` run, the file
-already has a TOC block written between the markers. Re-running `--insert` without
-`--skip-header` scans that block, and anything above it, together with the rest of
-the document. Adding `--skip-header` makes sure only the content after the existing
-block feeds the new TOC, so re-running `--insert` repeatedly does not fold the old
-TOC's own entries back into itself.
+The point is to hide the topmost headlines - the document's own title, and any
+other heading placed above the marker block, are excluded from the generated TOC.
+Without `--skip-header`, a document's title heading gets picked up like any other
+heading and shows up as an entry in its own TOC.
+
+This matters when combined with `--insert`: place the markers right below your
+title, e.g. `# Project` followed by `<!--ts-->`/`<!--te-->`, and add `--skip-header`
+to keep `Project` from appearing as the first entry of the TOC sitting right under
+it.
 
 `--skip-header` has no effect on documents that don't contain an end marker; the
 whole document is scanned, exactly as without the flag.

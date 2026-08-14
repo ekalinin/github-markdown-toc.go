@@ -147,3 +147,56 @@ func TestInsertMdPropagatesInnerError(t *testing.T) {
 		t.Fatalf("got error %v, want the inner error", err)
 	}
 }
+
+func TestInsertMdReadFailureLeavesFileAlone(t *testing.T) {
+	readErr := errors.New("read failed")
+	writer := &writerSpy{}
+	backupper := &backupperSpy{}
+	uc := New(Config{}, innerStub{toc: entity.Toc{"* [A](#a)"}}, readerStub{err: readErr}, writer,
+		backupper, stamperStub{}, &notifierSpy{}, loggerStub{})
+
+	if _, err := uc.Do(context.Background(), "README.md"); !errors.Is(err, readErr) {
+		t.Fatalf("got error %v, want the read error", err)
+	}
+	if writer.got != nil {
+		t.Errorf("got a write of %q, want none", writer.got)
+	}
+	if backupper.calls != 0 {
+		t.Errorf("got %d backup calls, want none", backupper.calls)
+	}
+}
+
+func TestInsertMdBackupFailureSkipsTheWrite(t *testing.T) {
+	backupErr := errors.New("backup failed")
+	writer := &writerSpy{}
+	notify := &notifierSpy{}
+	uc := New(Config{}, innerStub{toc: entity.Toc{"* [A](#a)"}},
+		readerStub{data: []byte("<!--ts-->\n<!--te-->\n")}, writer,
+		&backupperSpy{err: backupErr}, stamperStub{}, notify, loggerStub{})
+
+	if _, err := uc.Do(context.Background(), "README.md"); !errors.Is(err, backupErr) {
+		t.Fatalf("got error %v, want the backup error", err)
+	}
+	if writer.got != nil {
+		t.Errorf("got a write of %q, want none - a failed backup must never be followed by a rewrite", writer.got)
+	}
+	if len(notify.messages) != 0 {
+		t.Errorf("got messages %v, want none - nothing succeeded", notify.messages)
+	}
+}
+
+func TestInsertMdWriteFailurePropagates(t *testing.T) {
+	writeErr := errors.New("write failed")
+	writer := &writerSpy{err: writeErr}
+	notify := &notifierSpy{}
+	uc := New(Config{NoBackup: true}, innerStub{toc: entity.Toc{"* [A](#a)"}},
+		readerStub{data: []byte("<!--ts-->\n<!--te-->\n")}, writer,
+		&backupperSpy{}, stamperStub{}, notify, loggerStub{})
+
+	if _, err := uc.Do(context.Background(), "README.md"); !errors.Is(err, writeErr) {
+		t.Fatalf("got error %v, want the write error", err)
+	}
+	if len(notify.messages) != 0 {
+		t.Errorf("got messages %v, want none - the insert notice must not claim a write that failed", notify.messages)
+	}
+}

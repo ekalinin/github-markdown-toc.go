@@ -100,6 +100,11 @@ func TestHTMLConverterRateLimitHint(t *testing.T) {
 			wantHint: true,
 		},
 		{
+			name:     "forbidden for a reason other than the rate limit",
+			err:      &HTTPStatusError{StatusCode: http.StatusForbidden, Body: `{"message":"Bad credentials"}`},
+			wantHint: false,
+		},
+		{
 			name:     "server error keeps the bare message",
 			err:      &HTTPStatusError{StatusCode: http.StatusInternalServerError},
 			wantHint: false,

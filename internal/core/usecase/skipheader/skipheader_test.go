@@ -2,6 +2,7 @@ package skipheader
 
 import (
 	"context"
+	"errors"
 	"os"
 	"testing"
 
@@ -109,5 +110,68 @@ func TestSkipHeaderWithoutMarkerUsesTheFileAsIs(t *testing.T) {
 	}
 	if inner.gotDisplayPath != "https://example.com/README.md" {
 		t.Errorf("got display path %q, want it forwarded unchanged", inner.gotDisplayPath)
+	}
+}
+
+// failingRemoveTemper hands out real temp files but cannot remove them.
+type failingRemoveTemper struct{ err error }
+
+func (t failingRemoveTemper) CreateTemp(_ context.Context, dir, pattern string) (*os.File, error) {
+	return os.CreateTemp(dir, pattern)
+}
+
+func (t failingRemoveTemper) Remove(string) error { return t.err }
+
+func TestSkipHeaderReportsCleanupFailure(t *testing.T) {
+	removeErr := errors.New("remove failed")
+	inner := &innerSpy{}
+	uc := New(inner, readerStub{data: []byte("# Title\n<!--te-->\n\n## Section\n")},
+		failingRemoveTemper{err: removeErr}, loggerStub{})
+
+	_, err := uc.Do(context.Background(), "README.md")
+	if inner.gotFile != "" {
+		t.Cleanup(func() { _ = os.Remove(inner.gotFile) })
+	}
+	if !errors.Is(err, removeErr) {
+		t.Fatalf("got error %v, want it to carry the removal failure", err)
+	}
+	if inner.gotContent != "\n## Section\n" {
+		t.Errorf("got inner content %q, want the trimmed document - the inner call still ran", inner.gotContent)
+	}
+}
+
+// closedFileTemper returns a temp file that is already closed, so writing to it fails.
+type closedFileTemper struct{ removed *bool }
+
+func (t closedFileTemper) CreateTemp(_ context.Context, dir, pattern string) (*os.File, error) {
+	file, err := os.CreateTemp(dir, pattern)
+	if err != nil {
+		return nil, err
+	}
+	if err := file.Close(); err != nil {
+		return nil, err
+	}
+	return file, nil
+}
+
+func (t closedFileTemper) Remove(path string) error {
+	*t.removed = true
+	return os.Remove(path)
+}
+
+func TestSkipHeaderRemovesTempFileWhenTheWriteFails(t *testing.T) {
+	removed := false
+	inner := &innerSpy{}
+	uc := New(inner, readerStub{data: []byte("# Title\n<!--te-->\n## Section\n")},
+		closedFileTemper{removed: &removed}, loggerStub{})
+
+	if _, err := uc.Do(context.Background(), "README.md"); err == nil {
+		t.Fatal("got no error, want the write to an already-closed file to fail")
+	}
+	if !removed {
+		t.Error("got no removal, want the temp file cleaned up after the write failed")
+	}
+	if inner.gotFile != "" {
+		t.Errorf("got the inner use case called with %q, want it never reached", inner.gotFile)
 	}
 }

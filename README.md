@@ -343,6 +343,10 @@ heading is not written into the file, only the list itself.
 `--insert` only works on local files. A remote URL passed alongside `--insert` is
 reported as not local and left unmodified, instead of failing the whole run.
 
+An inserted TOC always links with bare anchors (`#section`), even when several files
+are passed at once. GitHub resolves relative links against the document's own
+directory, so prefixing the links with the document's path would break them.
+
 Before rewriting the file, a backup copy is kept next to it, named
 `<file>.orig.<timestamp>`. Pass `--no-backup` to skip the backup; that flag requires
 `--insert` and is rejected on its own.

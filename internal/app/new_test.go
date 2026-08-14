@@ -99,6 +99,51 @@ func TestNewSkipHeaderTrimsTheDocumentSentToGitHub(t *testing.T) {
 	}
 }
 
+func TestNewInsertMultipleFilesUsesBareAnchors(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html")
+		_, _ = w.Write([]byte(`<h2 class="heading-element">Section</h2>` +
+			`<a id="user-content-section" class="anchor" aria-label="Permalink: Section" href="#section">`))
+	}))
+	defer server.Close()
+
+	dir := t.TempDir()
+	fileA := filepath.Join(dir, "a.md")
+	fileB := filepath.Join(dir, "b.md")
+	content := "# Title\n<!--ts-->\n<!--te-->\n\n## Section\n"
+	for _, file := range []string{fileA, fileB} {
+		if err := os.WriteFile(file, []byte(content), 0644); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	application, err := New(Config{
+		Files:        []string{fileA, fileB},
+		GitHub:       GitHubConfig{GHUrl: server.URL, GHVersion: version.GH_2024_03},
+		TOC:          coretoc.DefaultConfig(),
+		Insert:       InsertConfig{Enabled: true, NoBackup: true},
+		Presentation: PresentationConfig{HideFooter: true},
+	}, io.Discard)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := application.Run(context.Background(), &bytes.Buffer{}); err != nil {
+		t.Fatal(err)
+	}
+
+	got, err := os.ReadFile(fileA)
+	if err != nil {
+		t.Fatal(err)
+	}
+	gotStr := string(got)
+	if !strings.Contains(gotStr, "](#") {
+		t.Errorf("got file content %q, want a bare anchor link into the document", gotStr)
+	}
+	if strings.Contains(gotStr, fileA) {
+		t.Errorf("got file content %q, want no reference to the document's own path", gotStr)
+	}
+}
+
 func TestNewWithoutSkipHeaderSendsTheWholeDocument(t *testing.T) {
 	var gotBody string
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

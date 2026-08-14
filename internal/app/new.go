@@ -82,7 +82,9 @@ func New(cfg Config, stderr io.Writer) (*App, error) {
 	jsonExtractor := adapters.NewJSONExtractor()
 	rendererCfg := cfg.TOC
 	// bash gh-md-toc drops the path prefix only when a single document is requested.
-	rendererCfg.AbsolutePaths = len(cfg.Files) > 1
+	// A TOC written into a document links to itself with bare anchors; only the
+	// stdout listing of several documents needs a path prefix.
+	rendererCfg.AbsolutePaths = len(cfg.Files) > 1 && !cfg.Insert.Enabled
 	renderer := coretoc.NewRenderer(rendererCfg)
 	grabberRe := coretoc.NewGenerator(regexpExtractor, renderer)
 	grabberJSON := coretoc.NewGenerator(jsonExtractor, renderer)

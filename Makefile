@@ -86,6 +86,12 @@ release-local:
 	@goreleaser check
 	@goreleaser release --snapshot --clean
 
+# Same as release-local, but without the container images. Useful when no Docker
+# daemon is available.
+release-local-nodocker:
+	@goreleaser check
+	@goreleaser release --snapshot --clean --skip=docker
+
 # Step 3: publish the tag, which triggers the goreleaser workflow.
 release-push:
 	@git push origin ${TAG}

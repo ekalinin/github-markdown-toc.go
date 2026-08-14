@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 )
@@ -116,8 +117,12 @@ func TestFileBackupperRefusesToOverwriteExistingBackup(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if _, err := backupper.Backup(context.Background(), file); err == nil {
+	_, err = backupper.Backup(context.Background(), file)
+	if err == nil {
 		t.Fatal("got no error, want a refusal to overwrite the existing backup")
+	}
+	if !strings.Contains(err.Error(), "already exists") {
+		t.Errorf("got error %q, want it to explain that the backup already exists", err)
 	}
 
 	data, err := os.ReadFile(first)

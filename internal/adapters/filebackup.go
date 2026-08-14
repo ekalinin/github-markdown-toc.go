@@ -24,6 +24,9 @@ func NewFileBackupperX(now func() time.Time) *FileBackupper {
 }
 
 // Backup copies file to "<file>.orig.<timestamp>" and returns the path of the copy.
+// An existing backup is never overwritten. The timestamp has one-second granularity,
+// so a second run within the same second would otherwise replace the pristine copy
+// with an already-rewritten one.
 func (b *FileBackupper) Backup(ctx context.Context, file string) (string, error) {
 	if err := ctx.Err(); err != nil {
 		return "", err
@@ -39,8 +42,17 @@ func (b *FileBackupper) Backup(ctx context.Context, file string) (string, error)
 	}
 
 	backup := fmt.Sprintf("%s.orig.%s", file, b.now().Format(backupTimeLayout))
-	if err := os.WriteFile(backup, data, info.Mode().Perm()); err != nil {
+	dst, err := os.OpenFile(backup, os.O_WRONLY|os.O_CREATE|os.O_EXCL, info.Mode().Perm())
+	if err != nil {
 		return "", err
+	}
+	_, writeErr := dst.Write(data)
+	closeErr := dst.Close()
+	if writeErr != nil {
+		return "", writeErr
+	}
+	if closeErr != nil {
+		return "", closeErr
 	}
 	return backup, nil
 }

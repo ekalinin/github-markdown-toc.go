@@ -31,6 +31,7 @@ type cliOptions struct {
 	reVersion  *string
 	insert     *bool
 	noBackup   *bool
+	skipHeader *bool
 }
 
 func newCLI() (*kingpin.Application, cliOptions) {
@@ -64,6 +65,10 @@ func newCLI() (*kingpin.Application, cliOptions) {
 		noBackup: parser.Flag(
 			"no-backup",
 			"Do not keep a backup copy of the file. Requires --insert",
+		).Bool(),
+		skipHeader: parser.Flag(
+			"skip-header",
+			"Ignore everything up to <!--te--> when building the TOC",
 		).Bool(),
 	}
 
@@ -106,8 +111,9 @@ func parseConfig(args []string) (app.Config, error) {
 	}
 
 	return app.Config{
-		Files:  files,
-		Serial: *options.serial,
+		Files:      files,
+		Serial:     *options.serial,
+		SkipHeader: *options.skipHeader,
 		Presentation: app.PresentationConfig{
 			HideHeader: *options.hideHeader,
 			HideFooter: *options.hideFooter,

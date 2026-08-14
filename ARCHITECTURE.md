@@ -42,8 +42,9 @@ cmd/gh-md-toc
         │   └── input routing, concurrency, and result output
         ├── internal/core/usecase
         │   ├── localmd
-        │   ├── insertmd (wraps localmd, only when --insert is set)
-        │   ├── remotemd
+        │   ├── skipheader (wraps localmd, only when --skip-header is set)
+        │   ├── insertmd (wraps localChain, only when --insert is set)
+        │   ├── remotemd (wraps localChain unconditionally)
         │   └── remotehtml
         ├── internal/core/toc
         │   ├── Generator
@@ -125,7 +126,15 @@ flowchart TD
     RegexpGenerator --> LocalMd
     Logger --> LocalMd
 
-    LocalMd --> InsertMd
+    LocalMd --> SkipHeader
+    FileReader --> SkipHeader
+    FileTemper --> SkipHeader
+    Logger --> SkipHeader
+
+    LocalMd -.->|"--skip-header not set"| LocalChain[localChain]
+    SkipHeader -.->|"--skip-header set"| LocalChain
+
+    LocalChain --> InsertMd
     FileReader --> InsertMd
     FileWriter --> InsertMd
     FileBackupper --> InsertMd
@@ -135,7 +144,7 @@ flowchart TD
 
     RemoteGetter --> RemoteMd
     FileTemper --> RemoteMd
-    LocalMd --> RemoteMd
+    LocalChain --> RemoteMd
     Logger --> RemoteMd
 
     RemoteGetter --> RemoteHTML
@@ -143,7 +152,7 @@ flowchart TD
     JSONGenerator --> RemoteHTML
     Logger --> RemoteHTML
 
-    LocalMd -.->|"--insert not set"| Controller
+    LocalChain -.->|"--insert not set"| Controller
     InsertMd -.->|"--insert set"| Controller
     RemoteMd --> Controller
     RemoteHTML --> Controller
@@ -153,12 +162,19 @@ flowchart TD
 
 The shared `http.Client` gives all remote operations the same timeout configuration. The shared `Renderer` gives both extraction paths the same TOC formatting behavior.
 
-`InsertMd` wraps `LocalMd`, it does not replace it: `app.New` always builds the plain
-`LocalMd` and only builds `InsertMd` around it when `cfg.Insert.Enabled` is true. The
-controller then receives whichever of the two implements the local-file use case for
-that run. `RemoteMd` always keeps a direct reference to the unwrapped `LocalMd`,
-never to `InsertMd`, because it processes a downloaded temporary file and must never
-have a TOC written back into it.
+`app.New` always builds the plain `LocalMd`. When `cfg.SkipHeader` is true, it wraps
+`LocalMd` in `SkipHeader`; either way, the result is assigned to the local variable
+`localChain`. `LocalMd` and `SkipHeader` both satisfy the `markdownProcessor`
+interface (`Do` and `DoAs`), so every consumer further down the chain works with
+`localChain` without caring which of the two it actually holds.
+
+`InsertMd` wraps `localChain`, it does not replace it: `app.New` only builds
+`InsertMd` around `localChain` when `cfg.Insert.Enabled` is true. The controller then
+receives whichever of the two implements the local-file use case for that run.
+`RemoteMd` always keeps a direct reference to `localChain`, never to `InsertMd`,
+because it processes a downloaded temporary file and must never have a TOC written
+back into it. `--skip-header` still applies to `RemoteMd`'s downloaded document
+through `localChain`; only the temp-file-into-`InsertMd` combination is disallowed.
 
 ## Main types and responsibilities
 
@@ -171,8 +187,9 @@ have a TOC written back into it.
 | `internal/app` | `InsertConfig` | Controls whether the TOC is written into the source document and whether a backup is kept. |
 | `internal/controller` | `Controller` | Selects a use case, runs document jobs, preserves output order, and aggregates errors. |
 | `internal/core/usecase/localmd` | `LocalMd` | Validates a local file, converts Markdown through GitHub, and generates a TOC from returned HTML. |
-| `internal/core/usecase/insertmd` | `InsertMd` | Wraps `LocalMd`, then backs up and rewrites the block between the TOC markers in the source file. |
-| `internal/core/usecase/remotemd` | `RemoteMd` | Downloads raw Markdown to a temporary file and delegates processing to `LocalMd`. |
+| `internal/core/usecase/skipheader` | `SkipHeader` | Wraps `LocalMd` (or another `markdownProcessor`), cutting everything up to and including `<!--te-->` into a temporary file before delegating. |
+| `internal/core/usecase/insertmd` | `InsertMd` | Wraps `localChain` (`LocalMd`, optionally wrapped by `SkipHeader`), then backs up and rewrites the block between the TOC markers in the source file. |
+| `internal/core/usecase/remotemd` | `RemoteMd` | Downloads raw Markdown to a temporary file and delegates processing to `localChain`. |
 | `internal/core/usecase/remotehtml` | `RemoteHTML` | Downloads GitHub JSON data and generates a TOC through the JSON path. |
 | `internal/core/toc` | `Generator` | Combines a heading extractor with the shared renderer. |
 | `internal/core/toc` | `Renderer` | Applies depth, indentation, escaping, and link rules to headings. |
@@ -201,16 +218,21 @@ Interfaces are intentionally small and located next to the consuming code.
 | Consumer | Interface | Implemented by |
 |---|---|---|
 | `app.App` | `app.Controller` | `*controller.Controller` |
-| `app.App` | `app.useCase` (used by `app.New`, not stored on `App`) | `*localmd.LocalMd`, `*insertmd.InsertMd` |
+| `app.App` | `app.useCase` (used by `app.New`, not stored on `App`) | `*localmd.LocalMd`, `*skipheader.SkipHeader`, `*insertmd.InsertMd` |
+| `app.App` | `app.markdownProcessor` (used by `app.New` to type `localChain`) | `*localmd.LocalMd`, `*skipheader.SkipHeader` |
 | `app.App` | `app.notifier` | `*adapters.Notifier` |
-| `controller.Controller` | `controller.useCase` | `*localmd.LocalMd`, `*insertmd.InsertMd`, `*remotemd.RemoteMd`, `*remotehtml.RemoteHTML` |
+| `controller.Controller` | `controller.useCase` | `*localmd.LocalMd`, `*skipheader.SkipHeader`, `*insertmd.InsertMd`, `*remotemd.RemoteMd`, `*remotehtml.RemoteHTML` |
 | `controller.Controller` | `controller.logger` | `*adapters.Logger` |
 | `localmd.LocalMd` | `localmd.fileChecker` | `*adapters.FileChecker` |
 | `localmd.LocalMd` | `localmd.fileWriter` | `*adapters.FileWriter` |
 | `localmd.LocalMd` | `localmd.htmlConverter` | `*adapters.HTMLConverter` |
 | `localmd.LocalMd` | `localmd.tocGrabber` | `*toc.Generator` |
 | `localmd.LocalMd` | `localmd.logger` | `*adapters.Logger` |
-| `insertmd.InsertMd` | `insertmd.useCase` | `*localmd.LocalMd` |
+| `skipheader.SkipHeader` | `skipheader.markdownProcessor` | `*localmd.LocalMd` |
+| `skipheader.SkipHeader` | `skipheader.fileReader` | `*adapters.FileReader` |
+| `skipheader.SkipHeader` | `skipheader.fileTemper` | `*adapters.FileTemper` |
+| `skipheader.SkipHeader` | `skipheader.logger` | `*adapters.Logger` |
+| `insertmd.InsertMd` | `insertmd.useCase` | `*localmd.LocalMd`, `*skipheader.SkipHeader` (whichever `localChain` holds) |
 | `insertmd.InsertMd` | `insertmd.fileReader` | `*adapters.FileReader` |
 | `insertmd.InsertMd` | `insertmd.atomicWriter` | `*adapters.FileWriter` |
 | `insertmd.InsertMd` | `insertmd.fileBackupper` | `*adapters.FileBackupper` |
@@ -218,7 +240,7 @@ Interfaces are intentionally small and located next to the consuming code.
 | `insertmd.InsertMd` | `insertmd.notifier` | `*adapters.Notifier` |
 | `insertmd.InsertMd` | `insertmd.logger` | `*adapters.Logger` |
 | `remotemd.RemoteMd` | `remotemd.remoteGetter` | `*adapters.RemoteGetter` |
-| `remotemd.RemoteMd` | `remotemd.markdownProcessor` | `*localmd.LocalMd` (always the unwrapped use case, never `*insertmd.InsertMd`) |
+| `remotemd.RemoteMd` | `remotemd.markdownProcessor` | `*localmd.LocalMd` or `*skipheader.SkipHeader` (always `localChain`, never `*insertmd.InsertMd`) |
 | `remotemd.RemoteMd` | `remotemd.fileTemper` | `*adapters.FileTemper` |
 | `remotemd.RemoteMd` | `remotemd.logger` | `*adapters.Logger` |
 | `remotehtml.RemoteHTML` | `remotehtml.remoteGetter` | `*adapters.RemoteGetter` |
@@ -236,6 +258,7 @@ These interfaces allow unit tests to replace each dependency with a small stub w
 app.Config
 ├── Files []string
 ├── Serial bool
+├── SkipHeader bool
 ├── Debug bool
 ├── Presentation app.PresentationConfig
 │   ├── HideHeader bool
@@ -257,11 +280,16 @@ app.Config
 
 `cmd/gh-md-toc` maps flags and environment variables into this structure. `app.New` derives `TOC.AbsolutePaths` from whether the CLI received multiple file arguments, matching bash `gh-md-toc`, which drops the prefix when a single document is requested.
 
+`SkipHeader` selects whether `app.New` wraps `LocalMd` in `SkipHeader` before
+assigning the result to `localChain`; it takes no other parameters, since the
+`<!--te-->` marker itself is the only input the use case needs.
+
 Only the settings required at runtime are passed further:
 
 - controller receives `Files` and `Serial`;
 - `LocalMd` and `RemoteHTML` receive `Debug`;
-- `RemoteMd` receives no configuration;
+- `SkipHeader` and `RemoteMd` receive no configuration beyond the collaborators they
+  are built with;
 - `Renderer` receives `toc.Config`;
 - GitHub settings are used when constructing `HTMLConverter` and `RegexpExtractor`;
 - `InsertMd` receives `Insert.NoBackup` and `Presentation.HideFooter`; `app.Run` reads
@@ -297,12 +325,41 @@ Controller
 
 When debug mode is enabled, `LocalMd` writes the returned HTML to `<input>.debug.html` through `FileWriter`.
 
+### Skip header (`--skip-header`)
+
+```text
+Controller (or InsertMd, if --insert is also set)
+  -> SkipHeader.Do / DoAs
+  -> FileReader.Read
+  -> trim everything up to and including <!--te-->
+  -> FileTemper.CreateTemp
+  -> write the trimmed copy
+  -> LocalMd.DoAs (builds the TOC from the trimmed copy, as above)
+  -> FileTemper.Remove
+  -> entity.Toc
+```
+
+`SkipHeader` wraps `LocalMd` rather than replacing it: it reads the source file,
+drops every line up to and including the `<!--te-->` marker, and writes what remains
+to a temporary file. It then delegates to `LocalMd.DoAs` with the temporary file as
+the path to read and the *original* file as the display path, so rendered links still
+point at the source document. If the source file has no `<!--te-->` marker, `SkipHeader`
+skips the trimming and delegates to the inner use case with the original file
+unchanged. The temporary file is always removed afterward, whether or not the inner
+call succeeded.
+
+`app.New` only builds `SkipHeader` when `cfg.SkipHeader` is true; otherwise
+`localChain` is the plain `LocalMd`. Because `SkipHeader` implements the same
+`markdownProcessor` interface as `LocalMd` (`Do` and `DoAs`), every consumer that
+holds `localChain` - `InsertMd` and `RemoteMd` - works identically regardless of
+which one it is.
+
 ### Insert into the source file (`--insert`)
 
 ```text
 Controller
   -> InsertMd.Do
-  -> LocalMd.Do (builds the TOC, as above)
+  -> localChain.Do (builds the TOC; may go through SkipHeader first, as above)
   -> FileReader.Read
   -> replaceBetweenMarkers (validate and rewrite the <!--ts--> / <!--te--> block)
   -> FileBackupper.Backup      (skipped when --no-backup is set)
@@ -311,23 +368,27 @@ Controller
   -> entity.Toc
 ```
 
-`InsertMd` wraps `LocalMd` rather than replacing it: it delegates to `LocalMd.Do` to
-obtain the TOC, then reads the current file, validates that it has exactly one
-`<!--ts-->` / `<!--te-->` marker pair in order, and rewrites only the block between
-them, byte for byte outside that block. The backup step runs before the rewrite so a
-failed rewrite still leaves a pristine copy on disk; it is skipped when
-`Insert.NoBackup` is set. `FileWriter.WriteAtomic` writes through a temporary file in
-the same directory and renames it over the target, so a failed write cannot truncate
-the original. `Notifier` reports the backup path and the rewritten path on stderr,
-separate from the TOC printed to stdout.
+`InsertMd` wraps `localChain` rather than replacing it: it delegates to
+`localChain.Do` to obtain the TOC, then reads the *current, untrimmed* file,
+validates that it has exactly one `<!--ts-->` / `<!--te-->` marker pair in order, and
+rewrites only the block between them, byte for byte outside that block. This is what
+makes `--insert --skip-header` correct together: the TOC is built from the content
+after the existing block (because `localChain` trimmed it away before building the
+TOC), while the rewrite step still sees, and correctly replaces, the existing block
+in the real file. The backup step runs before the rewrite so a failed rewrite still
+leaves a pristine copy on disk; it is skipped when `Insert.NoBackup` is set.
+`FileWriter.WriteAtomic` writes through a temporary file in the same directory and
+renames it over the target, so a failed write cannot truncate the original.
+`Notifier` reports the backup path and the rewritten path on stderr, separate from
+the TOC printed to stdout.
 
 `app.New` only builds `InsertMd` when `cfg.Insert.Enabled` is true; otherwise the
-controller receives the plain `LocalMd` for local files, unchanged from before this
-use case existed. `RemoteMd` is wired with the unwrapped `LocalMd` unconditionally, so
-downloading a remote document and then applying `--insert` to it never happens - the
-temporary file `RemoteMd` creates cannot be the target of a rewrite. `app.Run` warns
-on stderr, once per input, about any file passed alongside `--insert` that is not
-`entity.TypeLocalMD`, and otherwise leaves the document unmodified.
+controller receives the plain `localChain` for local files, unchanged from before
+`InsertMd` existed. `RemoteMd` is wired with `localChain` unconditionally, never with
+`InsertMd`, so downloading a remote document and then applying `--insert` to it never
+happens - the temporary file `RemoteMd` creates cannot be the target of a rewrite.
+`app.Run` warns on stderr, once per input, about any file passed alongside `--insert`
+that is not `entity.TypeLocalMD`, and otherwise leaves the document unmodified.
 
 ### Remote raw Markdown
 
@@ -337,12 +398,12 @@ Controller
   -> RemoteGetter.Get
   -> FileTemper.CreateTemp
   -> write downloaded Markdown
-  -> LocalMd.DoAs
+  -> localChain.DoAs
   -> remove temporary file
   -> entity.Toc
 ```
 
-`RemoteMd` reuses the complete local Markdown workflow after downloading the document. It validates the response media type as `text/plain` before creating the temporary file. It calls `LocalMd.DoAs` with the temporary file path and the original URL as the display path, so rendered links point at the source document instead of the temporary file.
+`RemoteMd` reuses the complete local Markdown workflow after downloading the document. It validates the response media type as `text/plain` before creating the temporary file. It calls `localChain.DoAs` with the temporary file path and the original URL as the display path, so rendered links point at the source document instead of the temporary file. When `--skip-header` is set, `localChain` is `SkipHeader`, so the downloaded document is trimmed the same way a local file would be - skipping a header in a downloaded document is correct, since the document itself is never rewritten.
 
 ### GitHub document page
 

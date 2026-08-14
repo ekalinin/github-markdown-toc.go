@@ -40,6 +40,7 @@ Table of Contents
     * [Multiple files](#multiple-files)
     * [Combo](#combo)
     * [Insert into a file](#insert-into-a-file)
+    * [Skip header](#skip-header)
     * [Starting Depth](#starting-depth)
     * [Depth](#depth)
     * [No Escape](#no-escape)
@@ -104,6 +105,7 @@ Flags:
                    RegExp version. Default: 2024-03
   --insert         Insert the TOC into the file, between <!--ts--> and <!--te-->. Local files only
   --no-backup      Do not keep a backup copy of the file. Requires --insert
+  --skip-header    Ignore everything up to <!--te--> when building the TOC
   --version        Show application version.
 
 Args:
@@ -340,6 +342,27 @@ ran the command, and when) are written right after the TOC, inside the markers.
 
 Status messages - the backup path, or a warning about a non-local input - are
 printed to stderr, not stdout.
+
+Skip header
+-----------
+
+Use `--skip-header` to make `gh-md-toc` ignore everything up to and including the
+end marker (`<!--te-->`) when building the TOC. Only the content after that marker
+is scanned for headings.
+
+```bash
+$ ./gh-md-toc --skip-header README.md
+```
+
+This matters when combined with `--insert`: after a first `--insert` run, the file
+already has a TOC block written between the markers. Re-running `--insert` without
+`--skip-header` scans that block, and anything above it, together with the rest of
+the document. Adding `--skip-header` makes sure only the content after the existing
+block feeds the new TOC, so re-running `--insert` repeatedly does not fold the old
+TOC's own entries back into itself.
+
+`--skip-header` has no effect on documents that don't contain an end marker; the
+whole document is scanned, exactly as without the flag.
 
 Starting Depth
 --------------

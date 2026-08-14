@@ -13,6 +13,7 @@ import (
 	"github.com/ekalinin/github-markdown-toc.go/v2/internal/core/usecase/localmd"
 	"github.com/ekalinin/github-markdown-toc.go/v2/internal/core/usecase/remotehtml"
 	"github.com/ekalinin/github-markdown-toc.go/v2/internal/core/usecase/remotemd"
+	"github.com/ekalinin/github-markdown-toc.go/v2/internal/core/usecase/skipheader"
 )
 
 type Controller interface {
@@ -21,6 +22,13 @@ type Controller interface {
 
 type useCase interface {
 	Do(ctx context.Context, file string) (entity.Toc, error)
+}
+
+// markdownProcessor is the local-document pipeline: the plain use case, or one
+// wrapped by skipheader. Both forms carry the display path through DoAs.
+type markdownProcessor interface {
+	Do(ctx context.Context, file string) (entity.Toc, error)
+	DoAs(ctx context.Context, file, displayPath string) (entity.Toc, error)
 }
 
 type notifier interface {
@@ -51,6 +59,7 @@ func New(cfg Config, stderr io.Writer) (*App, error) {
 		"token-configured", cfg.GitHub.GHToken != "",
 		"insert", cfg.Insert.Enabled,
 		"no-backup", cfg.Insert.NoBackup,
+		"skip-header", cfg.SkipHeader,
 	)
 	ctlCfg := controller.Config{Files: cfg.Files, Serial: cfg.Serial}
 
@@ -84,20 +93,23 @@ func New(cfg Config, stderr io.Writer) (*App, error) {
 	stamper := adapters.NewStamper()
 
 	log.Info("App.New: init usecases ...")
-	ucLocalMD := localmd.New(cfg.Debug, checker, writer, converter, grabberRe, log)
+	var localChain markdownProcessor = localmd.New(cfg.Debug, checker, writer, converter, grabberRe, log)
+	if cfg.SkipHeader {
+		localChain = skipheader.New(localChain, reader, temper, log)
+	}
 
-	var ucLocal useCase = ucLocalMD
+	var ucLocal useCase = localChain
 	if cfg.Insert.Enabled {
 		ucLocal = insertmd.New(
 			insertmd.Config{
 				NoBackup:   cfg.Insert.NoBackup,
 				HideFooter: cfg.Presentation.HideFooter,
 			},
-			ucLocalMD, reader, writer, backupper, stamper, notify, log,
+			localChain, reader, writer, backupper, stamper, notify, log,
 		)
 	}
 
-	ucRemoteMD := remotemd.New(getter, ucLocalMD, temper, log)
+	ucRemoteMD := remotemd.New(getter, localChain, temper, log)
 	ucRemoteHTML := remotehtml.New(cfg.Debug, getter, temper, grabberJSON, log)
 
 	log.Info("App.New: init controller ...")

@@ -6,6 +6,7 @@ import coretoc "github.com/ekalinin/github-markdown-toc.go/v2/internal/core/toc"
 type Config struct {
 	Files        []string
 	Serial       bool
+	SkipHeader   bool
 	Presentation PresentationConfig
 	GitHub       GitHubConfig
 	TOC          coretoc.Config

@@ -205,3 +205,35 @@ func TestLocalMdDoAsUsesDisplayPath(t *testing.T) {
 		t.Errorf("got grabber path %q, want the display path", grabber.gotPath)
 	}
 }
+
+func TestLocalMdDoAsWritesDebugNextToTheDisplayPath(t *testing.T) {
+	dir := t.TempDir()
+	source := filepath.Join(dir, "README.md")
+	trimmed := filepath.Join(dir, "ghtoc-skip-header-123.md")
+	for _, path := range []string{source, trimmed} {
+		if err := os.WriteFile(path, []byte("# Title\n"), 0644); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	uc := New(true, checkerStub{exists: true}, &adapterWriter{},
+		converterStub{html: "<h1>Title</h1>"}, &grabberStub{toc: &entity.Toc{}}, loggerStub{})
+
+	if _, err := uc.DoAs(context.Background(), trimmed, source); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := os.Stat(source + ".debug.html"); err != nil {
+		t.Errorf("got no dump next to the document: %v", err)
+	}
+	if _, err := os.Stat(trimmed + ".debug.html"); !os.IsNotExist(err) {
+		t.Error("got a dump named after the temporary copy, want none")
+	}
+}
+
+// adapterWriter writes through to disk so the test can assert on real files.
+type adapterWriter struct{}
+
+func (adapterWriter) Write(_ context.Context, file string, data []byte) error {
+	return os.WriteFile(file, data, 0644)
+}

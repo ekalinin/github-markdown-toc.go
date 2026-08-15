@@ -53,6 +53,9 @@ CLI behaviour, not about the output format.
 
 ### Fixed
 
+- `--debug` writes its HTML dump next to the document you named. With `--skip-header`
+  the dump used to be named after an internal temporary copy and was left behind in
+  the temp directory.
 - `GH_TOC_URL` is honoured again when `--github-url` is not passed. The flag's non-empty
   default used to shadow the environment variable, so the variable had no effect.
   ([#60](https://github.com/ekalinin/github-markdown-toc.go/pull/60))

@@ -83,7 +83,14 @@ func (uc *LocalMd) DoAs(ctx context.Context, file, displayPath string) (entity.T
 	}
 
 	if uc.debug {
-		htmlFile := file + ".debug.html"
+		// Name the dump after the document the user asked for. When the two differ,
+		// file is a temporary copy that its owner deletes, so a dump named after it
+		// would be stranded in the temp directory instead of next to the document.
+		debugTarget := file
+		if entity.GetType(displayPath) == entity.TypeLocalMD {
+			debugTarget = displayPath
+		}
+		htmlFile := debugTarget + ".debug.html"
 		uc.log.Info("LocalMD: writing html", "file", htmlFile)
 		// TODO: move to port
 		if err := uc.writer.Write(ctx, htmlFile, []byte(html)); err != nil {

@@ -5,6 +5,7 @@
     * [Compiling from source](#compiling-from-source)
     * [Go Install](#go-install)
     * [Homebew (Mac only)](#homebew-mac-only)
+    * [Docker](#docker)
 * [Tests](#tests)
 * [Usage](#usage)
     * [STDIN](#stdin)

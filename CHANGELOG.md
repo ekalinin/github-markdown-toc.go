@@ -65,7 +65,8 @@ Planned release: 2.1.0.
   "Multiple files" and "Combo" sections of the README always documented but the tool
   never actually did. A TOC written into a file with `--insert` is the exception: it
   always uses bare anchors, because GitHub resolves relative links against the
-  document's own directory.
+  document's own directory. Other documents in the same run, such as a remote URL,
+  keep their prefix.
 - `--version` now also reports the OS, architecture and Go version used to build the
   binary. The bare version number stays on the first line, so scripts that parse it
   keep working.

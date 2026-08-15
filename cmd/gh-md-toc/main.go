@@ -30,7 +30,7 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 		return 1
 	}
 
-	application, err := app.New(cfg)
+	application, err := app.New(cfg, stderr)
 	if err != nil {
 		_, _ = fmt.Fprintln(stderr, err)
 		return 1

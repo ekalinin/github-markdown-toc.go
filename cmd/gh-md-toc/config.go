@@ -1,6 +1,8 @@
 package main
 
 import (
+	"errors"
+
 	"gopkg.in/alecthomas/kingpin.v2"
 
 	"github.com/ekalinin/github-markdown-toc.go/v2/internal/app"
@@ -11,6 +13,7 @@ import (
 const (
 	cliName          = "gh-md-toc"
 	defaultGitHubURL = "https://api.github.com"
+	stdinMarker      = "-"
 )
 
 type cliOptions struct {
@@ -26,11 +29,14 @@ type cliOptions struct {
 	debug      *bool
 	githubURL  *string
 	reVersion  *string
+	insert     *bool
+	noBackup   *bool
+	skipHeader *bool
 }
 
 func newCLI() (*kingpin.Application, cliOptions) {
 	parser := kingpin.New(cliName, "")
-	parser.Version(version.Version)
+	parser.Version(version.Full())
 
 	pathsDesc := "Local path or URL of the document to grab TOC. Read MD from stdin if not entered."
 	options := cliOptions{
@@ -52,20 +58,62 @@ func newCLI() (*kingpin.Application, cliOptions) {
 			"re-version",
 			"RegExp version. Default: "+version.GH_2024_03,
 		).Default(version.GH_2024_03).Enum(version.SupportedGHVersions()...),
+		insert: parser.Flag(
+			"insert",
+			"Insert the TOC into the file, between <!--ts--> and <!--te-->. Local files only",
+		).Bool(),
+		noBackup: parser.Flag(
+			"no-backup",
+			"Do not keep a backup copy of the file. Requires --insert",
+		).Bool(),
+		skipHeader: parser.Flag(
+			"skip-header",
+			"Ignore everything up to <!--te--> when building the TOC",
+		).Bool(),
 	}
 
 	return parser, options
 }
 
+// extractStdinMarker removes the "-" STDIN marker from the argument list. The flag
+// parser would otherwise try to read it as a flag.
+func extractStdinMarker(args []string) ([]string, bool) {
+	found := false
+	rest := make([]string, 0, len(args))
+	for _, arg := range args {
+		if arg == stdinMarker {
+			found = true
+			continue
+		}
+		rest = append(rest, arg)
+	}
+	return rest, found
+}
+
 func parseConfig(args []string) (app.Config, error) {
+	args, useStdin := extractStdinMarker(args)
+
 	parser, options := newCLI()
 	if _, err := parser.Parse(args); err != nil {
 		return app.Config{}, err
 	}
 
+	files := *options.paths
+	if useStdin {
+		if len(files) > 0 {
+			return app.Config{}, errors.New(`the "-" STDIN marker cannot be combined with other paths`)
+		}
+		files = nil
+	}
+
+	if *options.noBackup && !*options.insert {
+		return app.Config{}, errors.New("--no-backup requires --insert")
+	}
+
 	return app.Config{
-		Files:  *options.paths,
-		Serial: *options.serial,
+		Files:      files,
+		Serial:     *options.serial,
+		SkipHeader: *options.skipHeader,
 		Presentation: app.PresentationConfig{
 			HideHeader: *options.hideHeader,
 			HideFooter: *options.hideFooter,
@@ -80,6 +128,10 @@ func parseConfig(args []string) (app.Config, error) {
 			Depth:      *options.depth,
 			Escape:     !*options.noEscape,
 			Indent:     *options.indent,
+		},
+		Insert: app.InsertConfig{
+			Enabled:  *options.insert,
+			NoBackup: *options.noBackup,
 		},
 		Debug: *options.debug,
 	}, nil

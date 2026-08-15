@@ -50,10 +50,14 @@ CLI behaviour, not about the output format.
 - Building from source now requires Go 1.26 or newer. `go.mod` declares `go 1.26`, and CI
   no longer tests against 1.21.x, so the toolchain used for tests, builds and releases is
   the same one that ships the binaries.
-  ([#58](https://github.com/ekalinin/github-markdown-toc.go/pull/58))
+  ([#58](https://github.com/ekalinin/github-markdown-toc.go/pull/58),
+  [#84](https://github.com/ekalinin/github-markdown-toc.go/pull/84))
 
 ### Fixed
 
+- `--debug` writes its HTML dump next to the document you named. With `--skip-header`
+  the dump used to be named after an internal temporary copy and was left behind in
+  the temp directory.
 - `GH_TOC_URL` is honoured again when `--github-url` is not passed. The flag's non-empty
   default used to shadow the environment variable, so the variable had no effect.
   ([#60](https://github.com/ekalinin/github-markdown-toc.go/pull/60))

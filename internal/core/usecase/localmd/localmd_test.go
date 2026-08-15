@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"io/fs"
+	"os"
+	"path/filepath"
 	"slices"
 	"strings"
 	"testing"
@@ -38,11 +40,13 @@ func (s converterStub) Convert(context.Context, string) (string, error) {
 }
 
 type grabberStub struct {
-	toc *entity.Toc
-	err error
+	toc     *entity.Toc
+	err     error
+	gotPath string
 }
 
-func (s grabberStub) Grab(context.Context, string) (*entity.Toc, error) {
+func (s *grabberStub) Grab(_ context.Context, path, _ string) (*entity.Toc, error) {
+	s.gotPath = path
 	return s.toc, s.err
 }
 
@@ -57,7 +61,7 @@ func TestDoReturnsTOC(t *testing.T) {
 		checkerStub{exists: true},
 		writerStub{},
 		converterStub{html: "<h1>Title</h1>"},
-		grabberStub{toc: &want},
+		&grabberStub{toc: &want},
 		loggerStub{},
 	)
 
@@ -77,7 +81,7 @@ func TestDoAcceptsEmptyTOC(t *testing.T) {
 		checkerStub{exists: true},
 		writerStub{},
 		converterStub{},
-		grabberStub{toc: &empty},
+		&grabberStub{toc: &empty},
 		loggerStub{},
 	)
 
@@ -131,7 +135,7 @@ func TestDoPropagatesDependencyErrors(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			uc := New(tt.debug, tt.checker, tt.writer, tt.converter, tt.grabber, loggerStub{})
+			uc := New(tt.debug, tt.checker, tt.writer, tt.converter, &tt.grabber, loggerStub{})
 			_, err := uc.Do(context.Background(), "broken.md")
 			if !errors.Is(err, dependencyErr) {
 				t.Fatalf("got error %v, want dependency error", err)
@@ -152,7 +156,7 @@ func TestDoReturnsErrorForMissingFile(t *testing.T) {
 		checkerStub{},
 		writerStub{},
 		converterStub{},
-		grabberStub{},
+		&grabberStub{},
 		loggerStub{},
 	)
 
@@ -174,7 +178,7 @@ func TestDoReturnsContextCancellation(t *testing.T) {
 		checkerStub{exists: true},
 		writerStub{},
 		converterStub{},
-		grabberStub{},
+		&grabberStub{},
 		loggerStub{},
 	)
 
@@ -182,4 +186,54 @@ func TestDoReturnsContextCancellation(t *testing.T) {
 	if !errors.Is(err, context.Canceled) {
 		t.Fatalf("got error %v, want context cancellation", err)
 	}
+}
+
+func TestLocalMdDoAsUsesDisplayPath(t *testing.T) {
+	dir := t.TempDir()
+	file := filepath.Join(dir, "source.md")
+	if err := os.WriteFile(file, []byte("# Title\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	grabber := &grabberStub{toc: &entity.Toc{"* [Title](#title)"}}
+	uc := New(false, checkerStub{exists: true}, writerStub{}, converterStub{html: "<h1>Title</h1>"}, grabber, loggerStub{})
+
+	if _, err := uc.DoAs(context.Background(), file, "https://example.com/README.md"); err != nil {
+		t.Fatal(err)
+	}
+	if grabber.gotPath != "https://example.com/README.md" {
+		t.Errorf("got grabber path %q, want the display path", grabber.gotPath)
+	}
+}
+
+func TestLocalMdDoAsWritesDebugNextToTheDisplayPath(t *testing.T) {
+	dir := t.TempDir()
+	source := filepath.Join(dir, "README.md")
+	trimmed := filepath.Join(dir, "ghtoc-skip-header-123.md")
+	for _, path := range []string{source, trimmed} {
+		if err := os.WriteFile(path, []byte("# Title\n"), 0644); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	uc := New(true, checkerStub{exists: true}, &adapterWriter{},
+		converterStub{html: "<h1>Title</h1>"}, &grabberStub{toc: &entity.Toc{}}, loggerStub{})
+
+	if _, err := uc.DoAs(context.Background(), trimmed, source); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := os.Stat(source + ".debug.html"); err != nil {
+		t.Errorf("got no dump next to the document: %v", err)
+	}
+	if _, err := os.Stat(trimmed + ".debug.html"); !os.IsNotExist(err) {
+		t.Error("got a dump named after the temporary copy, want none")
+	}
+}
+
+// adapterWriter writes through to disk so the test can assert on real files.
+type adapterWriter struct{}
+
+func (adapterWriter) Write(_ context.Context, file string, data []byte) error {
+	return os.WriteFile(file, data, 0644)
 }

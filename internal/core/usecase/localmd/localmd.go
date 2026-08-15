@@ -21,7 +21,7 @@ type htmlConverter interface {
 }
 
 type tocGrabber interface {
-	Grab(context.Context, string) (*entity.Toc, error)
+	Grab(context.Context, string, string) (*entity.Toc, error)
 }
 
 type logger interface {
@@ -53,7 +53,14 @@ func New(debug bool, checker fileChecker, writer fileWriter,
 	}
 }
 
+// Do builds the TOC for file, linking anchors relative to that same file.
 func (uc *LocalMd) Do(ctx context.Context, file string) (entity.Toc, error) {
+	return uc.DoAs(ctx, file, file)
+}
+
+// DoAs builds the TOC for file but renders links against displayPath. They differ
+// when the content was downloaded or trimmed into a temporary file.
+func (uc *LocalMd) DoAs(ctx context.Context, file, displayPath string) (entity.Toc, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, fmt.Errorf("process local Markdown %q: %w", file, err)
 	}
@@ -76,7 +83,14 @@ func (uc *LocalMd) Do(ctx context.Context, file string) (entity.Toc, error) {
 	}
 
 	if uc.debug {
-		htmlFile := file + ".debug.html"
+		// Name the dump after the document the user asked for. When the two differ,
+		// file is a temporary copy that its owner deletes, so a dump named after it
+		// would be stranded in the temp directory instead of next to the document.
+		debugTarget := file
+		if entity.GetType(displayPath) == entity.TypeLocalMD {
+			debugTarget = displayPath
+		}
+		htmlFile := debugTarget + ".debug.html"
 		uc.log.Info("LocalMD: writing html", "file", htmlFile)
 		// TODO: move to port
 		if err := uc.writer.Write(ctx, htmlFile, []byte(html)); err != nil {
@@ -86,7 +100,7 @@ func (uc *LocalMd) Do(ctx context.Context, file string) (entity.Toc, error) {
 	}
 
 	uc.log.Info("LocalMD: grabbing the TOC ...")
-	toc, err := uc.grabber.Grab(ctx, html)
+	toc, err := uc.grabber.Grab(ctx, displayPath, html)
 	if err != nil {
 		uc.log.Info("LocalMD: failed to grab TOC: %s", err)
 		return nil, fmt.Errorf("grab TOC from local Markdown %q: %w", file, err)

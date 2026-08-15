@@ -64,11 +64,13 @@ func (s converterStub) Convert(context.Context, string) (string, error) {
 }
 
 type grabberStub struct {
-	toc *entity.Toc
-	err error
+	toc     *entity.Toc
+	err     error
+	gotPath string
 }
 
-func (s grabberStub) Grab(context.Context, string) (*entity.Toc, error) {
+func (s *grabberStub) Grab(_ context.Context, path, _ string) (*entity.Toc, error) {
+	s.gotPath = path
 	return s.toc, s.err
 }
 
@@ -108,7 +110,7 @@ func newUseCase(
 	temper temperStub,
 	writer writerStub,
 	converter converterStub,
-	grabber grabberStub,
+	grabber *grabberStub,
 ) *RemoteMd {
 	t.Helper()
 	local := localmd.New(
@@ -131,7 +133,7 @@ func TestDoReturnsTOC(t *testing.T) {
 		temper,
 		writerStub{},
 		converterStub{},
-		grabberStub{toc: &want},
+		&grabberStub{toc: &want},
 	)
 
 	got, err := uc.Do(context.Background(), "https://example.com/README.md")
@@ -154,7 +156,7 @@ func TestDoPropagatesDownloadError(t *testing.T) {
 		createTemper(t),
 		writerStub{},
 		converterStub{},
-		grabberStub{},
+		&grabberStub{},
 	)
 
 	const documentURL = "https://example.com/README.md"
@@ -179,7 +181,7 @@ func TestDoPropagatesTemporaryFileError(t *testing.T) {
 		},
 		writerStub{},
 		converterStub{},
-		grabberStub{},
+		&grabberStub{},
 	)
 
 	_, err := uc.Do(context.Background(), "https://example.com/README.md")
@@ -205,7 +207,7 @@ func TestDoCleansUpAfterTemporaryFileWriteError(t *testing.T) {
 		temper,
 		writerStub{},
 		converterStub{},
-		grabberStub{},
+		&grabberStub{},
 	)
 
 	_, err := uc.Do(context.Background(), "https://example.com/README.md")
@@ -226,7 +228,7 @@ func TestDoKeepsRemotePathForLocalProcessingError(t *testing.T) {
 		temper,
 		writerStub{},
 		converterStub{err: dependencyErr},
-		grabberStub{},
+		&grabberStub{},
 	)
 
 	const documentURL = "https://example.com/README.md"
@@ -249,7 +251,7 @@ func TestDoRejectsUnexpectedContentType(t *testing.T) {
 		createTemper(t),
 		writerStub{},
 		converterStub{},
-		grabberStub{},
+		&grabberStub{},
 	)
 
 	_, err := uc.Do(context.Background(), "https://example.com/README.md")
@@ -265,7 +267,7 @@ func TestDoRejectsMalformedContentType(t *testing.T) {
 		createTemper(t),
 		writerStub{},
 		converterStub{},
-		grabberStub{},
+		&grabberStub{},
 	)
 
 	_, err := uc.Do(context.Background(), "https://example.com/README.md")
@@ -287,11 +289,32 @@ func TestDoReturnsTemporaryFileRemovalError(t *testing.T) {
 		temper,
 		writerStub{},
 		converterStub{},
-		grabberStub{toc: &want},
+		&grabberStub{toc: &want},
 	)
 
 	_, err := uc.Do(context.Background(), "https://example.com/README.md")
 	if !errors.Is(err, removeErr) {
 		t.Fatalf("got error %v, want removal error", err)
+	}
+}
+
+func TestRemoteMdPassesURLAsDisplayPath(t *testing.T) {
+	want := entity.Toc{"* [Title](#title)"}
+	grabber := &grabberStub{toc: &want}
+	uc := newUseCase(
+		t,
+		getterStub{body: []byte("# Title"), contentType: "text/plain"},
+		createTemper(t),
+		writerStub{},
+		converterStub{},
+		grabber,
+	)
+
+	const documentURL = "https://example.com/README.md"
+	if _, err := uc.Do(context.Background(), documentURL); err != nil {
+		t.Fatal(err)
+	}
+	if grabber.gotPath != documentURL {
+		t.Errorf("got grabber path %q, want %q", grabber.gotPath, documentURL)
 	}
 }

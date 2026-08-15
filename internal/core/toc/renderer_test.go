@@ -19,6 +19,7 @@ func TestRendererRender(t *testing.T) {
 	tests := []struct {
 		name     string
 		cfg      Config
+		path     string
 		headings []entity.Heading
 		want     entity.Toc
 	}{
@@ -63,11 +64,11 @@ func TestRendererRender(t *testing.T) {
 		{
 			name: "absolute paths",
 			cfg: Config{
-				Path:          "README.md",
 				AbsolutePaths: true,
 				Escape:        true,
 				Indent:        2,
 			},
+			path: "README.md",
 			want: entity.Toc{
 				"* [Root\\.](README.md#root)",
 				"  * [Child\\_\\*](README.md#child_)",
@@ -117,7 +118,7 @@ func TestRendererRender(t *testing.T) {
 			if input == nil {
 				input = headings
 			}
-			got, err := NewRenderer(tt.cfg).Render(context.Background(), input)
+			got, err := NewRenderer(tt.cfg).Render(context.Background(), tt.path, input)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -129,7 +130,7 @@ func TestRendererRender(t *testing.T) {
 }
 
 func TestRendererReturnsEmptyTOC(t *testing.T) {
-	got, err := NewRenderer(DefaultConfig()).Render(context.Background(), nil)
+	got, err := NewRenderer(DefaultConfig()).Render(context.Background(), "", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -141,8 +142,51 @@ func TestRendererReturnsEmptyTOC(t *testing.T) {
 func TestRendererReturnsContextCancellation(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
-	_, err := NewRenderer(DefaultConfig()).Render(ctx, []entity.Heading{{Level: 1}})
+	_, err := NewRenderer(DefaultConfig()).Render(ctx, "", []entity.Heading{{Level: 1}})
 	if !errors.Is(err, context.Canceled) {
 		t.Fatalf("got error %v, want context cancellation", err)
+	}
+}
+
+func TestRendererRenderPrefixesPath(t *testing.T) {
+	headings := []entity.Heading{
+		{Level: 1, Text: "Root", Anchor: "root"},
+		{Level: 2, Text: "Child", Anchor: "child"},
+	}
+	tests := []struct {
+		name string
+		cfg  Config
+		path string
+		want entity.Toc
+	}{
+		{
+			name: "absolute paths on",
+			cfg:  Config{AbsolutePaths: true, Escape: true, Indent: 2},
+			path: "docs/README.md",
+			want: entity.Toc{
+				"* [Root](docs/README.md#root)",
+				"  * [Child](docs/README.md#child)",
+			},
+		},
+		{
+			name: "absolute paths off ignores the path",
+			cfg:  Config{Escape: true, Indent: 2},
+			path: "docs/README.md",
+			want: entity.Toc{
+				"* [Root](#root)",
+				"  * [Child](#child)",
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := NewRenderer(tt.cfg).Render(context.Background(), tt.path, headings)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !slices.Equal(got, tt.want) {
+				t.Errorf("got TOC %v, want %v", got, tt.want)
+			}
+		})
 	}
 }

@@ -2,7 +2,10 @@ package adapters
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"net/http"
+	"strings"
 )
 
 type remotePoster interface {
@@ -37,5 +40,35 @@ func (c *HTMLConverter) Convert(ctx context.Context, file string) (string, error
 	c.log.Info("adapters.HTMLConverter.Convert: start", "file", file)
 	ghURL := c.ghURL + "/markdown/raw"
 	c.log.Info("adapters.HTMLConverter.Convert: sending", "url", ghURL)
-	return c.poster.Post(ctx, ghURL, c.ghToken, file)
+
+	html, err := c.poster.Post(ctx, ghURL, c.ghToken, file)
+	if err != nil {
+		return "", withRateLimitHint(err)
+	}
+	return html, nil
+}
+
+// rateLimitMarker is what GitHub puts in the body when the API rate limit is hit.
+// The bash gh-md-toc greps the response for the same string.
+const rateLimitMarker = "API rate limit exceeded"
+
+// withRateLimitHint points the user at the token options when GitHub throttles us.
+// A 403 on its own is not enough: GitHub also returns it for bad credentials and for
+// a token missing a scope, and sending those users off to fetch a token would be
+// misleading. A 429 is unambiguous.
+func withRateLimitHint(err error) error {
+	var statusErr *HTTPStatusError
+	if !errors.As(err, &statusErr) {
+		return err
+	}
+
+	rateLimited := statusErr.StatusCode == http.StatusTooManyRequests ||
+		(statusErr.StatusCode == http.StatusForbidden &&
+			strings.Contains(statusErr.Body, rateLimitMarker))
+	if !rateLimited {
+		return err
+	}
+	return fmt.Errorf(
+		"%w (GitHub API rate limit reached, pass --token, set GH_TOC_TOKEN, "+
+			"or put the token in token.txt next to the binary)", err)
 }

@@ -7,23 +7,43 @@ import (
 
 	"github.com/ekalinin/github-markdown-toc.go/v2/internal/adapters"
 	"github.com/ekalinin/github-markdown-toc.go/v2/internal/controller"
+	"github.com/ekalinin/github-markdown-toc.go/v2/internal/core/entity"
 	coretoc "github.com/ekalinin/github-markdown-toc.go/v2/internal/core/toc"
+	"github.com/ekalinin/github-markdown-toc.go/v2/internal/core/usecase/insertmd"
 	"github.com/ekalinin/github-markdown-toc.go/v2/internal/core/usecase/localmd"
 	"github.com/ekalinin/github-markdown-toc.go/v2/internal/core/usecase/remotehtml"
 	"github.com/ekalinin/github-markdown-toc.go/v2/internal/core/usecase/remotemd"
+	"github.com/ekalinin/github-markdown-toc.go/v2/internal/core/usecase/skipheader"
 )
 
 type Controller interface {
 	Process(ctx context.Context, stdout io.Writer) error
 }
 
-type App struct {
-	cfg Config
-	ctl Controller
+type useCase interface {
+	Do(ctx context.Context, file string) (entity.Toc, error)
 }
 
-func New(cfg Config) (*App, error) {
+// markdownProcessor is the local-document pipeline: the plain use case, or one
+// wrapped by skipheader. Both forms carry the display path through DoAs.
+type markdownProcessor interface {
+	Do(ctx context.Context, file string) (entity.Toc, error)
+	DoAs(ctx context.Context, file, displayPath string) (entity.Toc, error)
+}
+
+type notifier interface {
+	Notify(format string, args ...any)
+}
+
+type App struct {
+	cfg    Config
+	ctl    Controller
+	notify notifier
+}
+
+func New(cfg Config, stderr io.Writer) (*App, error) {
 	log := adapters.NewLogger(cfg.Debug)
+	notify := adapters.NewNotifier(stderr)
 
 	log.Info(
 		"App.New: init configs ...",
@@ -37,10 +57,20 @@ func New(cfg Config) (*App, error) {
 		"indent", cfg.TOC.Indent,
 		"github-version", cfg.GitHub.GHVersion,
 		"token-configured", cfg.GitHub.GHToken != "",
+		"insert", cfg.Insert.Enabled,
+		"no-backup", cfg.Insert.NoBackup,
+		"skip-header", cfg.SkipHeader,
 	)
 	ctlCfg := controller.Config{Files: cfg.Files, Serial: cfg.Serial}
 
 	log.Info("App.New: init adapters ...")
+	if cfg.GitHub.GHToken == "" {
+		token, err := adapters.NewTokenResolver().Resolve()
+		if err != nil {
+			return nil, fmt.Errorf("read token file: %w", err)
+		}
+		cfg.GitHub.GHToken = token
+	}
 	httpClient := adapters.NewHTTPClient()
 	checker := adapters.NewFileCheck(log)
 	writer := adapters.NewFileWriter()
@@ -51,24 +81,44 @@ func New(cfg Config) (*App, error) {
 	}
 	jsonExtractor := adapters.NewJSONExtractor()
 	rendererCfg := cfg.TOC
-	rendererCfg.AbsolutePaths = len(cfg.Files) > 0
+	// bash gh-md-toc drops the path prefix only when a single document is requested.
+	rendererCfg.AbsolutePaths = len(cfg.Files) > 1
 	renderer := coretoc.NewRenderer(rendererCfg)
 	grabberRe := coretoc.NewGenerator(regexpExtractor, renderer)
 	grabberJSON := coretoc.NewGenerator(jsonExtractor, renderer)
 	getter := adapters.NewRemoteGetterWithClient(true, httpClient)
 	temper := adapters.NewFileTemper()
+	reader := adapters.NewFileReader()
+	backupper := adapters.NewFileBackupper()
+	stamper := adapters.NewStamper()
 
 	log.Info("App.New: init usecases ...")
-	ucLocalMD := localmd.New(cfg.Debug, checker, writer, converter, grabberRe, log)
-	ucRemoteMD := remotemd.New(getter, ucLocalMD, temper, log)
+	var localChain markdownProcessor = localmd.New(cfg.Debug, checker, writer, converter, grabberRe, log)
+	if cfg.SkipHeader {
+		localChain = skipheader.New(localChain, reader, temper, log)
+	}
+
+	var ucLocal useCase = localChain
+	if cfg.Insert.Enabled {
+		ucLocal = insertmd.New(
+			insertmd.Config{
+				NoBackup:   cfg.Insert.NoBackup,
+				HideFooter: cfg.Presentation.HideFooter,
+			},
+			localChain, reader, writer, backupper, stamper, notify, log,
+		)
+	}
+
+	ucRemoteMD := remotemd.New(getter, localChain, temper, log)
 	ucRemoteHTML := remotehtml.New(cfg.Debug, getter, temper, grabberJSON, log)
 
 	log.Info("App.New: init controller ...")
-	ctl := controller.New(ctlCfg, ucLocalMD, ucRemoteMD, ucRemoteHTML, log)
+	ctl := controller.New(ctlCfg, ucLocal, ucRemoteMD, ucRemoteHTML, log)
 
 	log.Info("App.New: done.")
 	return &App{
-		ctl: ctl,
-		cfg: cfg,
+		ctl:    ctl,
+		cfg:    cfg,
+		notify: notify,
 	}, nil
 }

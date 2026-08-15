@@ -43,7 +43,7 @@ type grabberStub struct {
 	err error
 }
 
-func (s grabberStub) Grab(context.Context, string) (*entity.Toc, error) {
+func (s grabberStub) Grab(context.Context, string, string) (*entity.Toc, error) {
 	return s.toc, s.err
 }
 

@@ -25,13 +25,15 @@ func NewGenerator(extractor HeadingExtractor, renderer *Renderer) *Generator {
 	}
 }
 
-func (g *Generator) Grab(ctx context.Context, input string) (*entity.Toc, error) {
+// Grab extracts headings from input and renders them as a TOC for the document at
+// path. The path is only used when the renderer is configured for absolute paths.
+func (g *Generator) Grab(ctx context.Context, path, input string) (*entity.Toc, error) {
 	headings, err := g.extractor.Extract(ctx, input)
 	if err != nil {
 		return nil, fmt.Errorf("extract headings: %w", err)
 	}
 
-	result, err := g.renderer.Render(ctx, headings)
+	result, err := g.renderer.Render(ctx, path, headings)
 	if err != nil {
 		return nil, fmt.Errorf("render TOC: %w", err)
 	}

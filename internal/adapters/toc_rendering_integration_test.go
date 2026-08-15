@@ -23,11 +23,11 @@ func TestJSONAndRegexpExtractorsRenderSameTOC(t *testing.T) {
 		{"level":2,"text":"Mandatory elements","anchor":"mandatory-elements"},
 		{"level":3,"text":"The command plug_list_versions","anchor":"plug_list_versions"}
 	]}}}}`
-	jsonTOC, err := jsonGenerator.Grab(context.Background(), jsonInput)
+	jsonTOC, err := jsonGenerator.Grab(context.Background(), "", jsonInput)
 	if err != nil {
 		t.Fatal(err)
 	}
-	regexpTOC, err := regexpGenerator.Grab(context.Background(), htmlHeadingsV2024)
+	regexpTOC, err := regexpGenerator.Grab(context.Background(), "", htmlHeadingsV2024)
 	if err != nil {
 		t.Fatal(err)
 	}

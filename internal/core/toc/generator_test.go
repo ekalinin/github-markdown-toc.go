@@ -26,7 +26,7 @@ func TestGeneratorRendersExtractedHeadings(t *testing.T) {
 	}}}
 	generator := NewGenerator(extractor, NewRenderer(DefaultConfig()))
 
-	got, err := generator.Grab(context.Background(), "input")
+	got, err := generator.Grab(context.Background(), "", "input")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -40,7 +40,7 @@ func TestGeneratorPropagatesExtractorError(t *testing.T) {
 	extractorErr := errors.New("extract failed")
 	generator := NewGenerator(extractorStub{err: extractorErr}, NewRenderer(DefaultConfig()))
 
-	_, err := generator.Grab(context.Background(), "input")
+	_, err := generator.Grab(context.Background(), "", "input")
 	if !errors.Is(err, extractorErr) {
 		t.Fatalf("got error %v, want extractor error", err)
 	}
@@ -54,8 +54,28 @@ func TestGeneratorPropagatesRendererCancellation(t *testing.T) {
 		NewRenderer(DefaultConfig()),
 	)
 
-	_, err := generator.Grab(ctx, "input")
+	_, err := generator.Grab(ctx, "", "input")
 	if !errors.Is(err, context.Canceled) {
 		t.Fatalf("got error %v, want context cancellation", err)
+	}
+}
+
+func TestGeneratorPassesPathToRenderer(t *testing.T) {
+	extractor := extractorStub{headings: []entity.Heading{{
+		Level:  1,
+		Text:   "Title",
+		Anchor: "title",
+	}}}
+	cfg := DefaultConfig()
+	cfg.AbsolutePaths = true
+	generator := NewGenerator(extractor, NewRenderer(cfg))
+
+	got, err := generator.Grab(context.Background(), "docs/README.md", "input")
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := entity.Toc{"* [Title](docs/README.md#title)"}
+	if got == nil || !slices.Equal(*got, want) {
+		t.Errorf("got TOC %v, want %v", got, want)
 	}
 }

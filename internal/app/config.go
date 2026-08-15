@@ -6,9 +6,11 @@ import coretoc "github.com/ekalinin/github-markdown-toc.go/v2/internal/core/toc"
 type Config struct {
 	Files        []string
 	Serial       bool
+	SkipHeader   bool
 	Presentation PresentationConfig
 	GitHub       GitHubConfig
 	TOC          coretoc.Config
+	Insert       InsertConfig
 	Debug        bool
 }
 
@@ -23,4 +25,10 @@ type GitHubConfig struct {
 	GHToken   string
 	GHUrl     string
 	GHVersion string
+}
+
+// InsertConfig controls rewriting the TOC inside the source document.
+type InsertConfig struct {
+	Enabled  bool
+	NoBackup bool
 }

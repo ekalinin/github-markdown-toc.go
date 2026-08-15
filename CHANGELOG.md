@@ -19,6 +19,13 @@ CLI behaviour, not about the output format.
   dumped configuration. **If you ran `gh-md-toc --debug` in CI or any environment with
   shared logs, rotate that token.** The debug output now only reports whether a token was
   configured. ([#60](https://github.com/ekalinin/github-markdown-toc.go/pull/60))
+- CI and releases now build with Go 1.26.6. Go 1.26.5 carried four standard-library
+  vulnerabilities that `govulncheck` reports as reachable from this code:
+  [GO-2026-6218](https://pkg.go.dev/vuln/GO-2026-6218) (`net/url`),
+  [GO-2026-6090](https://pkg.go.dev/vuln/GO-2026-6090) (`crypto/tls`),
+  [GO-2026-5972](https://pkg.go.dev/vuln/GO-2026-5972) (`encoding/asn1`) and
+  [GO-2026-5026](https://pkg.go.dev/vuln/GO-2026-5026) (`net/http`). Binaries you built
+  yourself with Go 1.26.5 or earlier should be rebuilt.
 
 ### Changed
 
@@ -41,7 +48,7 @@ CLI behaviour, not about the output format.
 - Error messages name the document that failed and the operation that failed on it.
   ([#61](https://github.com/ekalinin/github-markdown-toc.go/pull/61))
 - Building from source now requires Go 1.21 or newer, matching the `log/slog` usage that
-  was already in the code. Releases are built with Go 1.26.5.
+  was already in the code. Releases are built with Go 1.26.6.
   ([#58](https://github.com/ekalinin/github-markdown-toc.go/pull/58))
 
 ### Fixed

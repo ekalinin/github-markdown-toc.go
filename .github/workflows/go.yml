@@ -17,7 +17,7 @@ jobs:
       matrix:
         go-version:
           - "1.21.x"
-          - "1.26.5"
+          - "1.26.6"
     steps:
       - uses: actions/checkout@v7
         with:
@@ -45,7 +45,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v7
         with:
-          go-version: "1.26.5"
+          go-version: "1.26.6"
 
       - name: Verify modules
         run: go mod verify
@@ -75,5 +75,5 @@ jobs:
       - id: govulncheck
         uses: golang/govulncheck-action@v1
         with:
-          go-version-input: "1.26.5"
+          go-version-input: "1.26.6"
           go-package: ./...

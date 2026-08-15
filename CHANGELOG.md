@@ -47,8 +47,9 @@ CLI behaviour, not about the output format.
   ([#61](https://github.com/ekalinin/github-markdown-toc.go/pull/61))
 - Error messages name the document that failed and the operation that failed on it.
   ([#61](https://github.com/ekalinin/github-markdown-toc.go/pull/61))
-- Building from source now requires Go 1.21 or newer, matching the `log/slog` usage that
-  was already in the code. Releases are built with Go 1.26.6.
+- Building from source now requires Go 1.26 or newer. `go.mod` declares `go 1.26`, and CI
+  no longer tests against 1.21.x, so the toolchain used for tests, builds and releases is
+  the same one that ships the binaries.
   ([#58](https://github.com/ekalinin/github-markdown-toc.go/pull/58))
 
 ### Fixed

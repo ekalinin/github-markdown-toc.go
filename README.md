@@ -73,7 +73,7 @@ $ ./gh-md-toc --version
 Compiling from source
 ---------------------
 
-You need Go 1.21 or newer installed in your OS:
+You need Go 1.26 or newer installed in your OS:
 
 ```bash
 $ make build
@@ -104,7 +104,7 @@ Args:
 Go Install
 ------------------
 
-You need Go 1.21 or newer installed in your OS:
+You need Go 1.26 or newer installed in your OS:
 
 ```bash
 go install "github.com/ekalinin/github-markdown-toc.go/cmd/gh-md-toc@latest"

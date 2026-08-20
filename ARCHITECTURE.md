@@ -60,6 +60,9 @@ internal/core/entity
 ├── Toc
 ├── Type
 └── MarkerStart / MarkerEnd
+
+internal/core/mdsplit
+└── Split (cuts a document into chunks the GitHub Markdown API accepts)
 ```
 
 ## Dependency direction
@@ -316,14 +319,24 @@ Controller
   -> LocalMd.Do
   -> FileChecker.Exists
   -> HTMLConverter.Convert
-  -> RemotePoster.Post
+  -> RemotePoster.Post          (documents up to 384 KB)
+  -> mdsplit.Split              (larger documents)
+  -> RemotePoster.PostBody      (once per chunk)
   -> GitHub /markdown/raw API
-  -> RegexpExtractor.Extract
+  -> RegexpExtractor.Extract    (once per chunk)
   -> Renderer.Render
   -> entity.Toc
 ```
 
 When debug mode is enabled, `LocalMd` writes the returned HTML to `<input>.debug.html` through `FileWriter`.
+
+`HTMLConverter.Convert` returns one HTML string per request. A document larger than
+384 KB is cut by `mdsplit` at blank lines outside fenced code blocks, HTML comments
+and raw HTML blocks, so every chunk parses the way those lines parse inside the whole
+document; a chunk forced to end inside such a block closes it and reopens it in the
+next chunk. `Generator.Grab` then extracts headings from every chunk and renumbers
+duplicate anchors against a document-wide counter, because GitHub numbered duplicates
+inside each chunk in isolation.
 
 ### Skip header (`--skip-header`)
 

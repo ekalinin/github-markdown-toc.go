@@ -18,6 +18,7 @@
     * [Starting Depth](#starting-depth)
     * [Depth](#depth)
     * [No escape](#no-escape)
+    * [Large documents](#large-documents)
     * [GitHub token](#github-token)
     * [GitHub Enterprise Server](#github-enterprise-server)
     * [Bash/ZSH auto\-complete](#bashzsh-auto-complete)

@@ -20,6 +20,9 @@ Planned release: 2.1.0.
 - `token.txt`, read from next to the executable, is now the last fallback for a GitHub
   token, after `--token` and `GH_TOC_TOKEN`.
 - A Docker image is published to `ghcr.io/ekalinin/github-markdown-toc.go`.
+- Documents larger than GitHub's 400 KB Markdown API limit are converted in chunks
+  instead of failing, with duplicate anchors numbered across the whole document.
+  ([#25](https://github.com/ekalinin/github-markdown-toc.go/issues/25))
 
 ### Security
 

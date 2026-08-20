@@ -45,6 +45,7 @@ Table of Contents
     * [Starting Depth](#starting-depth)
     * [Depth](#depth)
     * [No Escape](#no-escape)
+    * [Large documents](#large-documents)
     * [Github token](#github-token)
     * [GitHub Enterprise Server](#github-enterprise-server)
     * [Bash/ZSH auto\-complete](#bashzsh-auto-complete)
@@ -430,6 +431,21 @@ No escape
 ➥ ./gh-md-toc --no-escape ~/projects/my/Dockerfile.vim/README.md | grep Docker
 * [Dockerfile.vim](#dockerfilevim)
 ```
+
+Large documents
+---------------
+
+GitHub's `/markdown/raw` API renders at most 400 KB per request. A larger document is
+split automatically at blank lines outside code blocks, converted in several requests
+and reassembled into one TOC, with duplicate anchors numbered as they would be for
+the whole document.
+
+The only visible difference is the number of API calls: a 2 MB document costs six
+requests instead of one, which reaches the rate limit six times faster. Pass a token
+(see below) when you work with documents of that size.
+
+A document is only rejected when a single line is larger than the limit, since there
+is no way to split it without changing what it renders to.
 
 GitHub token
 ------------

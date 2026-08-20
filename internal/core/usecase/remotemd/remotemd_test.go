@@ -59,8 +59,8 @@ type converterStub struct {
 	err error
 }
 
-func (s converterStub) Convert(context.Context, string) (string, error) {
-	return "<h1>Title</h1>", s.err
+func (s converterStub) Convert(context.Context, string) ([]string, error) {
+	return []string{"<h1>Title</h1>"}, s.err
 }
 
 type grabberStub struct {
@@ -69,7 +69,7 @@ type grabberStub struct {
 	gotPath string
 }
 
-func (s *grabberStub) Grab(_ context.Context, path, _ string) (*entity.Toc, error) {
+func (s *grabberStub) Grab(_ context.Context, path string, _ ...string) (*entity.Toc, error) {
 	s.gotPath = path
 	return s.toc, s.err
 }

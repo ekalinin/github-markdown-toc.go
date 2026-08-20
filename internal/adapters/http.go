@@ -1,6 +1,7 @@
 package adapters
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -119,15 +120,24 @@ func HttpPost(ctx context.Context, client *http.Client, url, path, token string)
 		_ = file.Close()
 	}()
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, file)
-	if err != nil {
-		return "", err
-	}
 	fileInfo, err := file.Stat()
 	if err != nil {
 		return "", err
 	}
-	req.ContentLength = fileInfo.Size()
+	return httpPost(ctx, client, url, file, fileInfo.Size(), token)
+}
+
+// HttpPostBody sends an in-memory body in an HTTP POST request.
+func HttpPostBody(ctx context.Context, client *http.Client, url string, body []byte, token string) (string, error) {
+	return httpPost(ctx, client, url, bytes.NewReader(body), int64(len(body)), token)
+}
+
+func httpPost(ctx context.Context, client *http.Client, url string, body io.Reader, size int64, token string) (string, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, body)
+	if err != nil {
+		return "", err
+	}
+	req.ContentLength = size
 
 	if token != "" {
 		req.Header.Add("Authorization", "token "+token)

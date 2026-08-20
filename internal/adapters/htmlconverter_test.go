@@ -12,6 +12,7 @@ type fakePoster struct {
 	gotURL   string
 	gotToken string
 	gotPath  string
+	gotBody  []byte
 	retBody  string
 	retErr   error
 }
@@ -20,6 +21,13 @@ func (p *fakePoster) Post(_ context.Context, url, token, path string) (string, e
 	p.gotPath = path
 	p.gotToken = token
 	p.gotURL = url
+	return p.retBody, p.retErr
+}
+
+func (p *fakePoster) PostBody(_ context.Context, url, token string, body []byte) (string, error) {
+	p.gotURL = url
+	p.gotToken = token
+	p.gotBody = body
 	return p.retBody, p.retErr
 }
 
@@ -80,6 +88,10 @@ func Test_HTMLConverterX(t *testing.T) {
 type posterStub struct{ err error }
 
 func (s posterStub) Post(context.Context, string, string, string) (string, error) {
+	return "", s.err
+}
+
+func (s posterStub) PostBody(context.Context, string, string, []byte) (string, error) {
 	return "", s.err
 }
 

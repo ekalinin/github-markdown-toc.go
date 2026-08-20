@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -265,5 +266,38 @@ func Test_doHTTPReq_issue35(t *testing.T) {
 	}
 	if resHeader != "text/plain; charset=utf-8" {
 		t.Error("response header should be \"Hello, client\", but got:", resHeader)
+	}
+}
+
+func TestHttpPostBody(t *testing.T) {
+	token := "test-token"
+	var gotBody []byte
+	var gotToken string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		gotBody = body
+		gotToken = r.Header.Get("Authorization")
+		if _, err := w.Write([]byte("<h1>ok</h1>")); err != nil {
+			t.Error(err)
+		}
+	}))
+	defer srv.Close()
+
+	got, err := HttpPostBody(context.Background(), testHTTPClient(), srv.URL, []byte("# Title\n"), token)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got != "<h1>ok</h1>" {
+		t.Errorf("got response %q, want the rendered HTML", got)
+	}
+	if string(gotBody) != "# Title\n" {
+		t.Errorf("got body %q, want the posted content", gotBody)
+	}
+	if want := "token " + token; gotToken != want {
+		t.Errorf("got authorization %q, want %q", gotToken, want)
 	}
 }

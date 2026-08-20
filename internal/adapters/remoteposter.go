@@ -23,3 +23,10 @@ func (r *RemotePoster) Post(ctx context.Context, url, token, path string) (strin
 	}
 	return HttpPost(ctx, r.client, url, path, token)
 }
+
+func (r *RemotePoster) PostBody(ctx context.Context, url, token string, body []byte) (string, error) {
+	if err := ctx.Err(); err != nil {
+		return "", err
+	}
+	return HttpPostBody(ctx, r.client, url, body, token)
+}

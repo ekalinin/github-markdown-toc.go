@@ -10,6 +10,7 @@ import (
 
 type remotePoster interface {
 	Post(context.Context, string, string, string) (string, error)
+	PostBody(context.Context, string, string, []byte) (string, error)
 }
 
 type HTMLConverter struct {

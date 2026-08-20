@@ -11,11 +11,17 @@ import (
 )
 
 type innerStub struct {
-	toc entity.Toc
-	err error
+	toc            entity.Toc
+	err            error
+	gotDisplayPath *string
 }
 
-func (s innerStub) Do(context.Context, string) (entity.Toc, error) { return s.toc, s.err }
+func (s innerStub) DoAs(_ context.Context, _, displayPath string) (entity.Toc, error) {
+	if s.gotDisplayPath != nil {
+		*s.gotDisplayPath = displayPath
+	}
+	return s.toc, s.err
+}
 
 type readerStub struct {
 	data []byte
@@ -198,5 +204,20 @@ func TestInsertMdWriteFailurePropagates(t *testing.T) {
 	}
 	if len(notify.messages) != 0 {
 		t.Errorf("got messages %v, want none - the insert notice must not claim a write that failed", notify.messages)
+	}
+}
+
+func TestInsertMdAsksTheInnerUseCaseForBareAnchors(t *testing.T) {
+	var gotDisplayPath string
+	uc := New(Config{NoBackup: true},
+		innerStub{toc: entity.Toc{"* [A](#a)"}, gotDisplayPath: &gotDisplayPath},
+		readerStub{data: []byte("<!--ts-->\n<!--te-->\n")}, &writerSpy{},
+		&backupperSpy{}, stamperStub{}, &notifierSpy{}, loggerStub{})
+
+	if _, err := uc.Do(context.Background(), "README.md"); err != nil {
+		t.Fatal(err)
+	}
+	if gotDisplayPath != "" {
+		t.Errorf("got display path %q, want an empty one so the TOC links to the document itself", gotDisplayPath)
 	}
 }

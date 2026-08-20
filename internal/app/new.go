@@ -45,6 +45,16 @@ func New(cfg Config, stderr io.Writer) (*App, error) {
 	log := adapters.NewLogger(cfg.Debug)
 	notify := adapters.NewNotifier(stderr)
 
+	// Resolve the token.txt fallback before logging, so "token-configured" reflects
+	// the token that will actually be used, not just what --token/GH_TOC_TOKEN set.
+	if cfg.GitHub.GHToken == "" {
+		token, err := adapters.NewTokenResolver().Resolve()
+		if err != nil {
+			return nil, fmt.Errorf("read token file: %w", err)
+		}
+		cfg.GitHub.GHToken = token
+	}
+
 	log.Info(
 		"App.New: init configs ...",
 		"file-count", len(cfg.Files),
@@ -64,13 +74,6 @@ func New(cfg Config, stderr io.Writer) (*App, error) {
 	ctlCfg := controller.Config{Files: cfg.Files, Serial: cfg.Serial}
 
 	log.Info("App.New: init adapters ...")
-	if cfg.GitHub.GHToken == "" {
-		token, err := adapters.NewTokenResolver().Resolve()
-		if err != nil {
-			return nil, fmt.Errorf("read token file: %w", err)
-		}
-		cfg.GitHub.GHToken = token
-	}
 	httpClient := adapters.NewHTTPClient()
 	checker := adapters.NewFileCheck(log)
 	writer := adapters.NewFileWriter()
@@ -82,6 +85,9 @@ func New(cfg Config, stderr io.Writer) (*App, error) {
 	jsonExtractor := adapters.NewJSONExtractor()
 	rendererCfg := cfg.TOC
 	// bash gh-md-toc drops the path prefix only when a single document is requested.
+	// bash gh-md-toc drops the path prefix only when a single document is requested.
+	// InsertMd asks for bare anchors per document, so this stays a run-level rule and
+	// remote documents keep their URL prefix even when --insert is set.
 	rendererCfg.AbsolutePaths = len(cfg.Files) > 1
 	renderer := coretoc.NewRenderer(rendererCfg)
 	grabberRe := coretoc.NewGenerator(regexpExtractor, renderer)

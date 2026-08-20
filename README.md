@@ -32,6 +32,7 @@ Table of Contents
     * [Compiling from source](#compiling-from-source)
     * [Go Install](#go-install)
     * [Homebew (Mac only)](#homebew-mac-only)
+    * [Docker](#docker)
   * [Tests](#tests)
   * [Usage](#usage)
     * [STDIN](#stdin)
@@ -65,7 +66,7 @@ See the releases page, "Downloads" section:
 For example:
 
 ```bash
-$ wget https://github.com/ekalinin/github-markdown-toc.go/releases/download/1.1.0/gh-md-toc.linux.amd64.tgz
+$ wget https://github.com/ekalinin/github-markdown-toc.go/releases/download/v2.0.1/gh-md-toc.linux.amd64.tgz
 $ tar xzvf gh-md-toc.linux.amd64.tgz
 gh-md-toc
 $ ./gh-md-toc --version
@@ -128,6 +129,19 @@ Homebew (Mac only)
 ```bash
 $ brew install github-markdown-toc
 ```
+
+Docker
+------
+
+```bash
+$ docker run --rm -v "$PWD:/data" -w /data \
+    ghcr.io/ekalinin/github-markdown-toc.go:latest README.md
+```
+
+Pass a token with `-e GH_TOC_TOKEN=...` when you hit the GitHub API rate limit.
+
+The image runs as a non-root user, so `--insert` against a bind-mounted file fails
+with a permission error unless you also pass `--user "$(id -u):$(id -g)"`.
 
 Tests
 =====
@@ -332,6 +346,10 @@ heading is not written into the file, only the list itself.
 `--insert` only works on local files. A remote URL passed alongside `--insert` is
 reported as not local and left unmodified, instead of failing the whole run.
 
+An inserted TOC always links with bare anchors (`#section`), even when several files
+are passed at once. GitHub resolves relative links against the document's own
+directory, so prefixing the links with the document's path would break them.
+
 Before rewriting the file, a backup copy is kept next to it, named
 `<file>.orig.<timestamp>`. Pass `--no-backup` to skip the backup; that flag requires
 `--insert` and is rejected on its own.
@@ -418,6 +436,11 @@ GitHub token
 
 Without a GitHub token, the `/markdown/raw` endpoint allows very few requests per hour; when the rate limit is exceeded, the tool will suggest passing a token via `--token`, `GH_TOC_TOKEN`, or `token.txt`.
 All your tokents are [here](https://github.com/settings/tokens).
+
+The token is resolved in this order: the `--token` flag, then the `GH_TOC_TOKEN`
+environment variable, then a `token.txt` file placed next to the executable. The file
+is the last fallback and is only used when neither the flag nor the environment
+variable is set.
 
 Example for cli argument:
 

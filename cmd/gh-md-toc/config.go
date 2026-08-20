@@ -106,6 +106,10 @@ func parseConfig(args []string) (app.Config, error) {
 		files = nil
 	}
 
+	if *options.insert && len(files) == 0 {
+		return app.Config{}, errors.New("--insert requires at least one file path")
+	}
+
 	if *options.noBackup && !*options.insert {
 		return app.Config{}, errors.New("--no-backup requires --insert")
 	}

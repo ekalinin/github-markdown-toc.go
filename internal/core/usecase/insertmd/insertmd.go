@@ -11,8 +11,12 @@ import (
 // createdBy is the attribution written into the document, next to the TOC.
 const createdBy = "<!-- Created by https://github.com/ekalinin/github-markdown-toc.go -->"
 
+// useCase is the local-document pipeline InsertMd wraps. It takes a display path
+// because InsertMd needs the TOC rendered with bare anchors: the TOC is written into
+// the document itself, and GitHub resolves relative links against that document's own
+// directory, so a path prefix there would point somewhere else.
 type useCase interface {
-	Do(context.Context, string) (entity.Toc, error)
+	DoAs(context.Context, string, string) (entity.Toc, error)
 }
 
 type fileReader interface {
@@ -90,7 +94,7 @@ func (uc *InsertMd) Do(ctx context.Context, file string) (entity.Toc, error) {
 	}
 
 	uc.log.Info("InsertMD: start", "file", file)
-	toc, err := uc.inner.Do(ctx, file)
+	toc, err := uc.inner.DoAs(ctx, file, "")
 	if err != nil {
 		return nil, err
 	}

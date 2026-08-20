@@ -9,8 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Planned release: 2.1.0.
 
-The generated table of contents is byte-identical to 2.0.1. Everything below is about
-CLI behaviour, not about the output format.
+### Added
+
+- `--insert` writes the generated TOC directly into a document, replacing everything
+  between a `<!--ts-->` and `<!--te-->` marker pair. A backup copy is kept next to the
+  file unless `--no-backup` is also passed.
+- `--skip-header` ignores everything up to and including `<!--te-->` when building the
+  TOC, so a document's own title heading is not picked up as an entry.
+- `-` is now accepted as an explicit marker for reading Markdown from STDIN.
+- `token.txt`, read from next to the executable, is now the last fallback for a GitHub
+  token, after `--token` and `GH_TOC_TOKEN`.
+- A Docker image is published to `ghcr.io/ekalinin/github-markdown-toc.go`.
 
 ### Security
 
@@ -52,6 +61,17 @@ CLI behaviour, not about the output format.
   the same one that ships the binaries.
   ([#58](https://github.com/ekalinin/github-markdown-toc.go/pull/58),
   [#84](https://github.com/ekalinin/github-markdown-toc.go/pull/84))
+- Multi-document runs now prefix links with the document path, which is what the
+  "Multiple files" and "Combo" sections of the README always documented but the tool
+  never actually did. A TOC written into a file with `--insert` is the exception: it
+  always uses bare anchors, because GitHub resolves relative links against the
+  document's own directory. Other documents in the same run, such as a remote URL,
+  keep their prefix.
+- `--version` now also reports the OS, architecture and Go version used to build the
+  binary. The bare version number stays on the first line, so scripts that parse it
+  keep working.
+- `--hide-footer` gains a second meaning under `--insert`: it also suppresses the
+  signature comment written into the file, not just the printed footer.
 
 ### Fixed
 
@@ -81,6 +101,10 @@ CLI behaviour, not about the output format.
 - `gopkg.in/alecthomas/kingpin.v2` updated from v2.2.4 to v2.2.6, and the indirect module
   graph was tidied. The CLI surface is unchanged.
   ([#68](https://github.com/ekalinin/github-markdown-toc.go/pull/68))
+- GitHub rate-limit responses now explain that a token raises the limit, instead of
+  surfacing a bare HTTP status.
+- Remote Markdown documents now render links against their source URL instead of the
+  path of the temporary file they were downloaded to.
 
 ## [2.0.1] - 2026-04-03
 

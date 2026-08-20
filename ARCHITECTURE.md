@@ -278,7 +278,7 @@ app.Config
     └── NoBackup bool
 ```
 
-`cmd/gh-md-toc` maps flags and environment variables into this structure. `app.New` derives `TOC.AbsolutePaths` from whether the CLI received multiple file arguments, matching bash `gh-md-toc`, which drops the prefix when a single document is requested.
+`cmd/gh-md-toc` maps flags and environment variables into this structure. `app.New` derives `TOC.AbsolutePaths` from whether the CLI received multiple file arguments, matching bash `gh-md-toc`, which drops the prefix when a single document is requested. `InsertMd` overrides this per document rather than per run: it asks its inner use case for a TOC rendered against an empty display path, so a TOC written into a document links to itself with bare anchors, since GitHub resolves relative links against that document's own directory. Documents that are not inserted into, such as a remote URL passed in the same run, keep their prefix.
 
 `SkipHeader` selects whether `app.New` wraps `LocalMd` in `SkipHeader` before
 assigning the result to `localChain`; it takes no other parameters, since the

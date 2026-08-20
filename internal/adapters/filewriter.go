@@ -27,6 +27,14 @@ func (f *FileWriter) WriteAtomic(ctx context.Context, file string, data []byte) 
 		return err
 	}
 
+	// Resolve a symlink to its target, so the rename below replaces the target
+	// document instead of dropping a regular file in place of the link. A path that
+	// cannot be resolved (e.g. it does not exist yet) is handled below exactly as
+	// before.
+	if resolved, resolveErr := filepath.EvalSymlinks(file); resolveErr == nil {
+		file = resolved
+	}
+
 	perm := os.FileMode(0644)
 	if info, statErr := os.Stat(file); statErr == nil {
 		perm = info.Mode().Perm()

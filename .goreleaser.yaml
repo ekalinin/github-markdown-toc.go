@@ -16,6 +16,40 @@ builds:
       - amd64
       - arm64
       - arm
+dockers:
+  - image_templates:
+      - "ghcr.io/ekalinin/github-markdown-toc.go:{{ .Version }}-amd64"
+      - "ghcr.io/ekalinin/github-markdown-toc.go:latest-amd64"
+    dockerfile: Dockerfile
+    use: buildx
+    goos: linux
+    goarch: amd64
+    build_flag_templates:
+      - "--platform=linux/amd64"
+      - "--label=org.opencontainers.image.source=https://github.com/ekalinin/github-markdown-toc.go"
+      - "--label=org.opencontainers.image.version={{ .Version }}"
+  - image_templates:
+      - "ghcr.io/ekalinin/github-markdown-toc.go:{{ .Version }}-arm64"
+      - "ghcr.io/ekalinin/github-markdown-toc.go:latest-arm64"
+    dockerfile: Dockerfile
+    use: buildx
+    goos: linux
+    goarch: arm64
+    build_flag_templates:
+      - "--platform=linux/arm64"
+      - "--label=org.opencontainers.image.source=https://github.com/ekalinin/github-markdown-toc.go"
+      - "--label=org.opencontainers.image.version={{ .Version }}"
+
+docker_manifests:
+  - name_template: "ghcr.io/ekalinin/github-markdown-toc.go:{{ .Version }}"
+    image_templates:
+      - "ghcr.io/ekalinin/github-markdown-toc.go:{{ .Version }}-amd64"
+      - "ghcr.io/ekalinin/github-markdown-toc.go:{{ .Version }}-arm64"
+  - name_template: "ghcr.io/ekalinin/github-markdown-toc.go:latest"
+    image_templates:
+      - "ghcr.io/ekalinin/github-markdown-toc.go:latest-amd64"
+      - "ghcr.io/ekalinin/github-markdown-toc.go:latest-arm64"
+
 checksum:
   name_template: 'checksums.txt'
 snapshot:

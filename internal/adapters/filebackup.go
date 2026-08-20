@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"time"
 )
 
@@ -33,6 +34,13 @@ func (b *FileBackupper) Backup(ctx context.Context, file string) (string, error)
 		return "", err
 	}
 
+	// Resolve a symlink to its target, so the backup lands next to the real document
+	// rather than next to the link. A path that cannot be resolved (e.g. it does not
+	// exist) is handled below exactly as before.
+	if resolved, resolveErr := filepath.EvalSymlinks(file); resolveErr == nil {
+		file = resolved
+	}
+
 	info, err := os.Stat(file)
 	if err != nil {
 		return "", err
@@ -45,6 +53,9 @@ func (b *FileBackupper) Backup(ctx context.Context, file string) (string, error)
 	backup := fmt.Sprintf("%s.orig.%s", file, b.now().Format(backupTimeLayout))
 	dst, err := os.OpenFile(backup, os.O_WRONLY|os.O_CREATE|os.O_EXCL, info.Mode().Perm())
 	if err != nil {
+		if os.IsExist(err) {
+			return "", fmt.Errorf("backup %q already exists, refusing to overwrite it: %w", backup, err)
+		}
 		return "", err
 	}
 	_, writeErr := dst.Write(data)

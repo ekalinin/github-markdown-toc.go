@@ -220,3 +220,23 @@ func TestParseConfigNoBackupRequiresInsert(t *testing.T) {
 		t.Errorf("got error %q, want it to explain the dependency", err)
 	}
 }
+
+func TestParseConfigInsertRequiresFilePath(t *testing.T) {
+	_, err := parseConfig([]string{"--insert"})
+	if err == nil {
+		t.Fatal("got no error, want a usage error")
+	}
+	if !strings.Contains(err.Error(), "--insert requires at least one file path") {
+		t.Errorf("got error %q, want it to explain the dependency", err)
+	}
+}
+
+func TestParseConfigInsertRejectsStdinMarker(t *testing.T) {
+	_, err := parseConfig([]string{"--insert", "-"})
+	if err == nil {
+		t.Fatal("got no error, want a usage error")
+	}
+	if !strings.Contains(err.Error(), "--insert requires at least one file path") {
+		t.Errorf("got error %q, want it to explain the dependency", err)
+	}
+}

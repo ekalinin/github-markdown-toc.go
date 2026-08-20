@@ -35,8 +35,8 @@ type converterStub struct {
 	err  error
 }
 
-func (s converterStub) Convert(context.Context, string) (string, error) {
-	return s.html, s.err
+func (s converterStub) Convert(context.Context, string) ([]string, error) {
+	return []string{s.html}, s.err
 }
 
 type grabberStub struct {

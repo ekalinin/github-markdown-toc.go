@@ -3,8 +3,14 @@ package adapters
 import (
 	"context"
 	"errors"
+	"fmt"
+	"io"
 	"net/http"
+	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 )
 
@@ -60,8 +66,8 @@ func Test_HTMLConverter(t *testing.T) {
 			}
 
 			if !tt.failed {
-				if got != want {
-					t.Errorf("Got=%v, want=%v", got, want)
+				if len(got) != 1 || got[0] != want {
+					t.Errorf("Got=%v, want=[%v]", got, want)
 				}
 				if got := tt.poster.gotPath; got != path {
 					t.Errorf("Got=%v, want=%v", got, path)
@@ -140,5 +146,61 @@ func TestHTMLConverterRateLimitHint(t *testing.T) {
 				t.Errorf("got hint=%v in %q, want %v", hasHint, err, tt.wantHint)
 			}
 		})
+	}
+}
+
+func TestHTMLConverterSplitsLargeDocuments(t *testing.T) {
+	var mu sync.Mutex
+	var bodies [][]byte
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		mu.Lock()
+		bodies = append(bodies, body)
+		n := len(bodies)
+		mu.Unlock()
+		if _, err := fmt.Fprintf(w, "<h1>chunk %d</h1>", n); err != nil {
+			t.Error(err)
+		}
+	}))
+	defer srv.Close()
+
+	var doc strings.Builder
+	for doc.Len() <= 3*maxChunkBytes {
+		doc.WriteString("# Heading\n\n")
+		doc.WriteString(strings.Repeat("word ", 200))
+		doc.WriteString("\n\n")
+	}
+	file := filepath.Join(t.TempDir(), "big.md")
+	if err := os.WriteFile(file, []byte(doc.String()), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	converter := NewHTMLConverterWithClient("", srv.URL, srv.Client(), NewLogger(false))
+	got, err := converter.Convert(context.Background(), file)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(got) < 4 {
+		t.Fatalf("got %d chunks, want at least 4", len(got))
+	}
+	mu.Lock()
+	defer mu.Unlock()
+	if len(bodies) != len(got) {
+		t.Fatalf("got %d requests for %d chunks, want one each", len(bodies), len(got))
+	}
+	for i, body := range bodies {
+		if len(body) > maxChunkBytes {
+			t.Errorf("request %d carried %d bytes, want at most %d", i, len(body), maxChunkBytes)
+		}
+	}
+	for i, html := range got {
+		if want := fmt.Sprintf("<h1>chunk %d</h1>", i+1); html != want {
+			t.Errorf("chunk %d is %q, want %q", i, html, want)
+		}
 	}
 }

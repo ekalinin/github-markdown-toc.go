@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io/fs"
+	"strings"
 
 	"github.com/ekalinin/github-markdown-toc.go/v2/internal/core/entity"
 )
@@ -17,7 +18,7 @@ type fileWriter interface {
 }
 
 type htmlConverter interface {
-	Convert(context.Context, string) (string, error)
+	Convert(context.Context, string) ([]string, error)
 }
 
 type tocGrabber interface {
@@ -93,14 +94,14 @@ func (uc *LocalMd) DoAs(ctx context.Context, file, displayPath string) (entity.T
 		htmlFile := debugTarget + ".debug.html"
 		uc.log.Info("LocalMD: writing html", "file", htmlFile)
 		// TODO: move to port
-		if err := uc.writer.Write(ctx, htmlFile, []byte(html)); err != nil {
+		if err := uc.writer.Write(ctx, htmlFile, []byte(strings.Join(html, "\n"))); err != nil {
 			uc.log.Info("writing html file error: %s", err)
 			return nil, fmt.Errorf("write debug HTML for %q: %w", file, err)
 		}
 	}
 
 	uc.log.Info("LocalMD: grabbing the TOC ...")
-	toc, err := uc.grabber.Grab(ctx, displayPath, html)
+	toc, err := uc.grabber.Grab(ctx, displayPath, html...)
 	if err != nil {
 		uc.log.Info("LocalMD: failed to grab TOC: %s", err)
 		return nil, fmt.Errorf("grab TOC from local Markdown %q: %w", file, err)

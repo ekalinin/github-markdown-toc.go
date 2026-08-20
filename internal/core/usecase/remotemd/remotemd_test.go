@@ -59,8 +59,8 @@ type converterStub struct {
 	err error
 }
 
-func (s converterStub) Convert(context.Context, string) (string, error) {
-	return "<h1>Title</h1>", s.err
+func (s converterStub) Convert(context.Context, string) ([]string, error) {
+	return []string{"<h1>Title</h1>"}, s.err
 }
 
 type grabberStub struct {

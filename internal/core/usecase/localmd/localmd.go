@@ -21,7 +21,7 @@ type htmlConverter interface {
 }
 
 type tocGrabber interface {
-	Grab(context.Context, string, string) (*entity.Toc, error)
+	Grab(context.Context, string, ...string) (*entity.Toc, error)
 }
 
 type logger interface {

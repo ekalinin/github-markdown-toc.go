@@ -45,7 +45,7 @@ type grabberStub struct {
 	gotPath string
 }
 
-func (s *grabberStub) Grab(_ context.Context, path, _ string) (*entity.Toc, error) {
+func (s *grabberStub) Grab(_ context.Context, path string, _ ...string) (*entity.Toc, error) {
 	s.gotPath = path
 	return s.toc, s.err
 }

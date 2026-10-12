@@ -31,13 +31,22 @@ Planned release: 2.1.0.
   dumped configuration. **If you ran `gh-md-toc --debug` in CI or any environment with
   shared logs, rotate that token.** The debug output now only reports whether a token was
   configured. ([#60](https://github.com/ekalinin/github-markdown-toc.go/pull/60))
-- CI and releases now build with Go 1.26.6. Go 1.26.5 carried four standard-library
+- CI and releases now build with Go 1.26.9. Go 1.26.5 carried four standard-library
   vulnerabilities that `govulncheck` reports as reachable from this code:
   [GO-2026-6218](https://pkg.go.dev/vuln/GO-2026-6218) (`net/url`),
   [GO-2026-6090](https://pkg.go.dev/vuln/GO-2026-6090) (`crypto/tls`),
   [GO-2026-5972](https://pkg.go.dev/vuln/GO-2026-5972) (`encoding/asn1`) and
-  [GO-2026-5026](https://pkg.go.dev/vuln/GO-2026-5026) (`net/http`). Binaries you built
-  yourself with Go 1.26.5 or earlier should be rebuilt.
+  [GO-2026-5026](https://pkg.go.dev/vuln/GO-2026-5026) (`net/http`). Go 1.26.8 carried
+  nine more: [GO-2026-6617](https://pkg.go.dev/vuln/GO-2026-6617),
+  [GO-2026-6613](https://pkg.go.dev/vuln/GO-2026-6613),
+  [GO-2026-6612](https://pkg.go.dev/vuln/GO-2026-6612),
+  [GO-2026-6611](https://pkg.go.dev/vuln/GO-2026-6611),
+  [GO-2026-6610](https://pkg.go.dev/vuln/GO-2026-6610),
+  [GO-2026-6605](https://pkg.go.dev/vuln/GO-2026-6605) and
+  [GO-2026-6603](https://pkg.go.dev/vuln/GO-2026-6603) (`net/http`),
+  [GO-2026-6608](https://pkg.go.dev/vuln/GO-2026-6608) (`net/textproto`, `mime/multipart`)
+  and [GO-2026-6607](https://pkg.go.dev/vuln/GO-2026-6607) (`crypto/tls`). Binaries you
+  built yourself with Go 1.26.8 or earlier should be rebuilt.
 
 ### Changed
 
